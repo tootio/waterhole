@@ -1,0 +1,94 @@
+# Fixtures are inserted with raw SQL, so the before_validation that derives
+# email_domain and canonical_email_hash from the address never runs. They are
+# computed here instead, which also keeps the cross-instance match key visible
+# rather than magical.
+pending_alpha:
+  instance: alpha
+  mastodon_account_id: "1001"
+  username: rowan
+  email: rowan@fastmail.com
+  email_domain: fastmail.com
+  canonical_email_hash: <%= EmailCanonicalizer.hash_for("rowan@fastmail.com") %>
+  invite_request: I have been on a smaller server for two years and want a stronger local community.
+  signed_up_at: <%= 3.hours.ago.to_fs(:db) %>
+  status: pending
+  confirmed: true
+
+claimed_alpha:
+  instance: alpha
+  mastodon_account_id: "1002"
+  username: claimed
+  email: claimed@example.org
+  email_domain: example.org
+  canonical_email_hash: <%= EmailCanonicalizer.hash_for("claimed@example.org") %>
+  invite_request: A perfectly reasonable explanation of why I would like to join.
+  signed_up_at: <%= 4.hours.ago.to_fs(:db) %>
+  status: pending
+  confirmed: true
+  claimed_by: blake
+  claimed_at: <%= 10.minutes.ago.to_fs(:db) %>
+  # Fixtures bypass counter caches, so this is primed to match notes.yml.
+  notes_count: 1
+
+# Same canonical address as jules_beta, for the cross-instance signal.
+jules_alpha:
+  instance: alpha
+  mastodon_account_id: "1003"
+  username: jules_alpha
+  email: Ju.les+alpha@gmail.com
+  email_domain: gmail.com
+  canonical_email_hash: <%= EmailCanonicalizer.hash_for("Ju.les+alpha@gmail.com") %>
+  invite_request: Interested in the local art scene and want to post my sketches here.
+  signed_up_at: <%= 5.hours.ago.to_fs(:db) %>
+  status: pending
+  confirmed: true
+
+jules_beta:
+  instance: beta
+  mastodon_account_id: "2001"
+  username: jules_beta
+  email: jules@gmail.com
+  email_domain: gmail.com
+  canonical_email_hash: <%= EmailCanonicalizer.hash_for("jules@gmail.com") %>
+  invite_request: Interested in the local art scene and want to post my sketches here.
+  signed_up_at: <%= 5.hours.ago.to_fs(:db) %>
+  status: pending
+  confirmed: true
+
+jules_gamma:
+  instance: gamma
+  mastodon_account_id: "3001"
+  username: jules_gamma
+  email: jules@gmail.com
+  email_domain: gmail.com
+  canonical_email_hash: <%= EmailCanonicalizer.hash_for("jules@gmail.com") %>
+  invite_request: Interested in the local art scene and want to post my sketches here.
+  signed_up_at: <%= 5.hours.ago.to_fs(:db) %>
+  status: pending
+  confirmed: true
+
+rejected_alpha:
+  instance: alpha
+  mastodon_account_id: "1004"
+  username: rejected_before
+  email: repeat@example.net
+  email_domain: example.net
+  canonical_email_hash: <%= EmailCanonicalizer.hash_for("repeat@example.net") %>
+  invite_request: let me in
+  signed_up_at: <%= 8.days.ago.to_fs(:db) %>
+  status: rejected
+  confirmed: true
+  resolved_at: <%= 7.days.ago.to_fs(:db) %>
+  ip: 203.0.113.5
+
+other_instance:
+  instance: beta
+  mastodon_account_id: "2002"
+  username: not_yours
+  email: elsewhere@example.org
+  email_domain: example.org
+  canonical_email_hash: <%= EmailCanonicalizer.hash_for("elsewhere@example.org") %>
+  invite_request: A request belonging to a different instance entirely.
+  signed_up_at: <%= 2.hours.ago.to_fs(:db) %>
+  status: pending
+  confirmed: true

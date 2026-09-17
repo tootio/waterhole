@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html class="h-full">
+  <head>
+    <title><%= content_for(:title) || "Waterhole" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%= turbo_refreshes_with method: :morph, scroll: :preserve %>
+    <%= yield :head %>
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body class="flex min-h-dvh flex-col bg-stone-50 text-stone-900 antialiased">
+    <header class="border-b border-stone-200 bg-white">
+      <div class="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
+        <%= link_to (signed_in? ? root_path : new_session_path),
+              class: "order-1 flex shrink-0 items-center gap-2 font-semibold tracking-tight" do %>
+          <%= image_tag "/icon.svg", alt: "", class: "size-6" %>
+          <span>Waterhole</span>
+        <% end %>
+
+        <% if signed_in? %>
+          <div class="order-2 ml-auto flex items-center gap-3 text-sm sm:order-3">
+            <% if current_moderator.consent_current? %>
+              <%= button_to "Sync now", sync_path, class: "rounded border border-stone-300 px-2 py-1 whitespace-nowrap text-stone-700 hover:bg-stone-100" %>
+            <% end %>
+            <span class="hidden text-stone-500 sm:inline"><%= current_moderator.handle %></span>
+            <%= button_to "Sign out", session_path, method: :delete, class: "whitespace-nowrap text-stone-500 underline hover:text-stone-900" %>
+          </div>
+
+          <% if current_moderator.consent_current? %>
+          <nav class="order-3 -mx-4 flex w-full items-center gap-1 overflow-x-auto px-4 text-sm sm:order-2 sm:mx-0 sm:w-auto sm:gap-4 sm:overflow-visible sm:px-0">
+            <%= link_to "Queue", root_path, class: "#{nav_class(controller_name == "registration_requests")} whitespace-nowrap" %>
+            <%= link_to "Watchwords", keyword_rules_path, class: "#{nav_class(controller_name == "keyword_rules")} whitespace-nowrap" %>
+            <%= link_to "Sync history", sync_runs_path, class: "#{nav_class(controller_name == "sync_runs")} whitespace-nowrap" %>
+            <%= link_to "Instance", instances_path, class: "#{nav_class(controller_name == "instances")} whitespace-nowrap" %>
+          </nav>
+          <% end %>
+        <% else %>
+          <div class="order-2 ml-auto flex items-center gap-3 text-sm sm:gap-4">
+            <%= link_to "Authorise an instance", verification_path,
+                  class: "#{nav_class(controller_name == "verifications")} whitespace-nowrap" %>
+            <% unless controller_name == "sessions" && action_name == "new" %>
+              <%= link_to "Sign in", new_session_path,
+                    class: "rounded border border-stone-300 bg-white px-3 py-1 whitespace-nowrap text-stone-900 hover:bg-stone-100" %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </header>
+
+    <% if signed_in? && current_instance&.terms_outdated? %>
+      <%= render "shared/terms_banner" %>
+    <% end %>
+
+    <%= render "shared/flash" %>
+
+    <main class="mx-auto w-full max-w-6xl flex-1 px-4 py-6">
+      <%= yield %>
+    </main>
+
+    <%= render "shared/footer" %>
+  </body>
+</html>

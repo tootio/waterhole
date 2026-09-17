@@ -1,0 +1,30 @@
+<%# Claiming is what stops two people working the same request, so this has to be
+    unmissable and has to update for other viewers without a refresh. %>
+<div class="mb-6">
+  <% if registration_request.resolved? %>
+    <div class="rounded-lg border border-stone-200 bg-stone-100 px-4 py-3 text-sm text-stone-600">
+      Resolved <%= local_time(registration_request.resolved_at) %>.
+    </div>
+  <% elsif registration_request.claimed_by == current_moderator %>
+    <div class="flex flex-wrap items-center gap-3 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3">
+      <span class="text-sm text-indigo-900"><strong>You claimed this</strong> <%= time_ago_in_words(registration_request.claimed_at) %> ago.</span>
+      <%= button_to "Release", registration_request_claim_path(registration_request), method: :delete,
+            class: "ml-auto rounded border border-indigo-300 bg-white px-3 py-1 text-sm text-indigo-900 hover:bg-indigo-100" %>
+    </div>
+  <% elsif registration_request.claimed? %>
+    <div class="flex flex-wrap items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+      <span class="text-sm text-amber-900">
+        <strong><%= registration_request.claimed_by.name %></strong> is reviewing this
+        (claimed <%= time_ago_in_words(registration_request.claimed_at) %> ago).
+      </span>
+      <% if registration_request.claim_stale? %>
+        <%= button_to "Take over", registration_request_claim_path(registration_request, force: 1),
+              form: { data: { turbo_confirm: "#{registration_request.claimed_by.name} claimed this #{time_ago_in_words(registration_request.claimed_at)} ago. Take it over?" } },
+              class: "ml-auto rounded border border-amber-300 bg-white px-3 py-1 text-sm text-amber-900 hover:bg-amber-100" %>
+      <% end %>
+    </div>
+  <% else %>
+    <%= button_to "Claim this request", registration_request_claim_path(registration_request),
+          class: "w-full rounded-lg bg-stone-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-stone-800" %>
+  <% end %>
+</div>

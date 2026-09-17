@@ -1,0 +1,29 @@
+<article id="<%= dom_id(note) %>" class="<%= "ml-8 border-l-2 border-stone-200 pl-4" if note.parent_id %>">
+  <div class="flex flex-wrap items-baseline gap-2">
+    <span class="text-sm font-medium"><%= note.moderator&.name || "(removed)" %></span>
+    <span class="text-xs text-stone-400"><%= local_time(note.created_at, format: :short) %></span>
+    <% if note.edited? %><span class="text-xs text-stone-400">(edited)</span><% end %>
+
+    <% if note.moderator_id == current_moderator&.id %>
+      <span class="ml-auto flex gap-2 text-xs">
+        <%= link_to "Edit", edit_note_path(note), class: "text-stone-400 hover:text-stone-700" %>
+        <%= button_to "Delete", note_path(note), method: :delete,
+              form: { data: { turbo_confirm: "Delete this note?" } },
+              class: "text-stone-400 hover:text-red-700" %>
+      </span>
+    <% end %>
+  </div>
+
+  <div class="mt-1 whitespace-pre-wrap text-sm text-stone-800"><%= note.body %></div>
+
+  <% if note.root? %>
+    <div id="replies_<%= note.id %>" class="mt-3 space-y-3">
+      <%= render partial: "notes/note", collection: note.replies.chronological, as: :note %>
+    </div>
+    <details class="mt-2">
+      <summary class="cursor-pointer text-xs text-stone-400 hover:text-stone-700">Reply</summary>
+      <%= render "notes/form", registration_request: note.registration_request,
+            note: Note.new(parent_id: note.id), parent: note %>
+    </details>
+  <% end %>
+</article>

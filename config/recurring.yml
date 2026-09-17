@@ -1,0 +1,41 @@
+# Waterhole's core loops. Mirrored into development so `bin/dev` exercises the
+# real scheduler rather than leaving them to run only in production.
+defaults: &defaults
+  sync_instances:
+    class: ScheduleInstanceSyncsJob
+    schedule: every 5 minutes
+  verify_instances:
+    class: VerifyInstancesJob
+    schedule: every hour at minute 7
+  # After verify_instances, so an instance that just lost or regained access is
+  # reflected on every other instance within the hour.
+  refresh_cross_instance_flags:
+    class: RefreshCrossInstanceFlagsJob
+    schedule: every hour at minute 17
+  # Sign-in checks the Mastodon role once; this keeps checking.
+  verify_moderators:
+    class: VerifyModeratorsJob
+    schedule: every hour at minute 27
+  refresh_ip_databases:
+    class: RefreshIpDatabasesJob
+    schedule: every day at 3:20am
+  refresh_tor_relays:
+    class: RefreshTorRelaysJob
+    schedule: every hour at minute 42
+  # Applications and moderators of instances gone for more than
+  # ForgetDepartedInstancesJob::GRACE.
+  forget_departed_instances:
+    class: ForgetDepartedInstancesJob
+    schedule: every day at 4:10am
+  purge_resolved_requests:
+    class: PurgeResolvedRequestsJob
+    schedule: every day at 4am
+  clear_solid_queue_finished_jobs:
+    command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
+    schedule: every hour at minute 12
+
+development:
+  <<: *defaults
+
+production:
+  <<: *defaults

@@ -1,0 +1,66 @@
+# nginx in front of Waterhole's Docker Compose setup.
+#
+# Copy to /etc/nginx/conf.d/waterhole.conf (or sites-available + a link in
+# sites-enabled), replace waterhole.example.org with your WATERHOLE_HOST, then
+# `nginx -t && systemctl reload nginx`.
+#
+# Certificates: with certbot's nginx plugin, start with only the port-80 server
+# below, run `certbot --nginx -d waterhole.example.org`, then add the rest.
+#
+# docker-compose.yml publishes Waterhole on 127.0.0.1:3000. If that port is
+# taken, set WATERHOLE_PORT in compose's own .env file (next to
+# docker-compose.yml, not .env.production) and change proxy_pass to match.
+
+# Must sit at http level, which conf.d and sites-enabled files already are.
+# Named for Waterhole because a generic $connection_upgrade map often exists for
+# another site, and nginx refuses to start on a duplicate.
+map $http_upgrade $waterhole_connection_upgrade {
+  default upgrade;
+  ''      close;
+}
+
+server {
+  listen 80;
+  listen [::]:80;
+  server_name waterhole.example.org;
+
+  location /.well-known/acme-challenge/ { root /var/www/html; }
+  location / { return 301 https://$host$request_uri; }
+}
+
+server {
+  listen 443 ssl;
+  listen [::]:443 ssl;
+  # nginx 1.25.1+. Older versions (Debian 12, Ubuntu 22.04) reject this line:
+  # drop it and write `listen 443 ssl http2;` and `listen [::]:443 ssl http2;`.
+  http2 on;
+  server_name waterhole.example.org;
+
+  ssl_certificate     /etc/letsencrypt/live/waterhole.example.org/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/waterhole.example.org/privkey.pem;
+
+  # Nothing in Waterhole uploads files; the largest request is a 10k-char note.
+  client_max_body_size 1m;
+
+  # Security headers come from the app: the Content-Security-Policy, and HSTS
+  # via force_ssl. Setting them here as well would send them twice.
+
+  location / {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_http_version 1.1;
+
+    proxy_set_header Host              $host;
+    proxy_set_header X-Forwarded-Proto https;
+    # Appended, not replaced: Rails takes the rightmost address it does not
+    # trust, which is the one nginx adds, so a client cannot spoof it. Rate
+    # limits count per that address. nginx reaches the container over Docker's
+    # private network, which Rails trusts as a proxy.
+    proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header X-Real-IP         $remote_addr;
+
+    # Action Cable (live queue updates) at /cable.
+    proxy_set_header Upgrade    $http_upgrade;
+    proxy_set_header Connection $waterhole_connection_upgrade;
+    proxy_read_timeout 1h;
+  }
+}

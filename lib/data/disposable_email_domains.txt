@@ -1,0 +1,23 @@
+# Disposable / throwaway email providers. One domain per line; # starts a comment.
+# Vendored as a flat file rather than a table: tens of thousands of rows,
+# read-only, never joined.
+mailinator.com
+guerrillamail.com
+guerrillamail.net
+10minutemail.com
+tempmail.com
+temp-mail.org
+throwawaymail.com
+yopmail.com
+getnada.com
+trashmail.com
+sharklasers.com
+grr.la
+maildrop.cc
+dispostable.com
+fakeinbox.com
+mintemail.com
+mohmal.com
+emailondeck.com
+spamgourmet.com
+mytemp.email

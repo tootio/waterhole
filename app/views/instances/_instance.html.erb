@@ -1,0 +1,91 @@
+<div class="space-y-6">
+  <section class="rounded-lg border border-stone-200 bg-white p-5">
+    <h2 class="mb-3 text-xs font-semibold uppercase tracking-wide text-stone-500">Authorisation</h2>
+    <dl class="space-y-2 text-sm">
+      <div class="flex gap-3"><dt class="w-40 text-stone-500">Status</dt><dd><%= instance.status.humanize %></dd></div>
+      <div class="flex gap-3"><dt class="w-40 text-stone-500">DNS verified</dt><dd><%= local_time(instance.verified_at) %></dd></div>
+      <div class="flex gap-3"><dt class="w-40 text-stone-500">Last checked</dt><dd><%= local_time(instance.verification_checked_at) %></dd></div>
+      <% if instance.consecutive_verification_failures.positive? %>
+        <div class="flex gap-3">
+          <dt class="w-40 text-stone-500">Failed checks</dt>
+          <dd class="text-amber-800">
+            <%= instance.consecutive_verification_failures %> of <%= VerifyInstanceJob::FAILURES_BEFORE_REVOCATION %> before access is revoked
+          </dd>
+        </div>
+      <% end %>
+      <% if instance.verification_detail.present? %>
+        <div class="flex gap-3"><dt class="w-40 text-stone-500">Last DNS answer</dt>
+          <dd class="break-all font-mono text-xs"><%= instance.verification_detail %></dd></div>
+      <% end %>
+      <div class="flex gap-3"><dt class="w-40 text-stone-500">Mastodon scopes</dt><dd class="font-mono text-xs"><%= instance.scopes %></dd></div>
+    </dl>
+  </section>
+
+  <section class="rounded-lg border border-stone-200 bg-white p-5">
+    <h2 class="mb-3 text-xs font-semibold uppercase tracking-wide text-stone-500">Sync</h2>
+    <dl class="space-y-2 text-sm">
+      <div class="flex gap-3"><dt class="w-40 text-stone-500">Last synced</dt><dd><%= local_time(instance.last_synced_at) %></dd></div>
+      <div class="flex gap-3">
+        <dt class="w-40 text-stone-500">Token borrowed from</dt>
+        <dd><%= instance.sync_moderator&.handle || tag.span("nobody — sync is stalled", class: "text-red-700") %></dd>
+      </div>
+      <% if instance.last_sync_error.present? %>
+        <div class="flex gap-3"><dt class="w-40 text-stone-500">Last error</dt>
+          <dd class="text-amber-800"><%= instance.last_sync_error %></dd></div>
+      <% end %>
+    </dl>
+    <p class="mt-3 text-xs text-stone-500">
+      Background sync borrows a moderator's personal token, because jobs have no
+      signed-in user. Decisions always use the token of whoever pressed the button.
+    </p>
+  </section>
+
+  <section class="rounded-lg border border-stone-200 bg-white p-5">
+    <h2 class="mb-3 text-xs font-semibold uppercase tracking-wide text-stone-500">Cross-instance signals</h2>
+    <p class="text-sm text-stone-700">
+      <strong><%= instance.participating? ? "On" : "Off" %></strong> —
+      <% if instance.participating? %>
+        moderators here can see when an applicant's address or network is already
+        in use on another participating instance, and those instances can see the
+        same about yours.
+      <% else %>
+        this flag is not computed for your queue, and your applicants are not
+        visible to other instances.
+      <% end %>
+    </p>
+
+    <%# Two keys: the admin's consent in DNS, and the operator's approval. %>
+    <dl class="mt-3 space-y-1 text-sm">
+      <div class="flex gap-3">
+        <dt class="w-40 text-stone-500">Your DNS record</dt>
+        <dd><%= instance.signals_opted_in? ? "opts in (signals=on)" : "does not opt in" %></dd>
+      </div>
+      <div class="flex gap-3">
+        <dt class="w-40 text-stone-500">Operator approval</dt>
+        <dd><%= instance.signals_approved? ? "approved" : "not approved" %></dd>
+      </div>
+    </dl>
+
+    <% unless instance.signals_opted_in? %>
+      <p class="mt-3 text-xs text-stone-500">To opt in, your instance admin adds <code>signals=on</code> to the record:</p>
+      <pre class="mt-1 overflow-x-auto rounded bg-stone-100 p-2 text-xs"><code><%= DnsAllowlist.expected_record(instance.domain, signals: true) %></code></pre>
+    <% end %>
+    <% unless instance.signals_approved? %>
+      <p class="mt-3 text-xs text-stone-500">
+        Approval is given by whoever runs <%= Waterhole::Deployment.host %>; your
+        instance admin asks them.
+      </p>
+    <% end %>
+
+    <p class="mt-3 text-xs text-stone-500">
+      It's reciprocal on purpose: you only see the signal if you contribute to it.
+      It matches your applicants' addresses (as salted hashes, never in the clear),
+      signup networks, join-reason fingerprints and signup patterns against other
+      participating instances; only the other instance's domain is ever shown. Removing <code>signals=on</code> from the
+      record switches it off at the next hourly check.
+      Read the <%= link_to "terms", terms_path, class: "underline" %> first: they
+      explain how another participating instance could misuse the signal, and what
+      participating instances agree not to do.
+    </p>
+  </section>
+</div>

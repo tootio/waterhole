@@ -1,0 +1,54 @@
+<%# Always a full page load. A Turbo visit keeps the Content-Security-Policy of
+    the page it started from, whose form-action would block the redirect to
+    Mastodon; only a real load picks up this page's looser one. %>
+<% content_for :head, tag.meta(name: "turbo-visit-control", content: "reload") %>
+<% content_for :title, "Sign in — Waterhole" %>
+
+<div class="mx-auto max-w-lg">
+  <div class="mb-8 text-center">
+    <%= image_tag "/mammoth-3d.webp", alt: "", class: "mx-auto size-24" %>
+    <h1 class="mt-2 text-2xl font-semibold tracking-tight">Waterhole</h1>
+    <p class="mt-2 text-sm text-stone-600">
+      Collaborative moderation for Mastodon registration requests.
+    </p>
+  </div>
+
+  <%# Not Turbo: the response is a redirect to another site, which Turbo's fetch cannot follow. %>
+  <%= form_with url: session_path, method: :post, data: { turbo: false }, class: "rounded-lg border border-stone-200 bg-white p-6" do |f| %>
+    <%= f.label :domain, "Your instance", class: "block text-sm font-medium" %>
+    <p class="mt-1 text-xs text-stone-500">
+      You'll sign in with your Mastodon account. Waterhole acts as you, so your
+      moderator role decides what you can do.
+    </p>
+    <%= f.text_field :domain, value: @domain, placeholder: "mastodon.example",
+          autocomplete: "url", autofocus: true, required: true,
+          class: "mt-3 w-full rounded border border-stone-300 px-3 py-2" %>
+    <label class="mt-3 flex items-center gap-2 text-sm text-stone-700">
+      <%= f.check_box :remember, { class: "rounded border-stone-300" }, "1", "0" %>
+      Remember this instance in this browser
+    </label>
+    <%= f.submit "Continue", class: "mt-4 w-full rounded bg-stone-900 px-4 py-2.5 font-medium text-white hover:bg-stone-800" %>
+  <% end %>
+
+  <% if recent_instance_domains.any? %>
+    <div class="mt-6">
+      <p class="mb-2 text-xs font-medium uppercase tracking-wide text-stone-500">Recently used in this browser</p>
+      <ul class="divide-y divide-stone-200 overflow-hidden rounded-lg border border-stone-200 bg-white text-sm">
+        <% recent_instance_domains.each do |domain| %>
+          <li class="flex items-center">
+            <%= button_to domain, session_path, params: { domain:, remember: "1" },
+                  form_class: "min-w-0 flex-1", form: { data: { turbo: false } },
+                  class: "w-full truncate px-4 py-2.5 text-left hover:bg-stone-50" %>
+            <%= button_to "Forget", session_recent_instance_path, method: :delete, params: { domain: },
+                  title: "Remove #{domain} from this list",
+                  class: "px-4 py-2.5 text-xs text-stone-500 hover:bg-stone-50 hover:text-stone-900" %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <p class="mt-6 text-center text-xs text-stone-500">
+    Running an instance? <%= link_to "Lead your herd to this waterhole →", verification_path, class: "font-medium text-stone-700 underline hover:text-stone-900" %>
+  </p>
+</div>

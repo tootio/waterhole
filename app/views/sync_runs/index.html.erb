@@ -1,0 +1,38 @@
+<% content_for :title, "Sync history — Waterhole" %>
+<h1 class="mb-4 text-2xl font-semibold tracking-tight">Sync history</h1>
+
+<% if @sync_runs.any? %>
+  <div class="overflow-x-auto rounded-lg border border-stone-200 bg-white">
+    <table class="w-full text-sm">
+      <thead class="bg-stone-50 text-left text-xs uppercase tracking-wide text-stone-500">
+        <tr>
+          <th class="px-4 py-2 font-medium">Started</th>
+          <th class="px-4 py-2 font-medium">Status</th>
+          <th class="px-4 py-2 font-medium">Pages</th>
+          <th class="px-4 py-2 font-medium">Seen</th>
+          <th class="px-4 py-2 font-medium">New</th>
+          <th class="px-4 py-2 font-medium">Resolved elsewhere</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-stone-200">
+        <% @sync_runs.each do |run| %>
+          <tr class="<%= "bg-red-50" if run.failed? %>">
+            <td class="px-4 py-2"><%= local_time(run.started_at, format: :short) %></td>
+            <td class="px-4 py-2"><%= run.status %></td>
+            <td class="px-4 py-2"><%= run.pages_fetched %></td>
+            <td class="px-4 py-2"><%= run.records_seen %></td>
+            <td class="px-4 py-2"><%= run.records_created %></td>
+            <td class="px-4 py-2"><%= run.records_resolved %></td>
+          </tr>
+          <% if run.error_message.present? %>
+            <tr class="bg-red-50"><td colspan="6" class="px-4 pb-2 text-xs text-red-900"><%= run.error_message %></td></tr>
+          <% end %>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <p class="rounded-lg border border-dashed border-stone-300 bg-white px-6 py-12 text-center text-stone-500">
+    No syncs yet.
+  </p>
+<% end %>

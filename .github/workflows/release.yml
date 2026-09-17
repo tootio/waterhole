@@ -1,0 +1,91 @@
+# Publishes the release image that docker-compose.yml and config/deploy.yml.example
+# pull: ghcr.io/tootio/waterhole.
+#
+# Pushing a tag like v1.2.0 runs the full CI against that commit first, then
+# builds for amd64 and arm64 and tags the image:
+#
+#   v1.2.0  1.2.0  1.2  latest
+#
+# `v1.2.0` matches the git tag, so `bin/kamal deploy --skip-push --version v1.2.0`
+# runs exactly that release. Pre-release tags (v1.2.0-rc.1) get only their own
+# two tags, never `latest`.
+name: Release
+
+on:
+  push:
+    tags: [ "v*" ]
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  image:
+    needs: ci
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Image tags and labels
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository }}
+          # latest=auto would tag pre-releases too; only the semver rules decide.
+          flavor: latest=false
+          tags: |
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable=${{ !contains(github.ref_name, '-') }}
+
+      - name: Build and push
+        id: push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            WATERHOLE_VERSION=${{ github.ref_name }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Lets operators check that an image was built here, from this tag:
+      #   gh attestation verify oci://ghcr.io/tootio/waterhole:v1.2.0 -R tootio/waterhole
+      #
+      # GitHub only stores attestations for public repositories (or on a paid
+      # plan), so this switches itself on when the repository goes public
+      # rather than failing every release until then.
+      - name: Attest build provenance
+        if: ${{ !github.event.repository.private }}
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-name: ghcr.io/${{ github.repository }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true

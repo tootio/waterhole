@@ -1,0 +1,38 @@
+alpha:
+  domain: alpha.example
+  title: Alpha
+  status: verified
+  verified_at: <%= 1.hour.ago.to_fs(:db) %>
+  signals_opted_in: true
+  signals_approved: true
+  client_id: alpha-client
+  client_secret: alpha-secret
+  redirect_uri: http://localhost:3100/oauth/callback
+  scopes: profile admin:read:accounts admin:write:accounts
+  consecutive_verification_failures: 0
+
+# Also participates, so cross-instance matching has a counterpart.
+beta:
+  domain: beta.example
+  title: Beta
+  status: verified
+  verified_at: <%= 1.hour.ago.to_fs(:db) %>
+  signals_opted_in: true
+  signals_approved: true
+  scopes: profile admin:read:accounts admin:write:accounts
+  consecutive_verification_failures: 0
+
+# Verified and approved by the operator, but its DNS record does not opt in:
+# must never see or feed the cross-instance signal.
+gamma:
+  domain: gamma.example
+  status: verified
+  verified_at: <%= 1.hour.ago.to_fs(:db) %>
+  signals_opted_in: false
+  signals_approved: true
+  consecutive_verification_failures: 0
+
+unverified:
+  domain: newcomer.example
+  status: unverified
+  consecutive_verification_failures: 0

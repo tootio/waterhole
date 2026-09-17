@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+/* Typography for the operator-authored legal documents. Deliberately hand-rolled
+   rather than pulling in the typography plugin: three static pages do not
+   justify the dependency, and the sanitiser only lets a short tag list through
+   anyway. */
+@layer components {
+  .prose-waterhole {
+    color: var(--color-stone-800);
+    line-height: 1.7;
+  }
+  .prose-waterhole h1 { font-size: 1.75rem; font-weight: 600; letter-spacing: -0.015em; margin-bottom: 1rem; }
+  .prose-waterhole h2 { font-size: 1.25rem; font-weight: 600; margin-top: 2rem; margin-bottom: 0.5rem; }
+  .prose-waterhole h3 { font-size: 1.05rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.4rem; }
+  .prose-waterhole p { margin-bottom: 1rem; }
+  .prose-waterhole ul { list-style: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
+  .prose-waterhole ol { list-style: decimal; padding-left: 1.5rem; margin-bottom: 1rem; }
+  .prose-waterhole li { margin-bottom: 0.35rem; }
+  .prose-waterhole a { color: var(--color-indigo-700); text-decoration: underline; }
+  .prose-waterhole strong { font-weight: 600; }
+  .prose-waterhole code { font-family: ui-monospace, monospace; font-size: 0.875em; background: var(--color-stone-100); padding: 0.1rem 0.25rem; border-radius: 0.25rem; }
+  .prose-waterhole blockquote {
+    border-left: 3px solid var(--color-amber-300);
+    background: var(--color-amber-50);
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.25rem;
+  }
+  .prose-waterhole blockquote p:last-child { margin-bottom: 0; }
+  .prose-waterhole hr { border-color: var(--color-stone-200); margin: 2rem 0; }
+  .prose-waterhole table { width: 100%; margin-bottom: 1rem; }
+  .prose-waterhole th, .prose-waterhole td { border: 1px solid var(--color-stone-200); padding: 0.4rem 0.6rem; text-align: left; }
+}

@@ -1,0 +1,45 @@
+<%= form_with model: keyword_rule, class: "space-y-4 rounded-lg border border-stone-200 bg-white p-5" do |f| %>
+  <% if keyword_rule.errors.any? %>
+    <div class="rounded bg-red-50 px-3 py-2 text-sm text-red-900">
+      <%= keyword_rule.errors.full_messages.to_sentence %>
+    </div>
+  <% end %>
+
+  <div>
+    <%= f.label :pattern, class: "block text-sm font-medium" %>
+    <%= f.text_field :pattern, required: true, class: "mt-1 w-full rounded border border-stone-300 px-3 py-2" %>
+  </div>
+
+  <div class="flex flex-wrap gap-4">
+    <div>
+      <%= f.label :match_type, "Match", class: "block text-sm font-medium" %>
+      <%= f.select :match_type, KeywordRule::MATCH_TYPES.map { [ it.humanize, it ] }, {},
+            class: "mt-1 rounded border border-stone-300 px-3 py-2" %>
+      <p class="mt-1 text-xs text-stone-500 max-w-xs">
+        Regular expressions run against every pending request on every sync, so
+        they're time-bounded and a runaway pattern is ignored rather than allowed
+        to stall the queue.
+      </p>
+    </div>
+
+    <div>
+      <%= f.label :severity, class: "block text-sm font-medium" %>
+      <%= f.select :severity, Flag::SEVERITIES.keys.map { [ it.to_s.humanize, it ] }, {},
+            class: "mt-1 rounded border border-stone-300 px-3 py-2" %>
+    </div>
+  </div>
+
+  <div>
+    <%= f.label :description, "Note (optional)", class: "block text-sm font-medium" %>
+    <%= f.text_field :description, class: "mt-1 w-full rounded border border-stone-300 px-3 py-2" %>
+  </div>
+
+  <label class="flex items-center gap-2 text-sm">
+    <%= f.check_box :enabled, class: "rounded border-stone-300" %> Enabled
+  </label>
+
+  <div class="flex gap-3">
+    <%= f.submit class: "rounded bg-stone-900 px-4 py-2 text-sm text-white hover:bg-stone-800" %>
+    <%= link_to "Cancel", keyword_rules_path, class: "rounded border border-stone-300 px-4 py-2 text-sm" %>
+  </div>
+<% end %>

@@ -1,0 +1,22 @@
+<% content_for :title, "Authorise Waterhole — Waterhole" %>
+
+<div class="mx-auto max-w-2xl">
+  <h1 class="text-2xl font-semibold tracking-tight">Authorise this Waterhole</h1>
+  <%= render "shared/about", class: "mt-3 text-stone-700" %>
+
+  <h2 class="mt-8 text-lg font-semibold tracking-tight">Bring your herd</h2>
+  <p class="mt-2 text-stone-700">
+    Before your moderators can sign in, someone who controls your instance's DNS
+    has to say they want this Waterhole.
+  </p>
+
+  <%= form_with url: verification_path, method: :post, class: "mt-6 flex gap-2" do |f| %>
+    <%= f.text_field :instance_domain, value: @domain, placeholder: "mastodon.example", required: true,
+          class: "flex-1 rounded border border-stone-300 px-3 py-2" %>
+    <%= f.submit "Check", class: "rounded bg-stone-900 px-4 py-2 text-white" %>
+  <% end %>
+
+  <% if @domain.present? %>
+    <%= render "verifications/instructions", domain: @domain, signals: @signals, admission: @admission %>
+  <% end %>
+</div>

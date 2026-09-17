@@ -1,0 +1,57 @@
+<% content_for :title, "Queue — Waterhole" %>
+
+<%# Live queue: sync inserts, claims and decisions all reach every open queue. %>
+<%= turbo_stream_from current_instance, :registration_requests %>
+
+<div class="mb-5 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <h1 class="text-2xl font-semibold tracking-tight">Registration requests</h1>
+    <p class="mt-1 text-sm text-stone-600">
+      <%= current_instance.domain %> ·
+      <%= @counts[:pending] %> pending,
+      <%= @counts[:unclaimed] %> unclaimed,
+      <%= @counts[:mine] %> yours
+      <% if @counts[:unconfirmed].positive? %>
+        · <%= link_to "#{@counts[:unconfirmed]} waiting for email confirmation",
+                root_path(email: "unconfirmed"), class: "underline hover:text-stone-900" %>
+      <% end %>
+    </p>
+  </div>
+  <p class="text-xs text-stone-500">
+    Last synced <%= current_instance.last_synced_at ? "#{time_ago_in_words(current_instance.last_synced_at)} ago" : "never" %>
+  </p>
+</div>
+
+<% if current_instance.last_sync_error.present? %>
+  <div class="mb-4 rounded border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+    <strong>Sync problem:</strong> <%= current_instance.last_sync_error %>
+  </div>
+<% end %>
+
+<%= render "filters", query: @query %>
+
+<%# A frame, not a stream: filtering and paging are THIS viewer's navigation.
+    turbo_action advance keeps the URL shareable and the back button working. %>
+<%= turbo_frame_tag "queue", data: { turbo_action: "advance" } do %>
+  <% if @registration_requests.any? %>
+    <ul data-controller="keyboard-nav"
+        class="divide-y divide-stone-200 overflow-hidden rounded-lg border border-stone-200 bg-white">
+      <%= render partial: "registration_request", collection: @registration_requests %>
+    </ul>
+
+    <% if @pagination.many? %>
+      <nav class="mt-4 flex items-center justify-between text-sm">
+        <span class="text-stone-500">Page <%= @pagination.page %> of <%= @pagination.pages %> · <%= pluralize(@pagination.total, "request") %></span>
+        <span class="flex gap-2">
+          <%= link_to "← Newer", queue_page_path(@pagination.prev), class: "rounded border border-stone-300 px-3 py-1 hover:bg-stone-100" if @pagination.prev %>
+          <%= link_to "Older →", queue_page_path(@pagination.next), class: "rounded border border-stone-300 px-3 py-1 hover:bg-stone-100" if @pagination.next %>
+        </span>
+      </nav>
+    <% end %>
+  <% else %>
+    <div class="rounded-lg border border-dashed border-stone-300 bg-white px-6 py-12 text-center">
+      <p class="font-medium text-stone-700">Nothing here.</p>
+      <p class="mt-1 text-sm text-stone-500">No requests match these filters.</p>
+    </div>
+  <% end %>
+<% end %>

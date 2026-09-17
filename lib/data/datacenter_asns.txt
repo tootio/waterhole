@@ -1,0 +1,93 @@
+# Autonomous systems that are hosting/cloud providers rather than consumer ISPs.
+# One ASN per line; everything after # is a comment.
+#
+# Advisory only. A signup from a datacenter is a hint, not a verdict: VPN users
+# are over-represented among privacy-conscious Mastodon applicants, and this list
+# cannot tell a spammer from someone who values their privacy. The flag is capped
+# at `warning` for that reason and always shows the organisation it matched.
+#
+# last reviewed: 2026-09-19, each ASN checked against its registry holder
+# (RIPEstat) and PeeringDB. Consumer and mobile networks must never be listed:
+# a misattributed ASN flags ordinary people.
+16509   # Amazon AWS
+14618   # Amazon AWS
+7224    # Amazon AWS
+8075    # Microsoft Azure
+8068    # Microsoft Azure
+8069    # Microsoft Azure
+12076   # Microsoft Azure
+396982  # Google Cloud
+15169   # Google
+36040   # Google (YouTube)
+14061   # DigitalOcean
+24940   # Hetzner
+213230  # Hetzner
+16276   # OVH
+63949   # Akamai / Linode
+20940   # Akamai
+16625   # Akamai
+20473   # Vultr / Choopa
+51167   # Contabo
+31898   # Oracle Cloud
+12876   # Scaleway
+9009    # M247
+60781   # LeaseWeb
+16265   # LeaseWeb; not announced as of last review
+28753   # LeaseWeb
+49505   # Selectel
+200651  # Flokinet
+53667   # FranTech / BuyVM
+35916   # MULTACOM
+21409   # Ikoula
+13335   # Cloudflare
+54113   # Fastly
+36351   # IBM Cloud / SoftLayer
+21859   # Zenlayer
+8560    # IONOS / 1&1
+6724    # Strato
+197540  # Netcup
+47583   # Hostinger
+26496   # GoDaddy
+398101  # GoDaddy
+22612   # Namecheap
+19994   # Rackspace
+27357   # Rackspace
+33070   # Rackspace
+15395   # Rackspace
+32244   # Liquid Web
+202053  # UpCloud
+25697   # UpCloud USA
+36007   # Kamatera (US)
+204548  # Kamatera (Germany)
+210329  # Kamatera (UK)
+44709   # Kamatera (Israel)
+50673   # Serverius
+44803   # Webdock
+40676   # Psychz Networks
+54290   # Hostwinds
+32097   # Wholesale Internet
+30058   # FDCservers
+399820  # Atomic Networks / Sparked Host (game server hosting)
+40509   # Fly.io
+37963   # Alibaba Cloud (Aliyun)
+45102   # Alibaba Cloud
+24429   # Alibaba Cloud / Taobao
+134963  # Alibaba Cloud (Singapore)
+45090   # Tencent Cloud
+132203  # Tencent Cloud
+132591  # Tencent Cloud; not announced as of last review
+133478  # Tencent Cloud
+59019   # Kingsoft Cloud
+137280  # Kingsoft Cloud (global)
+55990   # Huawei Cloud
+136907  # Huawei Cloud
+58519   # China Telecom Cloud (CTyun)
+63199   # CDS Global Cloud
+38365   # Baidu Cloud
+55960   # Sinnet (AWS China, Beijing region)
+135377  # UCloud
+131486  # JD.com
+137753  # JD Cloud
+135630  # Amazon AWS China (Ningxia); not announced as of last review
+137718  # Volcano Engine (ByteDance Cloud)
+396986  # ByteDance

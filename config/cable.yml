@@ -1,0 +1,22 @@
+# Waterhole broadcasts Turbo Streams from background jobs (bin/jobs), which is a
+# separate process from Puma. The async adapter only works within one process, so
+# development uses solid_cable too -- otherwise sync/claim broadcasts silently
+# never reach the browser in development.
+development:
+  adapter: solid_cable
+  connects_to:
+    database:
+      writing: cable
+  polling_interval: 0.1.seconds
+  message_retention: 1.day
+
+test:
+  adapter: test
+
+production:
+  adapter: solid_cable
+  connects_to:
+    database:
+      writing: cable
+  polling_interval: 0.1.seconds
+  message_retention: 1.day

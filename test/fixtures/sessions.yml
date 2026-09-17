@@ -1,0 +1,5 @@
+avery:
+  moderator: avery
+  ip_address: 127.0.0.1
+  user_agent: test
+  last_active_at: <%= Time.current.to_fs(:db) %>

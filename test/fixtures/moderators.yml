@@ -1,0 +1,35 @@
+avery:
+  instance: alpha
+  mastodon_account_id: "1"
+  username: avery
+  display_name: Avery
+  access_token: token-avery
+  last_authenticated_at: <%= 1.hour.ago.to_fs(:db) %>
+  consented_at: <%= 1.day.ago.to_fs(:db) %>
+
+blake:
+  instance: alpha
+  mastodon_account_id: "2"
+  username: blake
+  display_name: Blake
+  access_token: token-blake
+  last_authenticated_at: <%= 2.hours.ago.to_fs(:db) %>
+  consented_at: <%= 1.day.ago.to_fs(:db) %>
+
+# Token known-dead: must never be picked to sync with.
+dana:
+  instance: alpha
+  mastodon_account_id: "3"
+  username: dana
+  access_token: token-dana
+  token_invalidated_at: <%= 1.day.ago.to_fs(:db) %>
+  last_authenticated_at: <%= 3.days.ago.to_fs(:db) %>
+  consented_at: <%= 1.day.ago.to_fs(:db) %>
+
+casey:
+  instance: beta
+  mastodon_account_id: "4"
+  username: casey
+  access_token: token-casey
+  last_authenticated_at: <%= 1.hour.ago.to_fs(:db) %>
+  consented_at: <%= 1.day.ago.to_fs(:db) %>

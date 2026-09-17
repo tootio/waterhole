@@ -1,0 +1,22 @@
+<%# data-turbo-permanent keeps an in-progress draft alive across the refresh
+    morphs that claims and decisions broadcast. Without it, someone else claiming
+    the request would wipe what you were typing. %>
+<div id="<%= dom_id(registration_request, parent ? "reply_form_#{parent.id}" : "note_form") %>"
+     data-turbo-permanent
+     class="mt-4">
+  <%= form_with model: [ registration_request, note ],
+        url: registration_request_notes_path(registration_request),
+        data: { controller: "note-composer", action: "turbo:submit-end->note-composer#reset" } do |f| %>
+    <%= f.hidden_field :parent_id, value: parent&.id %>
+    <%= f.text_area :body, rows: parent ? 2 : 3,
+          placeholder: parent ? "Reply…" : "Add a note for the other moderators…",
+          data: { note_composer_target: "input", action: "input->note-composer#count" },
+          class: "w-full rounded border border-stone-300 px-3 py-2 text-sm" %>
+    <div class="mt-2 flex items-center gap-3">
+      <%= f.submit parent ? "Reply" : "Add note",
+            data: { turbo_submits_with: "Saving…" },
+            class: "rounded bg-stone-900 px-3 py-1.5 text-sm text-white hover:bg-stone-800" %>
+      <span data-note-composer-target="counter" class="text-xs text-stone-400"></span>
+    </div>
+  <% end %>
+</div>

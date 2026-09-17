@@ -1,0 +1,28 @@
+<% content_for :title, "#{@document.title} — Waterhole" %>
+
+<article class="mx-auto max-w-3xl">
+  <% if @example %>
+    <%# Unmissable, and deliberately not dismissible: text that is not this
+        deployment's own must never be mistaken for it. %>
+    <div class="mb-6 rounded border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900">
+      <p class="font-semibold">This is example text, not this deployment's own <%= @document.title.downcase %>.</p>
+      <p class="mt-1">
+        Whoever runs <%= Waterhole::Deployment.host %> has not published their own document yet.
+        Until they do, nothing here is binding and the terms gate is inactive.
+      </p>
+    </div>
+  <% end %>
+
+  <div class="prose-waterhole rounded-lg border border-stone-200 bg-white px-6 py-6">
+    <%= @document.html %>
+  </div>
+
+  <p class="mt-4 text-xs text-stone-500">
+    <% if @document.published? %>
+      Document fingerprint <code class="font-mono"><%= @document.short_digest %></code>.
+      Instances accept these documents by publishing their combined fingerprint in DNS.
+    <% else %>
+      No fingerprint: this deployment publishes no legal documents yet.
+    <% end %>
+  </p>
+</article>

@@ -1,0 +1,100 @@
+# Template for deploying Waterhole with Kamal. Every deployment has its own
+# servers, registry and host, so the real config/deploy.yml is yours and is
+# gitignored:
+#
+#   cp config/deploy.yml.example config/deploy.yml
+#
+# Settings for the app itself go in .env.production (see .env.production.sample);
+# .kamal/secrets reads the secret ones from there. docker-compose.yml is the
+# simpler route if you do not already use Kamal.
+#
+# Deploying a released version, without building anything:
+#
+#   bin/kamal deploy --skip-push --version <release tag>
+#
+# Plain `bin/kamal deploy` builds the image from this checkout instead, which is
+# what you want for a modified Waterhole -- and then, per the AGPL, set
+# WATERHOLE_SOURCE_URL to where your modified source can be downloaded.
+
+service: waterhole
+
+# Release images. Point this at your own registry to deploy your own builds.
+image: tootio/waterhole
+
+servers:
+  web:
+    - 192.0.2.10
+  # Syncing, DNS re-verification and the IP database refresh are the core of
+  # Waterhole, so they get their own container rather than running inside Puma.
+  job:
+    hosts:
+      - 192.0.2.10
+    cmd: bin/jobs
+
+# TLS via Let's Encrypt. Waterhole assumes HTTPS (config.assume_ssl/force_ssl):
+# WATERHOLE_HOST is published in instances' DNS records, and the OAuth redirect
+# URI it registers with Mastodon is https://WATERHOLE_HOST/...
+proxy:
+  ssl: true
+  host: waterhole.example.org
+
+registry:
+  server: ghcr.io
+  # Kamal logs in on every deploy, so this is your own GitHub user, with a
+  # token in KAMAL_REGISTRY_PASSWORD: read:packages to pull release images,
+  # write:packages to push your own builds (with `image` pointed at your fork).
+  username: your-github-user
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+env:
+  # Secret values are read from .env.production by .kamal/secrets.
+  secret:
+    - SECRET_KEY_BASE
+    - ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY
+    - ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY
+    - ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT
+    - WATERHOLE_SHARING_HMAC_KEY
+    - DB_PASS
+  clear:
+    # Must match proxy.host above.
+    WATERHOLE_HOST: waterhole.example.org
+    # The db accessory below, over Kamal's docker network.
+    DB_HOST: waterhole-db
+    DB_USER: waterhole
+    # Everything else from .env.production.sample that you set belongs here too,
+    # e.g. WATERHOLE_POLICY_MODE, WATERHOLE_TERMS_GRACE_DAYS, WATERHOLE_SOURCE_URL.
+
+volumes:
+  # Downloaded IP databases, shared by the web and job containers.
+  - "waterhole_storage:/rails/storage"
+  # Your terms_of_service.md, privacy_policy.md and imprint.md, kept on the
+  # server. Changing them changes the terms digest instances accept via DNS.
+  - "/srv/waterhole/legal:/rails/storage/legal:ro"
+
+accessories:
+  db:
+    image: postgres:18-alpine
+    host: 192.0.2.10
+    # Not exposed beyond this server.
+    port: "127.0.0.1:5432:5432"
+    env:
+      clear:
+        POSTGRES_USER: waterhole
+      secret:
+        - POSTGRES_PASSWORD
+    directories:
+      - data:/var/lib/postgresql
+
+aliases:
+  console: app exec --interactive --reuse "bin/rails console"
+  shell: app exec --interactive --reuse "bash"
+  logs: app logs -f
+  dbc: app exec --interactive --reuse "bin/rails dbconsole --include-password"
+
+# Bridge fingerprinted assets between versions, so in-flight requests do not
+# 404 during a deploy.
+asset_path: /rails/public/assets
+
+builder:
+  arch: amd64

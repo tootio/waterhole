@@ -1,0 +1,190 @@
+<%= turbo_frame_tag "verification_result", target: "_top" do %>
+<div class="mt-6 space-y-4" data-controller="clipboard">
+  <% unaccepted = admission&.dns&.accepts_no_terms? %>
+  <% changed = admission&.dns&.changed_documents || [] %>
+  <div class="rounded-lg border border-stone-200 bg-white p-5">
+    <h2 class="text-sm font-semibold">1. Read the terms, and decide</h2>
+    <p class="mt-2 text-sm text-stone-700">
+      Publishing the record accepts these documents on your instance's behalf.
+      Read them, and decide whether your herd wants to join this waterhole.
+    </p>
+    <ul class="mt-3 space-y-1 text-sm">
+      <% LegalDocuments.all.each do |document| %>
+        <li>
+          <%= link_to document.title, legal_document_path(document), class: "font-medium underline" %>
+          <span class="text-stone-500">— <%= document.description %></span>
+          <% if changed.include?(document) %>
+            <span class="ml-1 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-900">changed</span>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+    <% if unaccepted %>
+      <p class="mt-3 rounded bg-amber-50 px-3 py-2 text-sm text-amber-900">
+        Your record does not accept these documents yet: it has no
+        <code>accepted</code> value. Read them, then publish the record below,
+        which includes it.
+      </p>
+    <% elsif changed.any? %>
+      <p class="mt-3 rounded bg-amber-50 px-3 py-2 text-sm text-amber-900">
+        Your record accepts an earlier version of the
+        <%= legal_document_links(changed) %>.
+        Read <%= changed.one? ? "it" : "them" %> again before publishing the record below.
+      </p>
+    <% end %>
+  </div>
+
+  <%# Besides accepting the terms, the record carries one decision. Both
+      versions of it are on the page and signals_choice shows the chosen one.
+      It starts out as whatever the admin already chose, so republishing
+      never quietly changes it. %>
+  <div data-controller="signals-choice" class="space-y-4">
+    <div class="rounded-lg border border-stone-200 bg-white p-5">
+      <h2 class="text-sm font-semibold">2. Choose whether to share signals</h2>
+      <p class="mt-2 text-sm text-stone-700">
+        All instances participating in this Waterhole can warn each other when
+        the same person applies to several of them — the pattern of a spammer,
+        or of a signup farm working through a list of servers.
+        Your instance only sees these warnings if it shares its own.
+      </p>
+      <ul class="mt-3 list-disc space-y-1.5 pl-5 text-sm text-stone-700">
+        <li>
+          <strong>What is compared:</strong> your applicants' email addresses (as
+          keyed hashes, never in the clear), the networks they sign up from,
+          fingerprints of their reasons for joining, and bursts of look-alike
+          signups — against every other instance that shares signals.
+        </li>
+        <li>
+          <strong>What your moderators see:</strong> that there is a match, and
+          the other instance's domain. Never the other instance's applicant. The
+          other instances see the same about yours.
+        </li>
+        <li>
+          <strong>The risk:</strong> the admin of another participating instance
+          could create signups of their own to find out whether an address or
+          network belongs to one of your applicants or recently admitted members.
+          The <%= link_to "terms", terms_path, class: "underline" %> explain this
+          in their part on cross-instance signals, and what participating
+          instances agree not to do.
+        </li>
+        <li>
+          <strong>Manual approval:</strong> sharing with an instance only starts
+          when the Waterhole operator approves this instance's sharing request.
+          Protecting against malicious Mastodon instances that may try to
+          abuse the sharing feature.
+        </li>
+      </ul>
+
+      <fieldset class="mt-4">
+        <legend class="sr-only">Cross-instance signals</legend>
+        <div class="inline-flex overflow-hidden rounded border border-stone-300 text-sm">
+          <% [ [ "off", "Don't share signals" ], [ "on", "Share signals" ] ].each_with_index do |(value, label), index| %>
+            <label class="cursor-pointer px-3 py-1.5 hover:bg-stone-100 has-[:checked]:bg-stone-900 has-[:checked]:text-white has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-stone-400 <%= "border-l border-stone-300" if index.positive? %>">
+              <input type="radio" name="signals" value="<%= value %>" class="sr-only"
+                     data-action="change->signals-choice#choose" <%= "checked" if (value == "on") == signals %>>
+              <%= label %>
+            </label>
+          <% end %>
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="rounded-lg border border-stone-200 bg-white p-5">
+      <h2 class="text-sm font-semibold">3. Publish this TXT record</h2>
+      <% { "off" => false, "on" => true }.each do |value, on| %>
+        <% suggestion = DnsAllowlist.suggestion(domain, signals: on) %>
+        <div data-signals-choice-target="variant" data-signals="<%= value %>" <%= "hidden" unless on == signals %>>
+          <pre class="mt-3 overflow-x-auto rounded bg-stone-900 p-3 text-xs text-stone-100"><code><%= suggestion.record %></code></pre>
+          <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+            <button type="button" data-action="clipboard#copy" data-clipboard-value="<%= suggestion.record %>"
+                    class="text-stone-500 underline hover:text-stone-900">Copy whole record (zone-file line)</button>
+            <button type="button" data-action="clipboard#copy" data-clipboard-value="<%= suggestion.value %>"
+                    class="text-stone-500 underline hover:text-stone-900">Copy value only (for your DNS provider's form)</button>
+          </div>
+        </div>
+      <% end %>
+      <p class="mt-2 text-xs text-stone-500">
+        In a DNS provider's form: name <code><%= DnsAllowlist::PREFIX %></code>
+        (some want the full <code><%= DnsAllowlist::PREFIX %>.<%= domain %></code>), type
+        <code>TXT</code>, and as value what "Copy value only" gives you.
+      </p>
+      <p class="mt-3 text-xs text-stone-500">
+        Publishing several records with different <code>host=</code> lets several Waterhole deployments in.
+        Removing the TXT record for this Waterhole revokes access and signs your moderators out. You may only publish
+        one TXT record per Waterhole instance.
+      </p>
+    </div>
+
+    <div class="rounded-lg border border-stone-200 bg-white p-5">
+      <h2 class="text-sm font-semibold">4. Tell your applicants</h2>
+      <p class="mt-2 text-sm text-stone-700">
+        <strong>Informing your applicants is your responsibility.</strong> They
+        apply to your instance and never see this Waterhole, so it cannot tell them
+        that their registration is shared with it. Say so in your instance's
+        privacy policy — in Mastodon the <em>Privacy policy</em> field under
+        Administration → Server settings → About
+        (<%= link_to "open it on #{domain}", "https://#{domain}/admin/settings/about",
+              target: "_blank", rel: "noopener", class: "underline" %>). Mastodon's
+        sign-up form links to it: applicants tick "I have read and agree to the
+        privacy policy" before they can apply.
+      </p>
+      <p class="mt-2 text-sm text-stone-700">
+        If you use Mastodon's <%= link_to "default privacy policy", "https://github.com/mastodon/mastodon/blob/main/config/templates/privacy-policy.md",
+                                          target: "_blank", rel: "noopener", class: "underline"  %>: its section <em>Do we
+        disclose any information to outside parties?</em> excludes "trusted third
+        parties who assist us in operating our site, conducting our business, or
+        servicing you, so long as those parties agree to keep this information
+        confidential." Whether that general clause is enough to cover this
+        Waterhole — a separate service run by someone else, which, if you share
+        signals, also compares your applicants with other servers' — is
+        <strong>your decision</strong>. If it is not enough for you, or you want
+        your applicants to know specifically, add an explicit section.
+      </p>
+      <p class="mt-2 text-sm text-stone-700">
+        Here is such a text, as a starting point. It is written for Mastodon's
+        default privacy policy: paste it into the section <em>Do we disclose any
+        information to outside parties?</em>, after its first paragraph. Adapt it
+        to your instance, and check it with whoever advises you on data
+        protection.
+      </p>
+      <% { "off" => false, "on" => true }.each do |value, on| %>
+        <% notice = applicant_notice(signals: on) %>
+        <div data-signals-choice-target="variant" data-signals="<%= value %>" <%= "hidden" unless on == signals %>>
+          <pre class="mt-3 max-h-72 overflow-auto whitespace-pre-wrap rounded bg-stone-100 p-3 text-xs text-stone-800"><code><%= notice %></code></pre>
+          <button type="button" data-action="clipboard#copy" data-clipboard-value="<%= notice %>"
+                  class="mt-2 text-xs text-stone-500 underline hover:text-stone-900">Copy text</button>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="rounded-lg border border-stone-200 bg-white p-5">
+    <h2 class="text-sm font-semibold">5. Check it</h2>
+
+    <% if admission.nil? %>
+      <p class="mt-2 text-sm text-stone-500">Enter your domain above.</p>
+    <% elsif admission.admitted? %>
+      <p class="mt-2 rounded bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+        Found it. <%= domain %> is authorised — your moderators can sign in now.
+      </p>
+    <% else %>
+      <p class="mt-2 rounded bg-amber-50 px-3 py-2 text-sm text-amber-900"><%= admission.message %></p>
+
+      <% if admission.dns&.records&.any? %>
+        <div class="mt-3 text-xs">
+          <p class="font-medium text-stone-600">What we found at _waterhole.<%= domain %>:</p>
+          <pre class="mt-1 overflow-x-auto rounded bg-stone-100 p-2"><code><%= admission.dns.records.join("\n") %></code></pre>
+        </div>
+      <% end %>
+
+      <p class="mt-3 text-xs text-stone-500">DNS changes can take a while to spread. Check again in a minute.</p>
+    <% end %>
+
+    <%= form_with url: verification_path, method: :post, data: { turbo_frame: "verification_result" }, class: "mt-4" do |f| %>
+      <%= f.hidden_field :instance_domain, value: domain %>
+      <%= f.submit "Check again", data: { turbo_submits_with: "Checking…" },
+            class: "rounded border border-stone-300 px-3 py-1.5 text-sm hover:bg-stone-50" %>
+    <% end %>
+  </div>
+</div>
+<% end %>

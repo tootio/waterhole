@@ -1,0 +1,29 @@
+<%= @instance.domain %> has added signals=on to its DNS record for <%= @host %>,
+asking to take part in cross-instance signals.
+
+Nothing changes until you approve it: its moderators see no matches, and its
+applicants are not matched against other instances.
+
+Before approving, make sure you know who runs <%= @instance.domain %>. The terms'
+part on cross-instance signals explains why: the admin of a participating instance could probe
+whether a given email address or network belongs to another participating
+instance's applicants or members.
+
+To approve:
+
+  bin/rails "waterhole:signals[<%= @instance.domain %>,approve]"
+
+or, with Docker Compose:
+
+  docker compose exec web bin/rails "waterhole:signals[<%= @instance.domain %>,approve]"
+
+To see every instance and what it is waiting for:
+
+  bin/rails waterhole:signals
+
+The record as we read it:
+
+  <%= @instance.verification_detail %>
+
+--
+Sent by the Waterhole at <%= @host %> because WATERHOLE_OPERATOR_EMAIL names you.

@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "waterhole",
+      "runtimeExecutable": "mise",
+      "runtimeArgs": ["exec", "--", "bin/dev"],
+      "port": 3100
+    }
+  ]
+}

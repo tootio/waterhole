@@ -1,0 +1,14 @@
+blocked_spam:
+  domain: spam.example
+  kind: blocked
+  reason: Repeatedly used to farm accounts.
+
+blocked_with_subdomains:
+  domain: badnet.example
+  kind: blocked
+  include_subdomains: true
+  reason: Whole network is a problem.
+
+allowed_alpha:
+  domain: alpha.example
+  kind: allowed

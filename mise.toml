@@ -1,0 +1,15 @@
+[tools]
+ruby = "4.0.6"
+
+[env]
+# Homebrew keeps postgresql@14 ahead of postgresql@18 on PATH, but the running
+# server is 18.x. A client older than the server breaks pg_dump outright, so pin
+# the matching client for this project.
+_.path = ["/opt/homebrew/opt/postgresql@18/bin"]
+
+# Ports 3000-3001 are commonly taken by a local Mastodon, which is exactly what you'd
+# be developing against. WATERHOLE_HOST must match wherever this actually runs:
+# it is the host instance admins put in their DNS TXT record, and it forms the
+# OAuth redirect_uri that every instance registers against.
+PORT = "3100"
+WATERHOLE_HOST = "localhost:3100"

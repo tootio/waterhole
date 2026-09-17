@@ -1,0 +1,20 @@
+<% content_for :title, "Authorise Waterhole — Waterhole" %>
+
+<div class="mx-auto max-w-2xl">
+  <h1 class="text-2xl font-semibold tracking-tight">Authorise this Waterhole</h1>
+  <p class="mt-2 text-stone-700">
+    Before your moderators can sign in, someone who controls your instance's DNS
+    has to say they want this Waterhole. That's the point: it's your call, not
+    a moderator's.
+  </p>
+
+  <%= form_with url: verification_path, method: :post, class: "mt-6 flex gap-2" do |f| %>
+    <%= f.text_field :instance_domain, value: @domain, placeholder: "mastodon.example", required: true,
+          class: "flex-1 rounded border border-stone-300 px-3 py-2" %>
+    <%= f.submit "Check", class: "rounded bg-stone-900 px-4 py-2 text-white" %>
+  <% end %>
+
+  <% if @domain.present? %>
+    <%= render "verifications/instructions", domain: @domain, expected_record: @expected_record, admission: @admission %>
+  <% end %>
+</div>

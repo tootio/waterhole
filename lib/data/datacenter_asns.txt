@@ -1,0 +1,30 @@
+# Autonomous systems that are hosting/cloud providers rather than consumer ISPs.
+# One ASN per line; everything after # is a comment.
+#
+# Advisory only. A signup from a datacenter is a hint, not a verdict: VPN users
+# are over-represented among privacy-conscious Mastodon applicants, and this list
+# cannot tell a spammer from someone who values their privacy. The flag is capped
+# at `warning` for that reason and always shows the organisation it matched.
+#
+# last reviewed: 2026-09-18
+16509   # Amazon AWS
+14618   # Amazon AWS
+8075    # Microsoft Azure
+396982  # Google Cloud
+15169   # Google
+14061   # DigitalOcean
+24940   # Hetzner
+16276   # OVH
+63949   # Akamai / Linode
+20473   # Vultr / Choopa
+51167   # Contabo
+31898   # Oracle Cloud
+12876   # Scaleway
+9009    # M247
+60781   # LeaseWeb
+16265   # LeaseWeb
+49505   # Selectel
+200651  # Flokinet
+53667   # FranTech / BuyVM
+35916   # MULTACOM
+21409   # Ikoula

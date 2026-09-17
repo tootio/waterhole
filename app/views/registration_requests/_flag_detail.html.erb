@@ -1,0 +1,27 @@
+<%- d = flag.details -%>
+<%- case flag.rule -%>
+<%- when "disposable_email" -%>
+  <%= d["domain"] %> is a throwaway provider
+<%- when "short_invite_request" -%>
+  only <%= pluralize(d["word_count"].to_i, "word") %>
+<%- when "shared_ip" -%>
+  same IP as <%= d["usernames"].to_a.map { "@#{it}" }.to_sentence %>
+<%- when "reapplication" -%>
+  matches <%= pluralize(d["count"].to_i, "earlier rejected request") %> by <%= d["matched_on"] %>
+<%- when "keyword_hit" -%>
+  matched <%= d["patterns"].to_a.map { "“#{it}”" }.to_sentence %>
+<%- when "datacenter_asn" -%>
+  <%= d["org"].presence || "AS#{d["asn"]}" %><%= " (AS#{d["asn"]})" if d["org"].present? %>
+  <%= "— matched on the organisation name" if d["matched"] == "keyword" %>
+  <%= "· data #{d["data_age_days"]} days old" if d["data_age_days"].to_i > 30 %>
+<%- when "ip_active_elsewhere" -%>
+  <%# Only the other instance's domain is disclosed, never its applicant. %>
+  same <%= d["scope"] == "/64" ? "IPv6 /64" : "address" %> as
+  <%= d["capped"] ? "#{d["count"]}+ requests" : pluralize(d["count"].to_i, "request") %>
+  on <%= d["instances"].to_a.to_sentence %>
+<%- when "email_active_elsewhere" -%>
+  <%# Counterpart instances are named only because both sides opted in. %>
+  also active on <%= d["instances"].to_a.to_sentence.presence || pluralize(d["count"].to_i, "other instance") %>
+<%- else -%>
+  <%= d.to_json %>
+<%- end -%>

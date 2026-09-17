@@ -1,0 +1,19 @@
+# Case-insensitive substrings matched against the AS organisation name, for
+# providers not on the explicit ASN list.
+#
+# Weaker evidence than an ASN match -- "Hosting University of Example" is not a
+# datacenter -- so a keyword hit is only ever `info`.
+#
+# last reviewed: 2026-09-18
+hosting
+vps
+cloud
+datacenter
+datacentre
+data center
+colocation
+colo
+dedicated server
+server farm
+cdn
+virtual private server

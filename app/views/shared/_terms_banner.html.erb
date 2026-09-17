@@ -1,0 +1,24 @@
+<%# Deliberately not dismissible: this one has a deadline attached. %>
+<div class="border-b border-amber-300 bg-amber-100">
+  <div class="mx-auto max-w-6xl px-4 py-3 text-sm text-amber-950">
+    <p>
+      <strong><%= current_instance.domain %> needs to accept updated documents.</strong>
+      <% if current_instance.outdated_documents.any? %>
+        The <%= current_instance.outdated_documents.map { it.title.downcase }.to_sentence %>
+        changed, so the DNS record that authorises this Waterhole is out of date.
+      <% else %>
+        The DNS record that authorises this Waterhole does not yet accept the current documents.
+      <% end %>
+    </p>
+    <p class="mt-1">
+      An administrator of <%= current_instance.domain %> needs to republish it
+      <% if current_instance.terms_grace_active? %>
+        before <strong><%= current_instance.terms_grace_until.to_fs(:long) %></strong>
+        (<%= distance_of_time_in_words(Time.current, current_instance.terms_grace_until) %> from now),
+        after which moderators here lose access.
+      <% end %>
+      <%= link_to "Show the record to publish",
+            verification_path(instance_domain: current_instance.domain), class: "underline font-medium" %>.
+    </p>
+  </div>
+</div>

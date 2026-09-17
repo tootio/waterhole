@@ -1,0 +1,8 @@
+<%# The note itself reaches every viewer -- including its author -- through the
+    model's append broadcast, so nothing is appended here; that is what stops the
+    author seeing it twice.
+
+    The composer is data-turbo-permanent (it must survive refresh morphs), which
+    means Turbo will not replace it from a stream either. It clears itself in the
+    note_composer Stimulus controller instead. %>
+<%= turbo_stream.update "notes_count", @registration_request.reload.notes_count %>

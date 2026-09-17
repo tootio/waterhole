@@ -1,0 +1,23 @@
+en:
+  # One entry per rule in Flags.registry. Missing ones raise in development and
+  # test (config.i18n.raise_on_missing_translations), so a new rule cannot ship
+  # with a humanized key for a name.
+  flags:
+    no_invite_request:
+      label: "No reason given"
+    short_invite_request:
+      label: "Short reason"
+    disposable_email:
+      label: "Disposable email"
+    shared_ip:
+      label: "Shared IP"
+    datacenter_asn:
+      label: "Datacenter ASN"
+    reapplication:
+      label: "Reapplication"
+    keyword_hit:
+      label: "Watchword match"
+    email_active_elsewhere:
+      label: "Email active elsewhere"
+    ip_active_elsewhere:
+      label: "IP active elsewhere"

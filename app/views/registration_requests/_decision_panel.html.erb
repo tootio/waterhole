@@ -1,0 +1,56 @@
+<section class="rounded-lg border border-stone-200 bg-white p-5">
+  <h2 class="mb-3 text-xs font-semibold uppercase tracking-wide text-stone-500">Decision</h2>
+
+  <% decision = registration_request.decision %>
+  <% if registration_request.resolved? %>
+    <p class="text-sm text-stone-700">
+      <%= status_badge(registration_request) %>
+      <% if decision&.moderator %>
+        by <strong><%= decision.moderator.name %></strong> <%= local_time(decision.performed_at || decision.created_at) %>
+      <% elsif registration_request.expired? %>
+        — the email address was never confirmed, so Mastodon deleted the account
+        after <%= RegistrationRequest::UNCONFIRMED_ACCOUNT_LIFETIME.inspect %>.
+        (Rejecting an unconfirmed account in Mastodon's own interface looks the same.)
+      <% elsif registration_request.resolved_elsewhere? %>
+        — actioned directly in Mastodon, not here.
+      <% end %>
+    </p>
+    <% if decision&.state_conflict? %>
+      <p class="mt-2 rounded bg-amber-50 px-3 py-2 text-sm text-amber-900"><%= decision.error_message %></p>
+    <% end %>
+  <% elsif decision&.state_pending? %>
+    <%# Loud rather than quiet: a decision that pushed but hasn't landed looks
+        exactly like a button that did nothing, and the moderator needs to know
+        which it is. %>
+    <div class="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+      <p>
+        <strong><%= decision.action.capitalize %> not confirmed yet.</strong>
+        <%= registration_request.instance.domain %> hasn't responded, so this is
+        being retried in the background. It stays <em>pending</em> until Mastodon accepts it.
+      </p>
+      <% if decision.error_message.present? %>
+        <p class="mt-1 font-mono text-xs opacity-75"><%= decision.error_message %></p>
+      <% end %>
+      <%= button_to "Try now", registration_request_decision_path(registration_request, decision_action: decision.action),
+            class: "mt-2 rounded border border-amber-300 bg-white px-3 py-1 text-sm hover:bg-amber-100" %>
+    </div>
+  <% else %>
+    <% if decision&.state_failed? %>
+      <div class="mb-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900">
+        <p><strong>Last attempt failed.</strong> <%= decision.error_message %></p>
+        <p class="mt-1 text-xs opacity-75">Nothing changed on <%= registration_request.instance.domain %>. You can try again below.</p>
+      </div>
+    <% end %>
+    <div class="flex flex-wrap gap-3">
+      <%= button_to "Approve", registration_request_decision_path(registration_request, decision_action: "approve"),
+            form: { data: { turbo_confirm: "Approve @#{registration_request.username} on #{registration_request.instance.domain}?" } },
+            class: "rounded bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700" %>
+      <%= button_to "Reject", registration_request_decision_path(registration_request, decision_action: "reject"),
+            form: { data: { turbo_confirm: "Reject @#{registration_request.username}? Mastodon deletes the account on rejection, and this cannot be undone." } },
+            class: "rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700" %>
+    </div>
+    <p class="mt-3 text-xs text-stone-500">
+      Acts as <%= current_moderator.handle %>, so it appears under your name in Mastodon's audit log.
+    </p>
+  <% end %>
+</section>

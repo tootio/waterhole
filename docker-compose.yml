@@ -1,0 +1,92 @@
+# Running Waterhole with Docker Compose.
+#
+#   cp .env.production.sample .env.production
+#   bin/rails waterhole:secrets        # paste the output into .env.production
+#   # in .env.production: DB_HOST=db, and leave DB_PASS empty (see "db" below)
+#   mkdir legal && cp config/legal/*.md legal/   # then make them yours
+#   docker compose up -d
+#
+# Upgrading: docker compose pull && docker compose up -d
+# Until release images are published, build locally instead:
+#   docker compose up -d --build
+#
+# Waterhole speaks plain HTTP on 127.0.0.1:3000 (WATERHOLE_PORT=... in the shell
+# or in compose's own .env file to change it). Put a TLS-terminating reverse
+# proxy (nginx, Caddy, ...) in front for WATERHOLE_HOST: the app assumes it is
+# served over HTTPS, marks its cookies secure, and the OAuth redirect URI it
+# registers with Mastodon instances is https://WATERHOLE_HOST/...
+
+x-waterhole: &waterhole
+  image: ${WATERHOLE_IMAGE:-ghcr.io/tootio/waterhole:latest}
+  build: .
+  restart: unless-stopped
+  env_file: .env.production
+  volumes:
+    # Downloaded IP databases, shared by the web and jobs containers.
+    - storage:/rails/storage
+    # Your terms_of_service.md, privacy_policy.md and imprint.md, edited on the
+    # host. Changing them changes the terms digest instances accept via DNS.
+    - ./legal:/rails/storage/legal:ro
+  networks:
+    - external
+    - internal
+
+services:
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    shm_size: 256mb
+    # Reachable only on the internal network, where trust authentication is
+    # the same trade Mastodon's compose file makes. Set a password and switch
+    # to scram-sha-256 if anything else can reach this network.
+    environment:
+      POSTGRES_USER: waterhole
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - postgres:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "waterhole"]
+      interval: 5s
+      retries: 10
+    networks:
+      - internal
+
+  web:
+    <<: *waterhole
+    # The image's entrypoint runs db:prepare before starting the server, so
+    # migrations happen here and the jobs container waits for this one.
+    ports:
+      - "127.0.0.1:${WATERHOLE_PORT:-3000}:80"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost/up"]
+      interval: 10s
+      start_period: 60s
+      retries: 6
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Syncing, DNS re-verification and the IP database refresh are the core of
+  # Waterhole, so they run in their own container rather than inside Puma where
+  # a busy web process could starve them.
+  jobs:
+    <<: *waterhole
+    command: ["./bin/jobs"]
+    environment:
+      # Two worker processes of 3 threads each, so a few slow or unreachable
+      # instances holding threads until their timeout cannot stall everyone
+      # else's sync. Set here rather than in .env.production because it only
+      # concerns this container; values here win over .env.production.
+      JOB_CONCURRENCY: 2
+    depends_on:
+      web:
+        condition: service_healthy
+
+volumes:
+  postgres:
+  storage:
+
+networks:
+  external:
+  internal:
+    internal: true

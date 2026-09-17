@@ -1,0 +1,52 @@
+<%# The frame lives here, not in the page, because sessions/blocked renders this
+    partial too and the "Check again" button below targets it. %>
+<%= turbo_frame_tag "verification_result" do %>
+<div class="mt-6 space-y-4" data-controller="clipboard">
+  <div class="rounded-lg border border-stone-200 bg-white p-5">
+    <h2 class="text-sm font-semibold">1. Publish this TXT record</h2>
+    <pre class="mt-3 overflow-x-auto rounded bg-stone-900 p-3 text-xs text-stone-100"><code><%= expected_record %></code></pre>
+    <button type="button" data-action="clipboard#copy" data-clipboard-value="<%= expected_record %>"
+            class="mt-2 text-xs text-stone-500 underline hover:text-stone-900">Copy record</button>
+    <p class="mt-3 text-xs text-stone-500">
+      Publishing several records lets several Waterhole deployments in. Removing
+      this one revokes access and signs your moderators out.
+    </p>
+    <p class="mt-2 text-xs text-stone-500">
+      Optional: append <code>; signals=on</code> to opt in to cross-instance
+      signals, which also need approval from whoever runs this Waterhole. Read
+      section 4 of the <%= link_to "terms", terms_path, class: "underline" %> first.
+    </p>
+  </div>
+
+  <div class="rounded-lg border border-stone-200 bg-white p-5">
+    <h2 class="text-sm font-semibold">2. Check it</h2>
+
+    <% if admission.nil? %>
+      <p class="mt-2 text-sm text-stone-500">Enter your domain above.</p>
+    <% elsif admission.admitted? %>
+      <p class="mt-2 rounded bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+        Found it. <%= domain %> is authorised — your moderators can sign in now.
+      </p>
+    <% else %>
+      <p class="mt-2 rounded bg-amber-50 px-3 py-2 text-sm text-amber-900"><%= admission.message %></p>
+
+      <% if admission.dns&.records&.any? %>
+        <%# Showing what we actually saw next to what we expected turns a typo
+            from a mystery into something the admin can fix in one look. %>
+        <div class="mt-3 text-xs">
+          <p class="font-medium text-stone-600">What we found at _waterhole.<%= domain %>:</p>
+          <pre class="mt-1 overflow-x-auto rounded bg-stone-100 p-2"><code><%= admission.dns.records.join("\n") %></code></pre>
+        </div>
+      <% end %>
+
+      <p class="mt-3 text-xs text-stone-500">DNS changes can take a while to spread. Check again in a minute.</p>
+    <% end %>
+
+    <%= form_with url: verification_path, method: :post, data: { turbo_frame: "verification_result" }, class: "mt-4" do |f| %>
+      <%= f.hidden_field :instance_domain, value: domain %>
+      <%= f.submit "Check again", data: { turbo_submits_with: "Checking…" },
+            class: "rounded border border-stone-300 px-3 py-1.5 text-sm hover:bg-stone-50" %>
+    <% end %>
+  </div>
+</div>
+<% end %>

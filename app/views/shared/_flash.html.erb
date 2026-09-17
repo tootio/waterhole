@@ -1,0 +1,11 @@
+<% if flash.any? %>
+  <div class="mx-auto max-w-6xl px-4 pt-4" data-controller="dismiss">
+    <% flash.each do |type, message| %>
+      <% next if message.blank? %>
+      <div class="mb-2 flex items-start gap-3 rounded border px-4 py-3 text-sm <%= flash_class(type) %>" role="status">
+        <span class="flex-1"><%= message %></span>
+        <button type="button" data-action="dismiss#close" class="opacity-60 hover:opacity-100" aria-label="Dismiss">&times;</button>
+      </div>
+    <% end %>
+  </div>
+<% end %>

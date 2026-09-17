@@ -1,0 +1,88 @@
+# PostgreSQL. Versions 9.5 and up are supported.
+#
+# Waterhole runs Solid Queue / Cache / Cable on separate databases. Rails only
+# generates those for production, but Waterhole's core loop *is* a recurring job,
+# so development and test get them too -- otherwise `bin/jobs` has nowhere to run
+# and the sync scheduler silently never fires.
+#
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+
+development:
+  primary: &primary_development
+    <<: *default
+    database: waterhole_development
+  cache:
+    <<: *primary_development
+    database: waterhole_development_cache
+    migrations_paths: db/cache_migrate
+  queue:
+    <<: *primary_development
+    database: waterhole_development_queue
+    migrations_paths: db/queue_migrate
+  cable:
+    <<: *primary_development
+    database: waterhole_development_cable
+    migrations_paths: db/cable_migrate
+
+# Warning: The database defined as "test" will be erased and
+# re-generated from your development database when you run "rake".
+# Do not set this db to the same as development or production.
+test:
+  primary: &primary_test
+    <<: *default
+    database: waterhole_test
+  cache:
+    <<: *primary_test
+    database: waterhole_test_cache
+    migrations_paths: db/cache_migrate
+  queue:
+    <<: *primary_test
+    database: waterhole_test_queue
+    migrations_paths: db/queue_migrate
+  cable:
+    <<: *primary_test
+    database: waterhole_test_cable
+    migrations_paths: db/cable_migrate
+
+# Production is configured entirely through ENV, with the same variable names as
+# Mastodon, so an instance admin already knows them. See .env.production.sample.
+#
+# Each Solid database can live on its own server: CACHE_DB_HOST, QUEUE_DB_USER,
+# CABLE_DB_PASS and so on (Mastodon's REPLICA_DB_* pattern). Anything unset or
+# blank falls back to the primary's value, except the name, which falls back to
+# <DB_NAME>_cache, _queue or _cable so two roles never share one database.
+#
+# Values are emitted with to_json -- a valid quoted YAML scalar -- so a password
+# containing "#" or ": " cannot break the file.
+<%
+  primary_db = {
+    "HOST" => ENV["DB_HOST"].presence || "localhost",
+    "PORT" => ENV["DB_PORT"].presence || "5432",
+    "NAME" => ENV["DB_NAME"].presence || "waterhole_production",
+    "USER" => ENV["DB_USER"].presence || "waterhole",
+    "PASS" => ENV["DB_PASS"].presence
+  }
+
+  # role is nil for the primary, or "CACHE", "QUEUE", "CABLE".
+  db_setting = lambda do |role, key|
+    value = ENV["#{role}_DB_#{key}"].presence if role
+    value ||= role && key == "NAME" ? "#{primary_db["NAME"]}_#{role.downcase}" : primary_db[key]
+    value.to_json
+  end
+%>
+production:
+<% [ [ "primary", nil ], [ "cache", "CACHE" ], [ "queue", "QUEUE" ], [ "cable", "CABLE" ] ].each do |name, role| %>
+  <%= name %>:
+    <<: *default
+    host: <%= db_setting.(role, "HOST") %>
+    port: <%= db_setting.(role, "PORT") %>
+    database: <%= db_setting.(role, "NAME") %>
+    username: <%= db_setting.(role, "USER") %>
+    password: <%= db_setting.(role, "PASS") %>
+<% if role %>
+    migrations_paths: db/<%= name %>_migrate
+<% end %>
+<% end %>

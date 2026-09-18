@@ -71,7 +71,7 @@ gem "webmock", "~> 3.26", group: :test
 # ActiveSupport 8.1.3.1 still calls `JSON.parse(json, options)` with two
 # positional arguments (active_support/json/decoding.rb), so json 3 breaks every
 # jsonb column decode. Pinned until Rails supports json 3.
-gem "json", "~> 2.21"
+gem "json", "~> 3.0"
 
 gem "kramdown", "~> 2.5"
 

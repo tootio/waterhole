@@ -77,7 +77,7 @@ jobs:
       # Lets operators check that an image was built here, from this tag:
       #   gh attestation verify oci://ghcr.io/tootio/waterhole:v1.2.0 -R tootio/waterhole
       - name: Attest build provenance
-        uses: actions/attest-build-provenance@v3
+        uses: actions/attest-build-provenance@v4
         with:
           subject-name: ghcr.io/${{ github.repository }}
           subject-digest: ${{ steps.push.outputs.digest }}

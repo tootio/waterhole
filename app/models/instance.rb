@@ -59,6 +59,11 @@ class Instance < ApplicationRecord
 
   def base_url = "https://#{domain}"
 
+  # URLs address a herd by its domain -- /herds/alpha.example -- which is
+  # unique, is what a moderator would type, and says nothing about how many
+  # instances this deployment has or in what order they arrived.
+  def to_param = domain
+
   # The navigation badge counts this instance's queue, not any one moderator's
   # view of it, so -- unlike the queue itself, which needs each viewer's own
   # session to render Claim vs Release -- it renders correctly from a job with

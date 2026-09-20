@@ -1,3 +1,38 @@
-<% content_for :title, "Instance — Waterhole" %>
-<h1 class="mb-4 text-2xl font-semibold tracking-tight">Instance</h1>
-<%= render "instance", instance: current_instance %>
+<% content_for :title, "Herds — Waterhole" %>
+
+<div class="mb-5">
+  <h1 class="text-2xl font-semibold tracking-tight">Herds</h1>
+  <p class="mt-1 text-sm text-stone-600">
+    The <%= pluralize(@instances.size, "instance") %> that come down to
+    <%= Waterhole::Deployment.host %>.
+  </p>
+</div>
+
+<ul class="divide-y divide-stone-200 overflow-hidden rounded-lg border border-stone-200 bg-white">
+  <% @instances.each do |instance| %>
+    <li>
+      <%= link_to herd_path(instance),
+            class: "flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 hover:bg-stone-50" do %>
+        <span class="font-medium"><%= instance.domain %></span>
+
+        <% if instance == current_instance %>
+          <span class="inline-flex rounded-full bg-stone-900 px-2 py-0.5 text-xs font-medium text-white">Yours</span>
+        <% end %>
+
+        <span class="ml-auto flex flex-wrap items-center gap-2">
+          <%= herd_status_badge(instance) %>
+          <%= herd_signals_badge(instance) %>
+        </span>
+      <% end %>
+    </li>
+  <% end %>
+</ul>
+
+<p class="mt-4 max-w-3xl text-xs text-stone-500">
+  A herd's status is whatever its own DNS record says, which anyone can look up
+  for themselves. Cross-instance signals need two keys — the instance admin's
+  <code>signals=on</code> in that record, and this waterhole's operator
+  approving it — and they are reciprocal: a herd only sees the signal if it
+  contributes to it, so the herds shown as on are exactly the ones yours is
+  matched against. Nothing here says anything about anyone's applicants.
+</p>

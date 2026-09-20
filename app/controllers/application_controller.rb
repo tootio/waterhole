@@ -5,13 +5,9 @@ class ApplicationController < ActionController::Base
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
   allow_browser versions: :modern
 
-  # Solid Cache in production, so every Puma worker counts against the same
-  # limit. See config/environments/test.rb for the exception.
-  RATE_LIMIT_STORE = Rails.configuration.x.rate_limit_store || Rails.cache
-
   # Throttles by client IP unless told otherwise.
   def self.throttle(to:, within:, name:, **options)
-    rate_limit(to:, within:, name:, store: RATE_LIMIT_STORE, with: -> { rate_limited(within) }, **options)
+    rate_limit(to:, within:, name:, with: -> { rate_limited(within) }, **options)
   end
 
   private

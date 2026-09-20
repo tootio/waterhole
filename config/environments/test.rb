@@ -26,9 +26,9 @@ Rails.application.configure do
   config.consider_all_requests_local = true
   config.cache_store = :null_store
 
-  # Rate limits count in a cache, and the null store above would quietly turn
-  # them off. Tests get a real one of their own, cleared between tests.
-  config.x.rate_limit_store = ActiveSupport::Cache::MemoryStore.new
+  # Except for the rate limiter, which counts in a cache: a null store would
+  # quietly turn the limits off, and rate_limit_test.rb could not tell.
+  config.action_controller.cache_store = :memory_store
 
   # Render exception templates for rescuable exceptions and raise for other exceptions.
   config.action_dispatch.show_exceptions = :rescuable

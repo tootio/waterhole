@@ -32,7 +32,9 @@ module ActiveSupport
       Ip::Databases.directory = Rails.root.join("test/fixtures/files/ipdata_empty")
 
       # Rate-limit counters are per process; start every test with none spent.
-      ApplicationController::RATE_LIMIT_STORE.clear
+      # NOT Rails.cache: that is the null store, and the limiter counts in
+      # config.action_controller.cache_store (see config/environments/test.rb).
+      ActionController::Base.cache_store.clear
     end
 
     teardown do

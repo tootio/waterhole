@@ -126,9 +126,16 @@ class DnsAllowlist
     return @stubbed_resolver if @stubbed_resolver
 
     fake = ENV["WATERHOLE_FAKE_DNS"]
-    return Resolver.new if fake.blank? || Rails.env.production?
+    base =
+      if fake.blank? || Rails.env.production?
+        Resolver.new
+      else
+        FakeResolver.new(fake.split(",").map { it.strip.downcase }, Waterhole::Deployment.host)
+      end
 
-    FakeResolver.new(fake.split(",").map { it.strip.downcase }, Waterhole::Deployment.host)
+    # Development only, and a pass-through for every domain nobody has
+    # overridden. See DevDns and waterhole:dev:dns.
+    DevDns.wrap(base)
   end
 
   # Exactly one record per deployment, the way SPF, DMARC and MTA-STS allow

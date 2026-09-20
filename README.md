@@ -92,6 +92,19 @@ keys that protect only seed data and fixtures. Put local overrides in
 
 Run the full check suite (RuboCop, Brakeman, audits, tests, seeds) with `bin/ci`.
 
+Nobody developing Waterhole controls the DNS of the instances they are testing
+against, so `waterhole:dev:dns` overrides what the resolver observes:
+
+```bash
+bin/rails waterhole:dev:dns                                   # scenarios, and what is overridden
+bin/rails 'waterhole:dev:dns[some.example,terms_outdated]'    # or: missing, ambiguous, unreachable, ...
+bin/rails 'waterhole:dev:verify[some.example]'                # apply it now, not at the next hourly check
+bin/rails waterhole:dev:dns_clear                             # back to real DNS
+```
+
+A scenario name, or the record itself. Overrides live in `tmp/dev_dns.json` and
+are refused outside development.
+
 ## License
 
 Copyright (C) 2026 Daniel Jagszent

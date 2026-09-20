@@ -16,6 +16,14 @@
   </head>
 
   <body class="flex min-h-dvh flex-col bg-stone-50 text-stone-900 antialiased">
+    <%# Only the navigation badge, and only ever the badge: a queue change
+        replaces that one element, so a moderator halfway through a watchword on
+        another page never has the page refreshed under them. The queue's own
+        live updates ride the separate stream it subscribes to itself. %>
+    <% if signed_in? && current_instance %>
+      <%= turbo_stream_from current_instance, :queue_badge %>
+    <% end %>
+
     <header class="border-b border-stone-200 bg-white">
       <div class="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
         <%= link_to (signed_in? ? root_path : new_session_path),
@@ -35,7 +43,9 @@
 
           <% if current_moderator.consent_current? %>
           <nav class="order-3 -mx-4 flex w-full items-center gap-1 overflow-x-auto px-4 text-sm sm:order-2 sm:mx-0 sm:w-auto sm:gap-4 sm:overflow-visible sm:px-0">
-            <%= link_to "Queue", root_path, class: "#{nav_class(controller_name == "registration_requests")} whitespace-nowrap" %>
+            <%= link_to root_path, class: "#{nav_class(controller_name == "registration_requests")} inline-flex items-center gap-1.5 whitespace-nowrap" do %>
+              Queue <%= render "shared/queue_badge", instance: current_instance %>
+            <% end %>
             <%= link_to "Watchwords", keyword_rules_path, class: "#{nav_class(controller_name == "keyword_rules")} whitespace-nowrap" %>
             <%= link_to "Sync history", sync_runs_path, class: "#{nav_class(controller_name == "sync_runs")} whitespace-nowrap" %>
             <%= link_to "Instance", instances_path, class: "#{nav_class(controller_name == "instances")} whitespace-nowrap" %>

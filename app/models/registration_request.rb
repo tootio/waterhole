@@ -41,6 +41,14 @@ class RegistrationRequest < ApplicationRecord
   broadcasts_refreshes_to ->(request) { [ request.instance, :registration_requests ] }
   after_update_commit -> { broadcast_refresh_later }
 
+  # Only when this request entered or left the queue. Every other update -- a
+  # claim, a flag recompute, IP enrichment -- leaves the count untouched, and a
+  # badge that rebroadcast on those would spend a job and a query to say
+  # nothing.
+  after_create_commit  -> { instance.broadcast_queue_badge_later if awaiting_review? }
+  after_destroy_commit -> { instance.broadcast_queue_badge_later if awaiting_review? }
+  after_update_commit  -> { instance.broadcast_queue_badge_later if awaiting_review_changed? }
+
   before_validation :derive_email_fields
   # After the email fields: the signup shape includes the email domain.
   before_validation :derive_pattern_fields
@@ -75,6 +83,11 @@ class RegistrationRequest < ApplicationRecord
   scope :claimed_by_moderator, ->(m) { where(claimed_by: m) }
   scope :with_flag, ->(rule) { where(id: Flag.where(rule: rule).select(:registration_request_id)) }
 
+  # What the queue is actually waiting on, and so what the navigation badge
+  # counts: unconfirmed sign-ups are hidden by default and mostly never confirm,
+  # so counting them would advertise work that is not there.
+  scope :awaiting_review, -> { pending.email_confirmed }
+
   scope :search, ->(term) {
     term = term.to_s.strip
     next all if term.blank?
@@ -106,6 +119,15 @@ class RegistrationRequest < ApplicationRecord
   def claim_stale? = claimed? && claimed_at < STALE_CLAIM_AFTER.ago
 
   def resolved? = RESOLVED_STATUSES.include?(status)
+
+  # The per-record form of the awaiting_review scope, and whether this save
+  # moved the record across it -- which is the only thing the queue badge counts.
+  def awaiting_review? = pending? && confirmed?
+
+  def awaiting_review_changed?
+    was = status_before_last_save == "pending" && confirmed_before_last_save
+    was != awaiting_review?
+  end
 
   # Resolved by someone acting directly in Mastodon rather than here.
   def resolved_elsewhere? = status.end_with?("_elsewhere")

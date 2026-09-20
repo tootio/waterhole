@@ -1,4 +1,17 @@
 module ApplicationHelper
+  # Past this the exact number stops changing anyone's next move, and a wider
+  # badge starts pushing the navigation around on a phone.
+  QUEUE_BADGE_MAX = 99
+
+  # Nothing waiting is worth saying with an absence, not with a "0".
+  def queue_badge(count)
+    return if count.zero?
+
+    tag.span count > QUEUE_BADGE_MAX ? "#{QUEUE_BADGE_MAX}+" : count,
+      class: "rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-900 tabular-nums",
+      aria: { label: "#{count} awaiting review" }
+  end
+
   def nav_class(active)
     base = "rounded px-2 py-1 "
     base + (active ? "bg-stone-900 text-white" : "text-stone-600 hover:bg-stone-100")

@@ -21,7 +21,7 @@ class LayoutTest < ActionDispatch::IntegrationTest
       get path
 
       assert_response :success
-      assert_select "header nav a", { text: "Queue", count: 1 },
+      assert_select "header nav a[href=?]", root_path, { count: 1 },
         "expected the signed-in header on #{path}"
       assert_select "header a", { text: "Sign in", count: 0 },
         "#{path} should not offer sign-in to someone already signed in"
@@ -48,7 +48,7 @@ class LayoutTest < ActionDispatch::IntegrationTest
     sign_in_as moderators(:avery)
     get root_path
 
-    assert_select "header nav a", text: "Queue"
+    assert_select "header nav a[href=?]", root_path
     assert_select "header nav a", text: "Watchwords"
     assert_select "header", /#{moderators(:avery).username}/
   end
@@ -119,5 +119,59 @@ class LayoutTest < ActionDispatch::IntegrationTest
     end
   ensure
     ENV.delete("WATERHOLE_SOURCE_URL")
+  end
+  # On every page but the queue itself, this badge is the only sign that work
+  # has arrived -- so it has to be right, and it has to be live.
+  test "the Queue nav item badges how many requests await review" do
+    waiting = moderators(:avery).instance.registration_requests.awaiting_review.count
+    assert waiting.positive?, "the fixtures should leave something in the queue"
+    sign_in_as moderators(:avery)
+
+    get keyword_rules_path
+
+    assert_select "header nav a[href=?] #queue_badge span", root_path, text: waiting.to_s
+  end
+
+  test "an empty queue shows no badge rather than a zero" do
+    moderators(:avery).instance.registration_requests.awaiting_review.update_all(status: "approved")
+    sign_in_as moderators(:avery)
+
+    get keyword_rules_path
+
+    assert_select "#queue_badge", count: 1, text: ""
+    assert_select "#queue_badge span", count: 0
+  end
+
+  test "the badge counts only this instance's requests" do
+    sign_in_as moderators(:casey)
+    casey_waiting = moderators(:casey).instance.registration_requests.awaiting_review.count
+
+    get keyword_rules_path
+
+    assert_select "header nav a[href=?] #queue_badge span", root_path, text: casey_waiting.to_s
+    assert_not_equal moderators(:avery).instance.registration_requests.awaiting_review.count,
+      casey_waiting, "the fixtures should differ per instance for this to mean anything"
+  end
+
+  # The badge has a stream of its own, carrying replacements of that one
+  # element. Subscribing the layout to the queue's refresh stream instead would
+  # keep the count just as true and refresh every page to do it -- including one
+  # a moderator is typing into.
+  test "pages other than the queue subscribe only to the badge stream" do
+    sign_in_as moderators(:avery)
+
+    get keyword_rules_path
+
+    assert_select "turbo-cable-stream-source", count: 1
+    assert_select "#queue_badge", count: 1
+  end
+
+  test "the queue keeps its own stream, since the layout no longer carries it" do
+    sign_in_as moderators(:avery)
+
+    get root_path
+
+    assert_select "turbo-cable-stream-source", { count: 2 },
+      "the badge's stream and the queue's own"
   end
 end

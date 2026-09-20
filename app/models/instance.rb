@@ -59,6 +59,20 @@ class Instance < ApplicationRecord
 
   def base_url = "https://#{domain}"
 
+  # The navigation badge counts this instance's queue, not any one moderator's
+  # view of it, so -- unlike the queue itself, which needs each viewer's own
+  # session to render Claim vs Release -- it renders correctly from a job with
+  # no session at all. That is what lets it be replaced in place instead of
+  # refreshing whatever page the viewer happens to be on, which for someone
+  # halfway through writing a watchword would be a refresh they did not ask for.
+  #
+  # The partial counts at render time, in the job, so the number is the one true
+  # when it arrives rather than when it was enqueued.
+  def broadcast_queue_badge_later
+    broadcast_replace_later_to [ self, :queue_badge ],
+      target: "queue_badge", partial: "shared/queue_badge", locals: { instance: self }
+  end
+
   # The per-record form of the participating scope, for the subject side of the
   # cross-instance rules: an instance that no longer contributes (revoked,
   # blocked, past its terms grace, or opted out) must not keep seeing.

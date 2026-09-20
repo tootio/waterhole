@@ -1,0 +1,5 @@
+<%# Its own broadcast target, so a change to the queue replaces this and nothing
+    else -- see Instance#broadcast_queue_badge_later. display:contents keeps the
+    wrapper out of the layout: the badge stays the flex item, and an empty queue
+    adds no stray gap after "Queue". %>
+<span id="queue_badge" class="contents"><%= queue_badge(instance.registration_requests.awaiting_review.count) %></span>

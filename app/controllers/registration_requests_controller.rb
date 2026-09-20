@@ -7,11 +7,12 @@ class RegistrationRequestsController < ApplicationController
     @query = RegistrationRequests::Query.new(registration_requests_scope, filter_params, viewer: current_moderator)
     @pagination = Pagination.new(@query.call, page: params[:page])
     @registration_requests = @pagination.records
-    pending = registration_requests_scope.pending
+    pending  = registration_requests_scope.pending
+    awaiting = pending.email_confirmed
     @counts = {
-      pending: pending.email_confirmed.count,
-      unclaimed: pending.email_confirmed.unclaimed.count,
-      mine: pending.email_confirmed.claimed_by_moderator(current_moderator).count,
+      pending: awaiting.count,
+      unclaimed: awaiting.unclaimed.count,
+      mine: awaiting.claimed_by_moderator(current_moderator).count,
       # Hidden by default, so say how many there are rather than let them vanish.
       unconfirmed: pending.email_unconfirmed.count
     }

@@ -7,7 +7,9 @@ module Flags
 
     def initialize(request) = @request = request
 
-    def call = raise NotImplementedError
+    def call
+      raise NotImplementedError
+    end
 
     private
 

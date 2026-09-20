@@ -29,6 +29,52 @@ module Waterhole
       ENV["WATERHOLE_HOST"].presence || "localhost:3000"
     end
 
+    def version
+      if Rails.env.production?
+        @version ||= detect_version
+      else
+        detect_version
+      end
+    end
+
+    def detect_version
+      ENV["WATERHOLE_VERSION"].presence || git_version
+    end
+
+    def git_version
+      base = git_tag || git_branch_version || git_sha
+      return "dev" unless base
+
+      git_dirty? ? "#{base}-dev" : base
+    end
+
+    def git_tag
+      %x(git describe --tags --exact-match 2>/dev/null).strip.presence
+    end
+
+    def git_branch
+      %x(git branch --show-current 2>/dev/null).strip.presence
+    end
+
+    def git_branch_version
+      branch = git_branch
+      return unless branch
+
+      [ branch, git_sha ].compact.join("-").presence || branch
+    end
+
+    def git_sha
+      %x(git rev-parse --short HEAD 2>/dev/null).strip.presence
+    end
+
+    def git_dirty?
+      %x(git status --porcelain 2>/dev/null).strip.present?
+    end
+
+    def reset_version_cache
+      @version = nil
+    end
+
     def base_url
       scheme = Rails.env.local? ? "http" : "https"
       "#{scheme}://#{host}"

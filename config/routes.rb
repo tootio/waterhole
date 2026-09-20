@@ -11,7 +11,7 @@ Rails.application.routes.draw do
 
   # Public: an instance admin must be able to read the DNS instructions before
   # anyone on their server can sign in.
-  resource :verification, only: %i[show create]
+  resource :verification, only: %i[show create], path: "about"
 
   # --- the queue -------------------------------------------------------------
   resources :registration_requests, path: "requests", only: %i[index show] do

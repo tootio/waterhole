@@ -55,7 +55,7 @@
           <% end %>
         <% else %>
           <div class="order-2 ml-auto flex items-center gap-3 text-sm sm:gap-4">
-            <%= link_to "Authorise an instance", verification_path,
+            <%= link_to "About", verification_path,
                   class: "#{nav_class(controller_name == "verifications")} whitespace-nowrap" %>
             <% unless controller_name == "sessions" && action_name == "new" %>
               <%= link_to "Sign in", new_session_path,

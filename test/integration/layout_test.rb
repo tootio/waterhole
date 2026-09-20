@@ -96,10 +96,20 @@ class LayoutTest < ActionDispatch::IntegrationTest
   test "the footer appears on every page, signed in or out" do
     get terms_path
     assert_select "footer a[href=?]", privacy_path
+    assert_select "footer", text: /Waterhole #{Regexp.escape(Waterhole::Deployment.version)}/
 
     sign_in_as moderators(:avery)
     get root_path
     assert_select "footer a[href=?]", imprint_path
+    assert_select "footer", text: /Waterhole #{Regexp.escape(Waterhole::Deployment.version)}/
+  end
+
+  test "the footer shows the configured version" do
+    ENV["WATERHOLE_VERSION"] = "v1.2.3"
+    get new_session_path
+    assert_select "footer", text: /Waterhole v1.2.3/
+  ensure
+    ENV.delete("WATERHOLE_VERSION")
   end
 
   # AGPL section 13: the footer is where a deployment offers its source.

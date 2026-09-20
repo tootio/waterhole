@@ -22,6 +22,19 @@ module RegistrationRequestsHelper
     end
   end
 
+  # "3 minutes ago", or "in 6 days" for a deadline. Rendered server-side so it
+  # is right without JavaScript, and re-rendered by the relative-time controller
+  # so it stays right on a page left open, which a queue is.
+  def relative_time(time)
+    return tag.span("—") if time.blank?
+
+    distance = time_ago_in_words(time)
+    phrase   = time.future? ? "in #{distance}" : "#{distance} ago"
+
+    tag.time phrase, datetime: time.iso8601, title: time.to_fs(:long),
+      data: { controller: "relative-time" }
+  end
+
   # Rendered from a datetime attribute so Stimulus can localise it client-side.
   def local_time(time, format: :long)
     return tag.span("—") if time.blank?

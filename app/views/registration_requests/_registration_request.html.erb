@@ -19,7 +19,7 @@
       <% end %>
 
       <span class="ml-auto text-xs text-stone-500">
-        <%= time_ago_in_words(registration_request.signed_up_at) %> ago
+        <%= relative_time(registration_request.signed_up_at) %>
       </span>
     </div>
 

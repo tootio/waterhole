@@ -15,7 +15,7 @@
       An administrator of <%= current_instance.domain %> needs to republish it
       <% if current_instance.terms_grace_active? %>
         before <strong><%= current_instance.terms_grace_until.to_fs(:long) %></strong>
-        (<%= distance_of_time_in_words(Time.current, current_instance.terms_grace_until) %> from now),
+        (<%= relative_time(current_instance.terms_grace_until) %>),
         after which moderators here lose access.
       <% end %>
       <%= link_to "Show the record to publish",

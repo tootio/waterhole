@@ -7,7 +7,7 @@
     </div>
   <% elsif registration_request.claimed_by == current_moderator %>
     <div class="flex flex-wrap items-center gap-3 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3">
-      <span class="text-sm text-indigo-900"><strong>You claimed this</strong> <%= time_ago_in_words(registration_request.claimed_at) %> ago.</span>
+      <span class="text-sm text-indigo-900"><strong>You claimed this</strong> <%= relative_time(registration_request.claimed_at) %>.</span>
       <%= button_to "Release", registration_request_claim_path(registration_request), method: :delete,
             class: "ml-auto rounded border border-indigo-300 bg-white px-3 py-1 text-sm text-indigo-900 hover:bg-indigo-100" %>
     </div>
@@ -15,7 +15,7 @@
     <div class="flex flex-wrap items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
       <span class="text-sm text-amber-900">
         <strong><%= registration_request.claimed_by.name %></strong> is reviewing this
-        (claimed <%= time_ago_in_words(registration_request.claimed_at) %> ago).
+        (claimed <%= relative_time(registration_request.claimed_at) %>).
       </span>
       <% if registration_request.claim_stale? %>
         <%= button_to "Take over", registration_request_claim_path(registration_request, force: 1),

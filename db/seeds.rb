@@ -12,7 +12,7 @@ Note.delete_all
 Decision.delete_all
 RegistrationRequest.delete_all
 Session.delete_all
-SyncRun.delete_all              # references instances; re-seeding fails without it
+SyncRun.delete_all
 Instance.update_all(sync_moderator_id: nil)
 Moderator.delete_all
 KeywordRule.delete_all
@@ -136,4 +136,4 @@ puts "  #{Instance.count} instances, #{Moderator.count} moderators, #{Registrati
 puts "  Sign in at /session/new as any instance; for a real sign-in you need a Mastodon server."
 puts "  Legal documents: #{LegalDocuments.published? ? "published" : "EXAMPLES ONLY - run waterhole:legal:install"}"
 puts "  IP databases:    #{Ip::Databases.ready? ? "installed" : "not installed - run waterhole:ipdata:refresh"}"
-puts "  To browse the seeded queue, run: bin/rails waterhole:impersonate[avery]"
+puts "  To browse the seeded queue, run: bin/rails waterhole:dev:impersonate[avery]"

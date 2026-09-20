@@ -39,15 +39,8 @@
       <%= render partial: "registration_request", collection: @registration_requests %>
     </ul>
 
-    <% if @pagination.many? %>
-      <nav class="mt-4 flex items-center justify-between text-sm">
-        <span class="text-stone-500">Page <%= @pagination.page %> of <%= @pagination.pages %> · <%= pluralize(@pagination.total, "request") %></span>
-        <span class="flex gap-2">
-          <%= link_to "← Newer", queue_page_path(@pagination.prev), class: "rounded border border-stone-300 px-3 py-1 hover:bg-stone-100" if @pagination.prev %>
-          <%= link_to "Older →", queue_page_path(@pagination.next), class: "rounded border border-stone-300 px-3 py-1 hover:bg-stone-100" if @pagination.next %>
-        </span>
-      </nav>
-    <% end %>
+    <%= render "shared/pagination", pagination: @pagination, noun: "request",
+          path: ->(page) { queue_page_path(page) } %>
   <% else %>
     <div class="rounded-lg border border-dashed border-stone-300 bg-white px-6 py-12 text-center">
       <p class="font-medium text-stone-700">Nothing here.</p>

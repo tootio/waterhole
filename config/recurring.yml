@@ -30,6 +30,11 @@ defaults: &defaults
   purge_resolved_requests:
     class: PurgeResolvedRequestsJob
     schedule: every day at 4am
+  # Sync history is a debugging aid, not a record: see
+  # Waterhole::Deployment.sync_history_retention.
+  purge_sync_runs:
+    class: PurgeSyncRunsJob
+    schedule: every day at 4:20am
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12

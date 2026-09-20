@@ -1,0 +1,12 @@
+<%# Both paginated lists are newest first, so "newer" and "older" say more than
+    "previous" and "next" would. `path` builds a URL for a page number, keeping
+    whatever filters the caller is showing. %>
+<% if pagination.many? %>
+  <nav class="mt-4 flex items-center justify-between text-sm">
+    <span class="text-stone-500">Page <%= pagination.page %> of <%= pagination.pages %> · <%= pluralize(pagination.total, noun) %></span>
+    <span class="flex gap-2">
+      <%= link_to "← Newer", path.call(pagination.prev), class: "rounded border border-stone-300 px-3 py-1 hover:bg-stone-100" if pagination.prev %>
+      <%= link_to "Older →", path.call(pagination.next), class: "rounded border border-stone-300 px-3 py-1 hover:bg-stone-100" if pagination.next %>
+    </span>
+  </nav>
+<% end %>

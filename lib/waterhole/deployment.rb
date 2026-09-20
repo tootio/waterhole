@@ -47,6 +47,14 @@ module Waterhole
       Integer(ENV.fetch("WATERHOLE_RETENTION_DAYS", 90)).days
     end
 
+    # How long sync history is kept. It exists to answer "why didn't this
+    # request show up?", which nobody asks of a run from last quarter -- and at
+    # a sync every five minutes per instance the table gains about 105,000 rows
+    # a year, none of which anything reads once they are old.
+    def sync_history_retention
+      Integer(ENV.fetch("WATERHOLE_SYNC_HISTORY_DAYS", 30)).days
+    end
+
     # How long an instance keeps working after the legal documents change and
     # its DNS record goes stale. Without a window, fixing a typo in the imprint
     # would sign out every moderation team on every instance at once -- and they

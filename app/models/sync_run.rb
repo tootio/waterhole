@@ -8,6 +8,12 @@ class SyncRun < ApplicationRecord
 
   scope :recent, -> { order(started_at: :desc) }
 
+  # The filter on the history page. Anything that is not a real status -- "all",
+  # a stale bookmark, a hand-edited URL -- means no filter rather than no rows.
+  scope :with_status, ->(status) { STATUSES.include?(status.to_s) ? where(status: status) : all }
+
+  scope :started_before, ->(time) { where(started_at: ..time) }
+
   def duration
     return nil unless finished_at
 

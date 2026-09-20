@@ -16,5 +16,25 @@ class LegalController < ApplicationController
     return head :not_found if @document.nil?
 
     @example = !@document.published?
+
+    # Signed out, this page renders nothing that varies by viewer: it is a pure
+    # function of the document's bytes and the deployment's own identity, and
+    # both are in the ETag. These documents change a few times a year and every
+    # instance admin reads them before accepting them in DNS, so revalidating to
+    # a 304 -- without rendering the page at all -- beats resending them.
+    #
+    # LegalDocuments.digest is in there for the footer's "no legal documents
+    # published" badge, which is deployment state rather than this document's.
+    #
+    # Signed in, no validator: the header carries the moderator's handle and a
+    # queue badge that moves whenever the queue does, and nothing here could
+    # tell when either changed. They simply get the page.
+    return if signed_in?
+
+    fresh_when(
+      etag: [ @document.cache_key, LegalDocuments.digest,
+              Waterhole::Deployment.host, Waterhole::Deployment.source_url ],
+      last_modified: @document.source_path.exist? ? @document.source_path.mtime : nil
+    )
   end
 end

@@ -91,6 +91,59 @@ class LegalDocumentsTest < ActiveSupport::TestCase
     assert_includes html, "example.org"
   end
 
+  # The stylesheet stacks tables into cards on a phone, where the header row is
+  # no longer beside the cells it describes.
+  TABLE_MARKDOWN = <<~MD
+    | Cookie | What it holds | How long it lasts |
+    |---|---|---|
+    | `session_id` | A reference to your sign-in | Until you sign out |
+  MD
+
+  test "table cells carry the heading of their own column" do
+    html = LegalDocuments.render(TABLE_MARKDOWN)
+
+    assert_includes html, %(data-label="What it holds")
+    assert_includes html, %(data-label="How long it lasts")
+  end
+
+  test "the labels come from the document, not from a list in the stylesheet" do
+    html = LegalDocuments.render(TABLE_MARKDOWN.sub("What it holds", "Purpose"))
+
+    assert_includes html, %(data-label="Purpose")
+    refute_includes html, %(data-label="What it holds")
+  end
+
+  # Stacking means display:block, which strips a table of its table semantics.
+  test "tables spell out the roles that stacking would otherwise take away" do
+    html = LegalDocuments.render(TABLE_MARKDOWN)
+
+    assert_includes html, %(<table role="table")
+    assert_includes html, %(role="rowgroup")
+    assert_includes html, %(role="row")
+    assert_includes html, %(role="columnheader")
+    assert_includes html, %(role="cell")
+  end
+
+  test "a document without a table is left alone" do
+    html = LegalDocuments.render("# Terms\n\nBe excellent to each other.\n")
+
+    refute_includes html, "role="
+    refute_includes html, "data-label"
+  end
+
+  # The label is a value the document's author wrote, copied into an attribute.
+  test "a heading cannot break out of the label it becomes" do
+    html = LegalDocuments.render(<<~MD)
+      | He said "stop" & <b>bold</b> | Plain |
+      |---|---|
+      | a | b |
+    MD
+
+    refute_includes html, "<b>", "the sanitiser still runs first"
+    assert_includes html, "&amp;", "an ampersand in a heading has to be escaped in the attribute"
+    assert_equal 2, html.scan(/data-label=/).length, "one label per cell, not one per quote"
+  end
+
   test "install_examples creates a legal directory outside the tree" do
     Dir.mktmpdir do |root|
       dir = File.join(root, "legal")

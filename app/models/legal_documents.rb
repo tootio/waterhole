@@ -175,8 +175,50 @@ class LegalDocuments
       html = Kramdown::Document.new(markdown.to_s, input: "kramdown",
         html_to_native: false, auto_ids: true, entity_output: :as_char).to_html
 
-      Rails::HTML5::SafeListSanitizer.new.sanitize(html,
-        tags: ALLOWED_TAGS, attributes: ALLOWED_ATTRIBUTES).html_safe
+      sanitized = Rails::HTML5::SafeListSanitizer.new.sanitize(html,
+        tags: ALLOWED_TAGS, attributes: ALLOWED_ATTRIBUTES)
+
+      prepare_tables(sanitized).html_safe
+    end
+
+    # A table of prose does not fit a phone, so below sm: the stylesheet stacks
+    # each row into a card. Two things have to travel with the markup for that
+    # to be readable rather than merely narrow:
+    #
+    #   data-label -- the header row is no longer beside the cells, and "Until
+    #     you close your browser" means nothing without "How long it lasts". The
+    #     text has to come from the document's own header, so each cell carries
+    #     its own and CSS draws it only where the header is hidden.
+    #
+    #   role -- stacking means display:block, which strips a table of its table
+    #     semantics in every browser. Spelling the roles out restores them for
+    #     screen readers; at wide widths they simply match what the elements
+    #     already imply.
+    #
+    # Added after sanitising, on our own markup, from text the sanitiser has
+    # already been through.
+    def prepare_tables(html)
+      return html unless html.include?("<table")
+
+      fragment = Nokogiri::HTML5.fragment(html)
+
+      fragment.css("table").each do |table|
+        table["role"] = "table"
+        table.css("thead, tbody, tfoot").each { it["role"] = "rowgroup" }
+        table.css("tr").each { it["role"] = "row" }
+        table.css("th").each { it["role"] = "columnheader" }
+
+        headers = table.css("thead tr:first-child th").map { it.text.strip }
+
+        table.css("tbody tr").each do |row|
+          row.css("td").each_with_index do |cell, column|
+            cell["role"] = "cell"
+            cell["data-label"] = headers[column] if headers[column].present?
+          end
+        end
+      end
+
+      fragment.to_html
     end
 
     # Copies any template that has no real file yet.

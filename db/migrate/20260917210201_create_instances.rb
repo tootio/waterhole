@@ -33,7 +33,7 @@ class CreateInstances < ActiveRecord::Migration[8.1]
     add_index :instances, :status
 
     add_check_constraint :instances,
-      "status IN ('unverified','verified','revoked','blocked')",
+      "status::text IN ('unverified','verified','revoked','blocked')",
       name: "instances_status_check"
   end
 end

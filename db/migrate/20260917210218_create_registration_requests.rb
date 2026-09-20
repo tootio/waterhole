@@ -56,7 +56,7 @@ class CreateRegistrationRequests < ActiveRecord::Migration[8.1]
     # expired: Mastodon deleted the account because its email stayed unconfirmed
     # for a week. That 404 looks like a rejection, but must not be recorded as one.
     add_check_constraint :registration_requests,
-      "status IN ('pending','approved','rejected','approved_elsewhere','rejected_elsewhere','expired')",
+      "status::text IN ('pending','approved','rejected','approved_elsewhere','rejected_elsewhere','expired')",
       name: "registration_requests_status_check"
   end
 end

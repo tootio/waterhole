@@ -13,7 +13,7 @@ class CreateDomainPolicies < ActiveRecord::Migration[8.1]
     add_index :domain_policies, :kind
 
     add_check_constraint :domain_policies,
-      "kind IN ('allowed','blocked')",
+      "kind::text IN ('allowed','blocked')",
       name: "domain_policies_kind_check"
   end
 end

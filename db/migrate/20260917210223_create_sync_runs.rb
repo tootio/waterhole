@@ -16,7 +16,7 @@ class CreateSyncRuns < ActiveRecord::Migration[8.1]
     end
 
     add_index :sync_runs, [ :instance_id, :started_at ]
-    add_check_constraint :sync_runs, "status IN ('running','succeeded','failed')",
+    add_check_constraint :sync_runs, "status::text IN ('running','succeeded','failed')",
       name: "sync_runs_status_check"
   end
 end

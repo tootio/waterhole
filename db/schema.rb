@@ -28,8 +28,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_170000) do
     t.index ["moderator_id"], name: "index_decisions_on_moderator_id"
     t.index ["registration_request_id"], name: "index_decisions_on_registration_request_id"
     t.index ["registration_request_id"], name: "index_decisions_on_registration_request_unique", unique: true
-    t.check_constraint "action::text = ANY (ARRAY['approve'::character varying::text, 'reject'::character varying::text])", name: "decisions_action_check"
-    t.check_constraint "state::text = ANY (ARRAY['pending'::character varying::text, 'succeeded'::character varying::text, 'failed'::character varying::text, 'conflict'::character varying::text])", name: "decisions_state_check"
+    t.check_constraint "action::text = ANY (ARRAY['approve'::text, 'reject'::text])", name: "decisions_action_check"
+    t.check_constraint "state::text = ANY (ARRAY['pending'::text, 'succeeded'::text, 'failed'::text, 'conflict'::text])", name: "decisions_state_check"
   end
 
   create_table "domain_policies", force: :cascade do |t|
@@ -41,7 +41,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_170000) do
     t.datetime "updated_at", null: false
     t.index ["domain"], name: "index_domain_policies_on_domain", unique: true
     t.index ["kind"], name: "index_domain_policies_on_kind"
-    t.check_constraint "kind::text = ANY (ARRAY['allowed'::character varying::text, 'blocked'::character varying::text])", name: "domain_policies_kind_check"
+    t.check_constraint "kind::text = ANY (ARRAY['allowed'::text, 'blocked'::text])", name: "domain_policies_kind_check"
   end
 
   create_table "flags", force: :cascade do |t|
@@ -85,7 +85,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_170000) do
     t.index ["domain"], name: "index_instances_on_domain", unique: true
     t.index ["status"], name: "index_instances_on_status"
     t.index ["sync_moderator_id"], name: "index_instances_on_sync_moderator_id"
-    t.check_constraint "status::text = ANY (ARRAY['unverified'::character varying::text, 'verified'::character varying::text, 'terms_outdated'::character varying::text, 'revoked'::character varying::text, 'blocked'::character varying::text])", name: "instances_status_check"
+    t.check_constraint "status::text = ANY (ARRAY['unverified'::text, 'verified'::text, 'terms_outdated'::text, 'revoked'::text, 'blocked'::text])", name: "instances_status_check"
   end
 
   create_table "keyword_rules", force: :cascade do |t|
@@ -99,7 +99,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_170000) do
     t.datetime "updated_at", null: false
     t.index ["enabled"], name: "index_keyword_rules_on_enabled"
     t.index ["instance_id"], name: "index_keyword_rules_on_instance_id"
-    t.check_constraint "match_type::text = ANY (ARRAY['substring'::character varying::text, 'word'::character varying::text, 'regex'::character varying::text])", name: "keyword_rules_match_type_check"
+    t.check_constraint "match_type::text = ANY (ARRAY['substring'::text, 'word'::text, 'regex'::text])", name: "keyword_rules_match_type_check"
   end
 
   create_table "moderators", force: :cascade do |t|
@@ -190,8 +190,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_170000) do
     t.index ["ip"], name: "index_registration_requests_on_ip"
     t.index ["ip_group"], name: "index_registration_requests_on_ip_group"
     t.index ["signup_shape", "signed_up_at"], name: "index_registration_requests_on_signup_shape_and_signed_up_at"
-    t.check_constraint "ip_relay::text = ANY (ARRAY['private_relay'::character varying::text, 'tor'::character varying::text])", name: "registration_requests_ip_relay_check"
-    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying::text, 'approved'::character varying::text, 'rejected'::character varying::text, 'approved_elsewhere'::character varying::text, 'rejected_elsewhere'::character varying::text, 'expired'::character varying::text])", name: "registration_requests_status_check"
+    t.check_constraint "ip_relay::text = ANY (ARRAY['private_relay'::text, 'tor'::text])", name: "registration_requests_ip_relay_check"
+    t.check_constraint "status::text = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text, 'approved_elsewhere'::text, 'rejected_elsewhere'::text, 'expired'::text])", name: "registration_requests_status_check"
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -219,7 +219,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_170000) do
     t.datetime "updated_at", null: false
     t.index ["instance_id", "started_at"], name: "index_sync_runs_on_instance_id_and_started_at"
     t.index ["instance_id"], name: "index_sync_runs_on_instance_id"
-    t.check_constraint "status::text = ANY (ARRAY['running'::character varying::text, 'succeeded'::character varying::text, 'failed'::character varying::text])", name: "sync_runs_status_check"
+    t.check_constraint "status::text = ANY (ARRAY['running'::text, 'succeeded'::text, 'failed'::text])", name: "sync_runs_status_check"
   end
 
   add_foreign_key "decisions", "moderators"

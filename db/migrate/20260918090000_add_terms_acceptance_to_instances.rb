@@ -12,7 +12,7 @@ class AddTermsAcceptanceToInstances < ActiveRecord::Migration[8.1]
     remove_check_constraint :instances,
       name: "instances_status_check"
     add_check_constraint :instances,
-      "status IN ('unverified','verified','terms_outdated','revoked','blocked')",
+      "status::text IN ('unverified','verified','terms_outdated','revoked','blocked')",
       name: "instances_status_check"
   end
 
@@ -21,7 +21,7 @@ class AddTermsAcceptanceToInstances < ActiveRecord::Migration[8.1]
 
     remove_check_constraint :instances, name: "instances_status_check"
     add_check_constraint :instances,
-      "status IN ('unverified','verified','revoked','blocked')",
+      "status::text IN ('unverified','verified','revoked','blocked')",
       name: "instances_status_check"
 
     remove_column :instances, :terms_grace_until

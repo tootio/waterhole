@@ -18,10 +18,10 @@ class CreateDecisions < ActiveRecord::Migration[8.1]
     add_index :decisions, :registration_request_id, unique: true,
       name: "index_decisions_on_registration_request_unique"
 
-    add_check_constraint :decisions, "action IN ('approve','reject')",
+    add_check_constraint :decisions, "action::text IN ('approve','reject')",
       name: "decisions_action_check"
     add_check_constraint :decisions,
-      "state IN ('pending','succeeded','failed','conflict')",
+      "state::text IN ('pending','succeeded','failed','conflict')",
       name: "decisions_state_check"
   end
 end

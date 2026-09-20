@@ -13,7 +13,7 @@ class CreateKeywordRules < ActiveRecord::Migration[8.1]
 
     add_index :keyword_rules, :enabled
     add_check_constraint :keyword_rules,
-      "match_type IN ('substring','word','regex')",
+      "match_type::text IN ('substring','word','regex')",
       name: "keyword_rules_match_type_check"
   end
 end

@@ -8,7 +8,7 @@ class AddIpEnrichmentToRegistrationRequests < ActiveRecord::Migration[8.1]
     # users on a CDN's network) or "tor" (a running Tor relay). One column,
     # because an address is never both.
     add_column :registration_requests, :ip_relay, :string
-    add_check_constraint :registration_requests, "ip_relay IN ('private_relay','tor')",
+    add_check_constraint :registration_requests, "ip_relay::text IN ('private_relay','tor')",
       name: "registration_requests_ip_relay_check"
     # nil means "never looked up", which is NOT the same as "looked up and the
     # database had nothing". Without it every re-sync would redo the lookup.

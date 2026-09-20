@@ -5,7 +5,12 @@ default: &default
     max_size: <%= 256.megabytes %>
     namespace: <%= Rails.env %>
 
+# Waterhole runs Solid Cache in development too (see config/environments/
+# development.rb), so it needs the cache database named here exactly as
+# production does. Without it Solid Cache falls back to the primary
+# connection, where solid_cache_entries does not exist and every read raises.
 development:
+  database: cache
   <<: *default
 
 test:

@@ -25,9 +25,6 @@ Rails.application.configure do
     config.action_controller.perform_caching = false
   end
 
-  # Change to :null_store to avoid any caching.
-  config.cache_store = :memory_store
-
   # Don't care if the mailer can't send.
   config.action_mailer.raise_delivery_errors = false
 
@@ -45,6 +42,12 @@ Rails.application.configure do
   # which would drop the recurring scheduler entirely.
   config.active_job.queue_adapter = :solid_queue
   config.solid_queue.connects_to = { database: { writing: :queue } }
+
+  # Solid Cache rather than :memory_store, because the rate limiter counts
+  # against one store shared by the web server and the job worker -- per-process
+  # counters would make a limit mean whatever the process count happens to be.
+  # It reads its database from config/cache.yml. Change to :null_store to
+  # develop without any caching at all.
   config.cache_store = :solid_cache_store
 
   # Raise an error on page load if there are pending migrations.

@@ -174,4 +174,23 @@ class LayoutTest < ActionDispatch::IntegrationTest
     assert_select "turbo-cable-stream-source", { count: 2 },
       "the badge's stream and the queue's own"
   end
+  # The shell only. Pinning dark: classes on feature views would make every palette
+  # tweak a test edit; this catches the regression that matters -- a build or a
+  # sweep that strips the variants wholesale.
+  test "the page shell carries its dark-mode counterparts" do
+    sign_in_as moderators(:avery)
+    get root_path
+
+    assert_select "body[class*=?]", "dark:bg-stone-950"
+    assert_select "body[class*=?]", "dark:text-stone-100"
+    assert_select "header[class*=?]", "dark:bg-stone-900"
+  end
+
+  # Nothing tells the browser to paint its own chrome dark otherwise, and a dark
+  # page with white checkboxes and a bright scrollbar reads as broken.
+  test "the browser is told the page supports both schemes" do
+    get new_session_path
+
+    assert_select %(meta[name="theme-color"][media="(prefers-color-scheme: dark)"]), count: 1
+  end
 end

@@ -2,21 +2,21 @@
 
 <div class="mb-5">
   <h1 class="text-2xl font-semibold tracking-tight">Herds</h1>
-  <p class="mt-1 text-sm text-stone-600">
+  <p class="mt-1 text-sm text-stone-600 dark:text-stone-300">
     The <%= pluralize(@instances.size, "instance") %> that come down to
     <%= Waterhole::Deployment.host %>.
   </p>
 </div>
 
-<ul class="divide-y divide-stone-200 overflow-hidden rounded-lg border border-stone-200 bg-white">
+<ul class="divide-y divide-stone-200 dark:divide-stone-800 overflow-hidden rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900">
   <% @instances.each do |instance| %>
     <li>
       <%= link_to herd_path(instance),
-            class: "flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 hover:bg-stone-50" do %>
+            class: "flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 hover:bg-stone-50 dark:hover:bg-stone-800" do %>
         <span class="font-medium"><%= instance.domain %></span>
 
         <% if instance == current_instance %>
-          <span class="inline-flex rounded-full bg-stone-900 px-2 py-0.5 text-xs font-medium text-white">Yours</span>
+          <span class="inline-flex rounded-full bg-stone-900 dark:bg-stone-100 px-2 py-0.5 text-xs font-medium text-white dark:text-stone-900">Yours</span>
         <% end %>
 
         <span class="ml-auto flex flex-wrap items-center gap-2">
@@ -28,7 +28,7 @@
   <% end %>
 </ul>
 
-<p class="mt-4 max-w-3xl text-xs text-stone-500">
+<p class="mt-4 max-w-3xl text-xs text-stone-500 dark:text-stone-400">
   A herd's status is whatever its own DNS record says, which anyone can look up
   for themselves. Cross-instance signals need two keys — the instance admin's
   <code>signals=on</code> in that record, and this waterhole's operator

@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+/* Lets the browser paint its own chrome to match: the interior and glyph of a
+   checkbox, the <select> popup, the caret, ::placeholder and the scrollbar. The
+   forms here are Rails helpers carrying only border classes, so without this a
+   dark page keeps white checkboxes and a bright scrollbar. */
+@layer base {
+  html { color-scheme: light dark; }
+}
+
 /* Typography for the operator-authored legal documents. Deliberately hand-rolled
    rather than pulling in the typography plugin: three static pages do not
    justify the dependency, and the sanitiser only lets a short tag list through
@@ -74,6 +82,33 @@
       letter-spacing: var(--tracking-wide);
       text-transform: uppercase;
       color: var(--color-stone-500);
+    }
+  }
+
+  /* The legal documents' typography is a component layer, so `dark:` utilities
+     cannot reach its descendants -- there is no element on a sanitiser-generated
+     <blockquote> to hang a class on. @variant is the in-CSS twin of the dark:
+     prefix and resolves through the same variant definition, so this cannot
+     drift from the rest of the app. It must stay AFTER the light rules above. */
+  @variant dark {
+    .prose-waterhole { color: var(--color-stone-300); }
+    .prose-waterhole a { color: var(--color-indigo-400); }
+    .prose-waterhole code { background: var(--color-stone-800); }
+    .prose-waterhole blockquote {
+      /* Longhand: the light rule sets border-left as a shorthand. */
+      border-left-color: var(--color-amber-800);
+      background: var(--color-amber-950);
+    }
+    .prose-waterhole hr,
+    .prose-waterhole th,
+    .prose-waterhole td { border-color: var(--color-stone-800); }
+    .prose-waterhole thead { background: var(--color-stone-800); }
+
+    @media (width < 40rem) {
+      .prose-waterhole tbody tr { border-color: var(--color-stone-800); }
+      .prose-waterhole tbody td { border-top-color: var(--color-stone-800); }
+      .prose-waterhole tbody td:first-child { background: var(--color-stone-800); }
+      .prose-waterhole tbody td[data-label]:not(:first-child)::before { color: var(--color-stone-400); }
     }
   }
 }

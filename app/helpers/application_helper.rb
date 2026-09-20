@@ -8,13 +8,13 @@ module ApplicationHelper
     return if count.zero?
 
     tag.span count > QUEUE_BADGE_MAX ? "#{QUEUE_BADGE_MAX}+" : count,
-      class: "rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-900 tabular-nums",
+      class: "rounded-full bg-amber-100 dark:bg-amber-900 px-1.5 py-0.5 text-xs font-medium text-amber-900 dark:text-amber-200 tabular-nums",
       aria: { label: "#{count} awaiting review" }
   end
 
   def nav_class(active)
     base = "rounded px-2 py-1 "
-    base + (active ? "bg-stone-900 text-white" : "text-stone-600 hover:bg-stone-100")
+    base + (active ? "bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900" : "text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800")
   end
 
   # The page each legal document is served at. config/routes.rb maps the
@@ -65,9 +65,9 @@ module ApplicationHelper
 
   def flash_class(type)
     case type.to_s
-    when "alert" then "border-red-200 bg-red-50 text-red-900"
-    when "notice" then "border-emerald-200 bg-emerald-50 text-emerald-900"
-    else "border-stone-200 bg-white text-stone-700"
+    when "alert" then "border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950 text-red-900 dark:text-red-200"
+    when "notice" then "border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-200"
+    else "border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 text-stone-700 dark:text-stone-300"
     end
   end
 end

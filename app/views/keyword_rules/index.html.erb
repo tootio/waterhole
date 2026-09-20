@@ -3,30 +3,30 @@
 <div class="mb-4 flex items-center justify-between">
   <div>
     <h1 class="text-2xl font-semibold tracking-tight">Watchwords</h1>
-    <p class="mt-1 text-sm text-stone-600">Patterns checked against each applicant's reason, bio and display name.</p>
+    <p class="mt-1 text-sm text-stone-600 dark:text-stone-300">Patterns checked against each applicant's reason, bio and display name.</p>
   </div>
-  <%= link_to "Add watchword", new_keyword_rule_path, class: "rounded bg-stone-900 px-4 py-2 text-sm text-white hover:bg-stone-800" %>
+  <%= link_to "Add watchword", new_keyword_rule_path, class: "rounded bg-stone-900 dark:bg-stone-100 px-4 py-2 text-sm text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-white" %>
 </div>
 
 <% if @keyword_rules.any? %>
-  <ul class="divide-y divide-stone-200 overflow-hidden rounded-lg border border-stone-200 bg-white">
+  <ul class="divide-y divide-stone-200 dark:divide-stone-800 overflow-hidden rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900">
     <% @keyword_rules.each do |rule| %>
       <li class="flex flex-wrap items-center gap-3 px-4 py-3">
-        <code class="rounded bg-stone-100 px-2 py-0.5 text-sm"><%= rule.pattern %></code>
-        <span class="text-xs text-stone-500"><%= rule.match_type %></span>
+        <code class="rounded bg-stone-100 dark:bg-stone-800 px-2 py-0.5 text-sm"><%= rule.pattern %></code>
+        <span class="text-xs text-stone-500 dark:text-stone-400"><%= rule.match_type %></span>
         <span class="rounded px-1.5 py-0.5 text-xs <%= severity_style(rule.severity) %>"><%= rule.severity %></span>
-        <% unless rule.enabled? %><span class="text-xs text-stone-400">disabled</span><% end %>
-        <% if rule.description.present? %><span class="text-sm text-stone-600"><%= rule.description %></span><% end %>
+        <% unless rule.enabled? %><span class="text-xs text-stone-500 dark:text-stone-400">disabled</span><% end %>
+        <% if rule.description.present? %><span class="text-sm text-stone-600 dark:text-stone-300"><%= rule.description %></span><% end %>
         <span class="ml-auto flex gap-3 text-sm">
-          <%= link_to "Edit", edit_keyword_rule_path(rule), class: "text-stone-500 underline" %>
+          <%= link_to "Edit", edit_keyword_rule_path(rule), class: "text-stone-500 dark:text-stone-400 underline" %>
           <%= button_to "Delete", keyword_rule_path(rule), method: :delete,
-                form: { data: { turbo_confirm: "Delete this watchword?" } }, class: "text-stone-500 underline hover:text-red-700" %>
+                form: { data: { turbo_confirm: "Delete this watchword?" } }, class: "text-stone-500 dark:text-stone-400 underline hover:text-red-700 dark:hover:text-red-400" %>
         </span>
       </li>
     <% end %>
   </ul>
 <% else %>
-  <p class="rounded-lg border border-dashed border-stone-300 bg-white px-6 py-12 text-center text-stone-500">
+  <p class="rounded-lg border border-dashed border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-6 py-12 text-center text-stone-500 dark:text-stone-400">
     No watchwords yet.
   </p>
 <% end %>

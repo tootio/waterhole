@@ -4,7 +4,7 @@
   <% if @example %>
     <%# Unmissable, and deliberately not dismissible: text that is not this
         deployment's own must never be mistaken for it. %>
-    <div class="mb-6 rounded border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900">
+    <div class="mb-6 rounded border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950 px-4 py-3 text-sm text-red-900 dark:text-red-200">
       <p class="font-semibold">This is example text, not this deployment's own <%= @document.title.downcase %>.</p>
       <p class="mt-1">
         Whoever runs <%= Waterhole::Deployment.host %> has not published their own document yet.
@@ -13,11 +13,11 @@
     </div>
   <% end %>
 
-  <div class="prose-waterhole rounded-lg border border-stone-200 bg-white px-6 py-6">
+  <div class="prose-waterhole rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 px-6 py-6">
     <%= @document.html %>
   </div>
 
-  <p class="mt-4 text-xs text-stone-500">
+  <p class="mt-4 text-xs text-stone-500 dark:text-stone-400">
     <% if @document.published? %>
       Document fingerprint <code class="font-mono"><%= @document.short_digest %></code>.
       Instances accept these documents by publishing their combined fingerprint in DNS.

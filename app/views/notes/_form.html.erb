@@ -11,12 +11,12 @@
     <%= f.text_area :body, rows: parent ? 2 : 3,
           placeholder: parent ? "Reply…" : "Add a note for the other moderators…",
           data: { note_composer_target: "input", action: "input->note-composer#count" },
-          class: "w-full rounded border border-stone-300 px-3 py-2 text-sm" %>
+          class: "w-full rounded border border-stone-300 dark:border-stone-700 px-3 py-2 text-sm" %>
     <div class="mt-2 flex items-center gap-3">
       <%= f.submit parent ? "Reply" : "Add note",
             data: { turbo_submits_with: "Saving…" },
-            class: "rounded bg-stone-900 px-3 py-1.5 text-sm text-white hover:bg-stone-800" %>
-      <span data-note-composer-target="counter" class="text-xs text-stone-400"></span>
+            class: "rounded bg-stone-900 dark:bg-stone-100 px-3 py-1.5 text-sm text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-white" %>
+      <span data-note-composer-target="counter" class="text-xs text-stone-500 dark:text-stone-400"></span>
     </div>
   <% end %>
 </div>

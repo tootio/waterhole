@@ -38,8 +38,8 @@ export default class extends Controller {
     this.index = Math.max(0, Math.min(this.itemTargets.length - 1, this.index + delta))
     const item = this.itemTargets[this.index]
     item.scrollIntoView({ block: "nearest" })
-    this.itemTargets.forEach((el) => el.classList.remove("ring-2", "ring-stone-900"))
-    item.classList.add("ring-2", "ring-stone-900")
+    this.itemTargets.forEach((el) => el.classList.remove("ring-2"))
+    item.classList.add("ring-2")
   }
 
   open() {

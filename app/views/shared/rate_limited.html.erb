@@ -1,7 +1,7 @@
 <% content_for :title, "Slow down — Waterhole" %>
 <div class="mx-auto max-w-md py-12 text-center">
   <h1 class="text-2xl font-semibold tracking-tight">Too many attempts</h1>
-  <p class="mt-2 text-stone-600">
+  <p class="mt-2 text-stone-600 dark:text-stone-300">
     Wait <%= distance_of_time_in_words(response.get_header("Retry-After").to_i) %> and try again.
   </p>
 </div>

@@ -2,9 +2,9 @@
 <div class="mt-6 space-y-4" data-controller="clipboard">
   <% unaccepted = admission&.dns&.accepts_no_terms? %>
   <% changed = admission&.dns&.changed_documents || [] %>
-  <div class="rounded-lg border border-stone-200 bg-white p-5">
+  <div class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-5">
     <h2 class="text-sm font-semibold">1. Read the terms, and decide</h2>
-    <p class="mt-2 text-sm text-stone-700">
+    <p class="mt-2 text-sm text-stone-700 dark:text-stone-300">
       Publishing the record accepts these documents on your instance's behalf.
       Read them, and decide whether your herd wants to join this waterhole.
     </p>
@@ -12,21 +12,21 @@
       <% LegalDocuments.all.each do |document| %>
         <li>
           <%= link_to document.title, legal_document_path(document), class: "font-medium underline" %>
-          <span class="text-stone-500">— <%= document.description %></span>
+          <span class="text-stone-500 dark:text-stone-400">— <%= document.description %></span>
           <% if changed.include?(document) %>
-            <span class="ml-1 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-900">changed</span>
+            <span class="ml-1 rounded bg-amber-100 dark:bg-amber-900 px-1.5 py-0.5 text-xs font-medium text-amber-900 dark:text-amber-200">changed</span>
           <% end %>
         </li>
       <% end %>
     </ul>
     <% if unaccepted %>
-      <p class="mt-3 rounded bg-amber-50 px-3 py-2 text-sm text-amber-900">
+      <p class="mt-3 rounded bg-amber-50 dark:bg-amber-950 px-3 py-2 text-sm text-amber-900 dark:text-amber-200">
         Your record does not accept these documents yet: it has no
         <code>accepted</code> value. Read them, then publish the record below,
         which includes it.
       </p>
     <% elsif changed.any? %>
-      <p class="mt-3 rounded bg-amber-50 px-3 py-2 text-sm text-amber-900">
+      <p class="mt-3 rounded bg-amber-50 dark:bg-amber-950 px-3 py-2 text-sm text-amber-900 dark:text-amber-200">
         Your record accepts an earlier version of the
         <%= legal_document_links(changed) %>.
         Read <%= changed.one? ? "it" : "them" %> again before publishing the record below.
@@ -39,15 +39,15 @@
       It starts out as whatever the admin already chose, so republishing
       never quietly changes it. %>
   <div data-controller="signals-choice" class="space-y-4">
-    <div class="rounded-lg border border-stone-200 bg-white p-5">
+    <div class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-5">
       <h2 class="text-sm font-semibold">2. Choose whether to share signals</h2>
-      <p class="mt-2 text-sm text-stone-700">
+      <p class="mt-2 text-sm text-stone-700 dark:text-stone-300">
         All instances participating in this Waterhole can warn each other when
         the same person applies to several of them — the pattern of a spammer,
         or of a signup farm working through a list of servers.
         Your instance only sees these warnings if it shares its own.
       </p>
-      <ul class="mt-3 list-disc space-y-1.5 pl-5 text-sm text-stone-700">
+      <ul class="mt-3 list-disc space-y-1.5 pl-5 text-sm text-stone-700 dark:text-stone-300">
         <li>
           <strong>What is compared:</strong> your applicants' email addresses (as
           keyed hashes, never in the clear), the networks they sign up from,
@@ -77,9 +77,9 @@
 
       <fieldset class="mt-4">
         <legend class="sr-only">Cross-instance signals</legend>
-        <div class="inline-flex overflow-hidden rounded border border-stone-300 text-sm">
+        <div class="inline-flex overflow-hidden rounded border border-stone-300 dark:border-stone-700 text-sm">
           <% [ [ "off", "Don't share signals" ], [ "on", "Share signals" ] ].each_with_index do |(value, label), index| %>
-            <label class="cursor-pointer px-3 py-1.5 hover:bg-stone-100 has-[:checked]:bg-stone-900 has-[:checked]:text-white has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-stone-400 <%= "border-l border-stone-300" if index.positive? %>">
+            <label class="cursor-pointer px-3 py-1.5 hover:bg-stone-100 dark:hover:bg-stone-800 has-[:checked]:bg-stone-900 dark:has-[:checked]:bg-stone-100 has-[:checked]:text-white dark:has-[:checked]:text-stone-900 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-stone-400 dark:has-[:focus-visible]:ring-stone-500 <%= "border-l border-stone-300 dark:border-stone-700" if index.positive? %>">
               <input type="radio" name="signals" value="<%= value %>" class="sr-only"
                      data-action="change->signals-choice#choose" <%= "checked" if (value == "on") == signals %>>
               <%= label %>
@@ -89,35 +89,35 @@
       </fieldset>
     </div>
 
-    <div class="rounded-lg border border-stone-200 bg-white p-5">
+    <div class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-5">
       <h2 class="text-sm font-semibold">3. Publish this TXT record</h2>
       <% { "off" => false, "on" => true }.each do |value, on| %>
         <% suggestion = DnsAllowlist.suggestion(domain, signals: on) %>
         <div data-signals-choice-target="variant" data-signals="<%= value %>" <%= "hidden" unless on == signals %>>
-          <pre class="mt-3 overflow-x-auto rounded bg-stone-900 p-3 text-xs text-stone-100"><code><%= suggestion.record %></code></pre>
+          <pre class="mt-3 overflow-x-auto rounded bg-stone-900 dark:bg-stone-950 dark:ring-1 dark:ring-stone-800 p-3 text-xs text-stone-100 dark:text-stone-200"><code><%= suggestion.record %></code></pre>
           <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
             <button type="button" data-action="clipboard#copy" data-clipboard-value="<%= suggestion.record %>"
-                    class="text-stone-500 underline hover:text-stone-900">Copy whole record (zone-file line)</button>
+                    class="text-stone-500 dark:text-stone-400 underline hover:text-stone-900 dark:hover:text-stone-100">Copy whole record (zone-file line)</button>
             <button type="button" data-action="clipboard#copy" data-clipboard-value="<%= suggestion.value %>"
-                    class="text-stone-500 underline hover:text-stone-900">Copy value only (for your DNS provider's form)</button>
+                    class="text-stone-500 dark:text-stone-400 underline hover:text-stone-900 dark:hover:text-stone-100">Copy value only (for your DNS provider's form)</button>
           </div>
         </div>
       <% end %>
-      <p class="mt-2 text-xs text-stone-500">
+      <p class="mt-2 text-xs text-stone-500 dark:text-stone-400">
         In a DNS provider's form: name <code><%= DnsAllowlist::PREFIX %></code>
         (some want the full <code><%= DnsAllowlist::PREFIX %>.<%= domain %></code>), type
         <code>TXT</code>, and as value what "Copy value only" gives you.
       </p>
-      <p class="mt-3 text-xs text-stone-500">
+      <p class="mt-3 text-xs text-stone-500 dark:text-stone-400">
         Publishing several records with different <code>host=</code> lets several Waterhole deployments in.
         Removing the TXT record for this Waterhole revokes access and signs your moderators out. You may only publish
         one TXT record per Waterhole instance.
       </p>
     </div>
 
-    <div class="rounded-lg border border-stone-200 bg-white p-5">
+    <div class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-5">
       <h2 class="text-sm font-semibold">4. Tell your applicants</h2>
-      <p class="mt-2 text-sm text-stone-700">
+      <p class="mt-2 text-sm text-stone-700 dark:text-stone-300">
         <strong>Informing your applicants is your responsibility.</strong> They
         apply to your instance and never see this Waterhole, so it cannot tell them
         that their registration is shared with it. Say so in your instance's
@@ -128,7 +128,7 @@
         sign-up form links to it: applicants tick "I have read and agree to the
         privacy policy" before they can apply.
       </p>
-      <p class="mt-2 text-sm text-stone-700">
+      <p class="mt-2 text-sm text-stone-700 dark:text-stone-300">
         If you use Mastodon's <%= link_to "default privacy policy", "https://github.com/mastodon/mastodon/blob/main/config/templates/privacy-policy.md",
                                           target: "_blank", rel: "noopener", class: "underline"  %>: its section <em>Do we
         disclose any information to outside parties?</em> excludes "trusted third
@@ -140,7 +140,7 @@
         <strong>your decision</strong>. If it is not enough for you, or you want
         your applicants to know specifically, add an explicit section.
       </p>
-      <p class="mt-2 text-sm text-stone-700">
+      <p class="mt-2 text-sm text-stone-700 dark:text-stone-300">
         Here is such a text, as a starting point. It is written for Mastodon's
         default privacy policy: paste it into the section <em>Do we disclose any
         information to outside parties?</em>, after its first paragraph. Adapt it
@@ -150,40 +150,40 @@
       <% { "off" => false, "on" => true }.each do |value, on| %>
         <% notice = applicant_notice(signals: on) %>
         <div data-signals-choice-target="variant" data-signals="<%= value %>" <%= "hidden" unless on == signals %>>
-          <pre class="mt-3 max-h-72 overflow-auto whitespace-pre-wrap rounded bg-stone-100 p-3 text-xs text-stone-800"><code><%= notice %></code></pre>
+          <pre class="mt-3 max-h-72 overflow-auto whitespace-pre-wrap rounded bg-stone-100 dark:bg-stone-800 p-3 text-xs text-stone-800 dark:text-stone-200"><code><%= notice %></code></pre>
           <button type="button" data-action="clipboard#copy" data-clipboard-value="<%= notice %>"
-                  class="mt-2 text-xs text-stone-500 underline hover:text-stone-900">Copy text</button>
+                  class="mt-2 text-xs text-stone-500 dark:text-stone-400 underline hover:text-stone-900 dark:hover:text-stone-100">Copy text</button>
         </div>
       <% end %>
     </div>
   </div>
 
-  <div class="rounded-lg border border-stone-200 bg-white p-5">
+  <div class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-5">
     <h2 class="text-sm font-semibold">5. Check it</h2>
 
     <% if admission.nil? %>
-      <p class="mt-2 text-sm text-stone-500">Enter your domain above.</p>
+      <p class="mt-2 text-sm text-stone-500 dark:text-stone-400">Enter your domain above.</p>
     <% elsif admission.admitted? %>
-      <p class="mt-2 rounded bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+      <p class="mt-2 rounded bg-emerald-50 dark:bg-emerald-950 px-3 py-2 text-sm text-emerald-900 dark:text-emerald-200">
         Found it. <%= domain %> is authorised — your moderators can sign in now.
       </p>
     <% else %>
-      <p class="mt-2 rounded bg-amber-50 px-3 py-2 text-sm text-amber-900"><%= admission.message %></p>
+      <p class="mt-2 rounded bg-amber-50 dark:bg-amber-950 px-3 py-2 text-sm text-amber-900 dark:text-amber-200"><%= admission.message %></p>
 
       <% if admission.dns&.records&.any? %>
         <div class="mt-3 text-xs">
-          <p class="font-medium text-stone-600">What we found at _waterhole.<%= domain %>:</p>
-          <pre class="mt-1 overflow-x-auto rounded bg-stone-100 p-2"><code><%= admission.dns.records.join("\n") %></code></pre>
+          <p class="font-medium text-stone-600 dark:text-stone-300">What we found at _waterhole.<%= domain %>:</p>
+          <pre class="mt-1 overflow-x-auto rounded bg-stone-100 dark:bg-stone-800 p-2"><code><%= admission.dns.records.join("\n") %></code></pre>
         </div>
       <% end %>
 
-      <p class="mt-3 text-xs text-stone-500">DNS changes can take a while to spread. Check again in a minute.</p>
+      <p class="mt-3 text-xs text-stone-500 dark:text-stone-400">DNS changes can take a while to spread. Check again in a minute.</p>
     <% end %>
 
     <%= form_with url: verification_path, method: :post, data: { turbo_frame: "verification_result" }, class: "mt-4" do |f| %>
       <%= f.hidden_field :instance_domain, value: domain %>
       <%= f.submit "Check again", data: { turbo_submits_with: "Checking…" },
-            class: "rounded border border-stone-300 px-3 py-1.5 text-sm hover:bg-stone-50" %>
+            class: "rounded border border-stone-300 dark:border-stone-700 px-3 py-1.5 text-sm hover:bg-stone-50 dark:hover:bg-stone-800" %>
     <% end %>
   </div>
 </div>

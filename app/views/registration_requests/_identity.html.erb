@@ -1,25 +1,25 @@
-<section class="rounded-lg border border-stone-200 bg-white p-5" data-controller="clipboard">
-  <h2 class="mb-3 text-xs font-semibold uppercase tracking-wide text-stone-500">Applicant</h2>
+<section class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-5" data-controller="clipboard">
+  <h2 class="mb-3 text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">Applicant</h2>
 
   <dl class="space-y-3 text-sm">
     <div>
-      <dt class="text-xs text-stone-500">Signed up</dt>
+      <dt class="text-xs text-stone-500 dark:text-stone-400">Signed up</dt>
       <dd><%= local_time(registration_request.signed_up_at) %></dd>
     </div>
 
     <div>
-      <dt class="text-xs text-stone-500">Email</dt>
+      <dt class="text-xs text-stone-500 dark:text-stone-400">Email</dt>
       <dd class="flex items-center gap-2">
         <span class="break-all font-mono text-xs"><%= registration_request.email.presence || "—" %></span>
         <% if registration_request.email.present? %>
-          <button type="button" class="text-xs text-stone-400 hover:text-stone-700"
+          <button type="button" class="text-xs text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300"
                   data-action="clipboard#copy" data-clipboard-value="<%= registration_request.email %>">copy</button>
         <% end %>
       </dd>
       <% if registration_request.confirmed? %>
-        <dd class="mt-1 text-xs text-stone-500">confirmed</dd>
+        <dd class="mt-1 text-xs text-stone-500 dark:text-stone-400">confirmed</dd>
       <% else %>
-        <dd class="mt-1 text-xs text-amber-800">
+        <dd class="mt-1 text-xs text-amber-800 dark:text-amber-200">
           not confirmed yet — Mastodon deletes the account if it stays unconfirmed
           for <%= RegistrationRequest::UNCONFIRMED_ACCOUNT_LIFETIME.inspect %> after signup
         </dd>
@@ -27,11 +27,11 @@
     </div>
 
     <div>
-      <dt class="text-xs text-stone-500">Signup IP</dt>
+      <dt class="text-xs text-stone-500 dark:text-stone-400">Signup IP</dt>
       <dd class="flex items-center gap-2">
         <span class="font-mono text-xs"><%= registration_request.ip.presence || "—" %></span>
         <% if registration_request.ip.present? %>
-          <button type="button" class="text-xs text-stone-400 hover:text-stone-700"
+          <button type="button" class="text-xs text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300"
                   data-action="clipboard#copy" data-clipboard-value="<%= registration_request.ip %>">copy</button>
         <% end %>
       </dd>
@@ -39,23 +39,23 @@
 
     <% if registration_request.ip_enriched_at.present? %>
       <div>
-        <dt class="text-xs text-stone-500">Network</dt>
+        <dt class="text-xs text-stone-500 dark:text-stone-400">Network</dt>
         <dd>
           <% if registration_request.ip_country.present? %>
             <span class="font-medium"><%= registration_request.ip_country %></span>
           <% end %>
           <% if registration_request.ip_asn.present? %>
-            <span class="text-stone-600">
+            <span class="text-stone-600 dark:text-stone-300">
               AS<%= registration_request.ip_asn %> <%= registration_request.ip_asn_org %>
             </span>
           <% elsif registration_request.ip_country.blank? %>
-            <span class="text-stone-400">no data for this address</span>
+            <span class="text-stone-500 dark:text-stone-400">no data for this address</span>
           <% end %>
           <% case registration_request.ip_relay %>
           <% when "private_relay" %>
-            <span class="block text-xs text-stone-500">iCloud Private Relay — an address shared by many Apple users</span>
+            <span class="block text-xs text-stone-500 dark:text-stone-400">iCloud Private Relay — an address shared by many Apple users</span>
           <% when "tor" %>
-            <span class="block text-xs text-stone-500">Tor relay — this address was running a Tor relay when the signup was seen</span>
+            <span class="block text-xs text-stone-500 dark:text-stone-400">Tor relay — this address was running a Tor relay when the signup was seen</span>
           <% end %>
         </dd>
       </div>
@@ -63,23 +63,23 @@
 
     <% if registration_request.locale.present? %>
       <div>
-        <dt class="text-xs text-stone-500">Locale</dt>
+        <dt class="text-xs text-stone-500 dark:text-stone-400">Locale</dt>
         <dd><%= registration_request.locale %></dd>
       </div>
     <% end %>
 
     <% if registration_request.bio.present? %>
       <div>
-        <dt class="text-xs text-stone-500">Profile note</dt>
-        <dd class="whitespace-pre-wrap text-stone-700"><%= registration_request.bio %></dd>
+        <dt class="text-xs text-stone-500 dark:text-stone-400">Profile note</dt>
+        <dd class="whitespace-pre-wrap text-stone-700 dark:text-stone-300"><%= registration_request.bio %></dd>
       </div>
     <% end %>
 
     <% if registration_request.account_url.present? %>
       <div>
-        <dt class="text-xs text-stone-500">In Mastodon</dt>
+        <dt class="text-xs text-stone-500 dark:text-stone-400">In Mastodon</dt>
         <dd><%= link_to "Open admin view", "#{registration_request.instance.base_url}/admin/accounts/#{registration_request.mastodon_account_id}",
-              target: "_blank", rel: "noopener", class: "text-indigo-700 underline" %></dd>
+              target: "_blank", rel: "noopener", class: "text-indigo-700 dark:text-indigo-400 underline" %></dd>
       </div>
     <% end %>
   </dl>

@@ -1,4 +1,4 @@
-<li id="<%= dom_id(registration_request) %>" data-keyboard-nav-target="item" class="hover:bg-stone-50">
+<li id="<%= dom_id(registration_request) %>" data-keyboard-nav-target="item" class="hover:bg-stone-50 dark:hover:bg-stone-800">
   <%# turbo_frame "_top" because this row sits inside the "queue" frame, which
       exists for filtering and paging. Without it the link would try to load the
       detail page INTO that frame, and the detail page has no "queue" frame, so
@@ -9,22 +9,22 @@
       <span class="font-medium">@<%= registration_request.username %></span>
       <%= status_badge(registration_request) %>
       <% unless registration_request.confirmed? %>
-        <span class="rounded-full bg-stone-100 px-2 py-0.5 text-xs text-stone-600 ring-1 ring-stone-300">Email not confirmed</span>
+        <span class="rounded-full bg-stone-100 dark:bg-stone-800 px-2 py-0.5 text-xs text-stone-600 dark:text-stone-300 ring-1 ring-stone-300 dark:ring-stone-700">Email not confirmed</span>
       <% end %>
 
       <% if registration_request.claimed? %>
-        <span class="rounded-full bg-indigo-100 px-2 py-0.5 text-xs text-indigo-900">
+        <span class="rounded-full bg-indigo-100 dark:bg-indigo-900 px-2 py-0.5 text-xs text-indigo-900 dark:text-indigo-200">
           <%= registration_request.claimed_by == current_moderator ? "Yours" : "#{registration_request.claimed_by&.name} is on it" %>
         </span>
       <% end %>
 
-      <span class="ml-auto text-xs text-stone-500">
+      <span class="ml-auto text-xs text-stone-500 dark:text-stone-400">
         <%= relative_time(registration_request.signed_up_at) %>
       </span>
     </div>
 
-    <p class="mt-1 line-clamp-2 text-sm text-stone-600">
-      <%= registration_request.invite_request.presence || tag.em("No reason given", class: "text-stone-400") %>
+    <p class="mt-1 line-clamp-2 text-sm text-stone-600 dark:text-stone-300">
+      <%= registration_request.invite_request.presence || tag.em("No reason given", class: "text-stone-500 dark:text-stone-400") %>
     </p>
 
     <% if registration_request.flags.any? %>
@@ -36,7 +36,7 @@
     <% end %>
 
     <% if registration_request.notes_count.positive? %>
-      <p class="mt-1 text-xs text-stone-500"><%= pluralize(registration_request.notes_count, "note") %></p>
+      <p class="mt-1 text-xs text-stone-500 dark:text-stone-400"><%= pluralize(registration_request.notes_count, "note") %></p>
     <% end %>
   <% end %>
 </li>

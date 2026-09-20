@@ -49,6 +49,8 @@ class QueueTest < ActionDispatch::IntegrationTest
     assert_select "turbo-frame#queue a[href=?]", registration_request_path(registration_requests(:pending_alpha)) do |links|
       assert_equal "_top", links.first["data-turbo-frame"],
         "a row link inside the queue frame must target _top"
+      assert_match(%r{\A/requests/\d+/claim\z}, links.first["data-claim-url"])
+      assert_equal "false", links.first["data-claimed-by-me"]
     end
   end
 

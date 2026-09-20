@@ -33,7 +33,9 @@
   <% if recent_instance_domains.any? %>
     <div class="mt-6">
       <p class="mb-2 text-xs font-medium uppercase tracking-wide text-stone-500 dark:text-stone-400">Recently used in this browser</p>
-      <ul class="divide-y divide-stone-200 dark:divide-stone-800 overflow-hidden rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 text-sm">
+      <ul class="divide-y divide-stone-200 dark:divide-stone-800 rounded-lg
+          [&>li:first-child>form:first-child>button]:rounded-tl-lg [&>li:first-child>form:last-child>button]:rounded-tr-lg
+          [&>li:last-child>form:first-child>button]:rounded-bl-lg [&>li:last-child>form:last-child>button]:rounded-br-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 text-sm">
         <% recent_instance_domains.each do |domain| %>
           <li class="flex items-center">
             <%= button_to domain, session_path, params: { domain:, remember: "1" },

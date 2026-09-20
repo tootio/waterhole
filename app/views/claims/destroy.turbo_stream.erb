@@ -1,0 +1,4 @@
+<%= turbo_stream.replace @registration_request %>
+<%= turbo_stream.replace dom_id(@registration_request, :claim_banner) do %>
+  <%= render "registration_requests/claim_banner", registration_request: @registration_request %>
+<% end %>

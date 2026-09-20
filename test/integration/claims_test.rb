@@ -1,6 +1,9 @@
 require "test_helper"
 
 class ClaimsTest < ActionDispatch::IntegrationTest
+  include ActiveJob::TestHelper
+  include ActionCable::TestHelper
+
   setup do
     @moderator = moderators(:avery)
     @pending = registration_requests(:pending_alpha)
@@ -8,10 +11,17 @@ class ClaimsTest < ActionDispatch::IntegrationTest
   end
 
   test "claiming an unclaimed request succeeds" do
-    post registration_request_claim_path(@pending)
+    instance_stream = Turbo::StreamsChannel.send(:stream_name_from, [ @pending.instance, :registration_requests ])
+    request_stream = Turbo::StreamsChannel.send(:stream_name_from, @pending)
+
+    perform_enqueued_jobs do
+      post registration_request_claim_path(@pending)
+    end
 
     assert_equal @moderator, @pending.reload.claimed_by
     assert @pending.claimed_at.present?
+    assert broadcasts(instance_stream).any?, "expected a refresh broadcast on the instance stream"
+    assert broadcasts(request_stream).any?, "expected a refresh broadcast on the request stream"
   end
 
   test "claiming something someone else already holds does not steal it" do
@@ -48,6 +58,26 @@ class ClaimsTest < ActionDispatch::IntegrationTest
     delete registration_request_claim_path(@pending)
 
     assert_nil @pending.reload.claimed_by
+  end
+
+  test "claiming via turbo stream responds with turbo stream replacing the request" do
+    post registration_request_claim_path(@pending), as: :turbo_stream
+
+    assert_response :success
+    assert_equal @moderator, @pending.reload.claimed_by
+    assert_match(/<turbo-stream action="replace" target="registration_request_#{@pending.id}">/, response.body)
+    assert_match(/Yours/, response.body)
+  end
+
+  test "releasing via turbo stream responds with turbo stream replacing the request" do
+    @pending.update!(claimed_by: @moderator, claimed_at: Time.current)
+
+    delete registration_request_claim_path(@pending), as: :turbo_stream
+
+    assert_response :success
+    assert_nil @pending.reload.claimed_by
+    assert_match(/<turbo-stream action="replace" target="registration_request_#{@pending.id}">/, response.body)
+    refute_match(/Yours/, response.body)
   end
 
   # The conditional UPDATE is what makes this safe; a read-then-write would let

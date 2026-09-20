@@ -6,17 +6,28 @@ class ClaimsController < ApplicationController
   def create
     if claim_atomically || stealing_allowed?
       broadcast_change
-      redirect_back_or_to registration_request_path(@registration_request)
+      respond_to do |format|
+        format.turbo_stream
+        format.html { redirect_back_or_to registration_request_path(@registration_request) }
+      end
     else
-      redirect_back_or_to registration_request_path(@registration_request),
-        alert: "#{@registration_request.reload.claimed_by&.name || "Someone else"} claimed this first."
+      respond_to do |format|
+        format.turbo_stream
+        format.html do
+          redirect_back_or_to registration_request_path(@registration_request),
+            alert: "#{@registration_request.reload.claimed_by&.name || "Someone else"} claimed this first."
+        end
+      end
     end
   end
 
   def destroy
     @registration_request.update!(claimed_by: nil, claimed_at: nil)
     broadcast_change
-    redirect_back_or_to registration_request_path(@registration_request)
+    respond_to do |format|
+      format.turbo_stream
+      format.html { redirect_back_or_to registration_request_path(@registration_request) }
+    end
   end
 
   private
@@ -42,6 +53,8 @@ class ClaimsController < ApplicationController
 
   # update_all skips callbacks, so the broadcast is explicit.
   def broadcast_change
-    @registration_request.reload.broadcast_refresh_later
+    @registration_request.reload
+    @registration_request.broadcast_refresh_later_to [ @registration_request.instance, :registration_requests ]
+    @registration_request.broadcast_refresh_later
   end
 end

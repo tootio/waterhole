@@ -1,10 +1,17 @@
-<li id="<%= dom_id(registration_request) %>" data-keyboard-nav-target="item" class="hover:bg-stone-50 dark:hover:bg-stone-800">
+<li id="<%= dom_id(registration_request) %>">
   <%# turbo_frame "_top" because this row sits inside the "queue" frame, which
       exists for filtering and paging. Without it the link would try to load the
       detail page INTO that frame, and the detail page has no "queue" frame, so
       the list would just empty itself. %>
   <%= link_to registration_request_path(registration_request),
-        data: { turbo_frame: "_top" }, class: "block px-4 py-3" do %>
+        data: {
+          turbo_frame: "_top",
+          keyboard_nav_target: "item",
+          claim_url: registration_request_claim_path(registration_request),
+          claimed_by_me: registration_request.claimed_by == current_moderator
+        },
+        class: "block px-4 py-3 hover:bg-stone-50 dark:hover:bg-stone-800 focus-visible:bg-stone-50 dark:focus-visible:bg-stone-800",
+        id: dom_id(registration_request, :link) do %>
     <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
       <span class="font-medium">@<%= registration_request.username %></span>
       <%= status_badge(registration_request) %>

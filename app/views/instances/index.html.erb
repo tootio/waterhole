@@ -8,7 +8,7 @@
   </p>
 </div>
 
-<ul class="divide-y divide-stone-200 dark:divide-stone-800 overflow-hidden rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900">
+<ul class="divide-y divide-stone-200 dark:divide-stone-800 rounded-lg [&>li:first-child>a]:rounded-t-lg [&>li:last-child>a]:rounded-b-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900">
   <% @instances.each do |instance| %>
     <li>
       <%= link_to herd_path(instance),

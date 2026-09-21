@@ -10,7 +10,11 @@
     <%= f.hidden_field :parent_id, value: parent&.id %>
     <%= f.text_area :body, rows: parent ? 2 : 3,
           placeholder: parent ? "Reply…" : "Add a note for the other moderators…",
-          data: { note_composer_target: "input", action: "input->note-composer#count" },
+          data: {
+            note_composer_target: "input",
+            action: "input->note-composer#count keydown.meta+enter->note-composer#submit keydown.ctrl+enter->note-composer#submit",
+            **(parent.nil? ? { detail_nav_target: "noteInput" } : {})
+          },
           class: "w-full rounded border border-stone-300 dark:border-stone-700 px-3 py-2 text-sm" %>
     <div class="mt-2 flex items-center gap-3">
       <%= f.submit parent ? "Reply" : "Add note",

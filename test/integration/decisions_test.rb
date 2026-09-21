@@ -146,4 +146,32 @@ class DecisionsTest < ActionDispatch::IntegrationTest
 
     assert_nil @pending.reload.decision
   end
+
+  test "approve and advance redirects to the next request in the list, not back to this one" do
+    claimed_alpha = registration_requests(:claimed_alpha) # next after pending_alpha, newest first
+    stub_decision(@instance, id: @pending.mastodon_account_id, action: "approve")
+
+    post registration_request_decision_path(@pending, decision_action: "approve", advance: 1)
+
+    assert_equal "approved", @pending.reload.status
+    assert_redirected_to registration_request_path(claimed_alpha)
+  end
+
+  test "approve and advance on the last request in the list falls back to the queue" do
+    jules_alpha = registration_requests(:jules_alpha) # last in the default (newest-first, pending) list
+    stub_decision(@instance, id: jules_alpha.mastodon_account_id, action: "approve")
+
+    post registration_request_decision_path(jules_alpha, decision_action: "approve", advance: 1)
+
+    assert_equal "approved", jules_alpha.reload.status
+    assert_redirected_to registration_requests_path
+  end
+
+  test "a plain approve without advance still redirects back to this request" do
+    stub_decision(@instance, id: @pending.mastodon_account_id, action: "approve")
+
+    post registration_request_decision_path(@pending, decision_action: "approve")
+
+    assert_redirected_to registration_request_path(@pending)
+  end
 end

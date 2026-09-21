@@ -15,6 +15,10 @@ Rails.application.routes.draw do
 
   # --- the queue -------------------------------------------------------------
   resources :registration_requests, path: "requests", only: %i[index show] do
+    member do
+      get :next
+      get :previous
+    end
     resource  :claim,    only: %i[create destroy]
     resource  :decision, only: :create
     # Clears the applicant's personal data here; sync never imports it again.

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="h-full" lang="<%= I18n.locale %>">
   <head>
-    <title><%= content_for(:title) || "Waterhole" %></title>
+    <title><%= page_title %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <link rel="icon" href="/icon.png" type="image/png">
@@ -9,6 +9,7 @@
     <link rel="apple-touch-icon" href="/icon.png">
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#1c1917" media="(prefers-color-scheme: dark)">
+    <%= render "shared/meta" %>
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
     <%= turbo_refreshes_with method: :morph, scroll: :preserve %>

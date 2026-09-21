@@ -132,6 +132,9 @@ upstream repository by default; set `WATERHOLE_SOURCE_URL` to your fork.
   [Noto Emoji](https://googlefonts.github.io/noto-emoji-files/?emoji=emoji_u1f9a3)
   by Google, under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/),
   scaled down to 288×288 and converted to WebP.
+- `public/og.png`, the link-preview image (`og:image`/`twitter:image`), is a
+  derivative of that same 3D mammoth, under the same CC BY 4.0 license. Its
+  editable source is [`design/og.svg`](design/og.svg).
 - IP geolocation data is not part of this repository. It is downloaded at
   runtime from [ip-location-db](https://github.com/sapics/ip-location-db) and is
   in the public domain (PDDL).

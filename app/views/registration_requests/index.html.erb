@@ -1,4 +1,4 @@
-<% content_for :title, "Queue — Waterhole" %>
+<% content_for :page_title, "Queue" %>
 
 <%# Live queue: sync inserts, claims and decisions all reach every open queue. %>
 <%= turbo_stream_from current_instance, :registration_requests %>

@@ -1,11 +1,12 @@
-<% content_for :title, "About — Waterhole" %>
+<% content_for :page_title, "About" %>
+<% content_for :description, "How #{Waterhole::Deployment.host} moderates Mastodon registrations with Waterhole, and how to bring your own instance's herd." %>
 
 <div class="mx-auto max-w-2xl">
   <div class="mb-8 text-center">
     <%= image_tag "/mammoth-3d.webp", alt: "", class: "mx-auto size-24" %>
     <h1 class="mt-2 text-2xl font-semibold tracking-tight">About <%= Waterhole::Deployment.host %></h1>
     <p class="mt-2 text-sm text-stone-600 dark:text-stone-300">
-      Collaborative moderation for Mastodon registration requests.
+      <%= ApplicationHelper::TAGLINE %>
     </p>
   </div>
 

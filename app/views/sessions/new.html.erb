@@ -2,14 +2,15 @@
     the page it started from, whose form-action would block the redirect to
     Mastodon; only a real load picks up this page's looser one. %>
 <% content_for :head, tag.meta(name: "turbo-visit-control", content: "reload") %>
-<% content_for :title, "Sign in — Waterhole" %>
+<% content_for :page_title, "Sign in" %>
+<% content_for :description, "Sign in with your Mastodon account. Waterhole acts as you, so your moderator role decides what you can do." %>
 
 <div class="mx-auto max-w-lg">
   <div class="mb-8 text-center">
     <%= image_tag "/mammoth-3d.webp", alt: "", class: "mx-auto size-24" %>
     <h1 class="mt-2 text-2xl font-semibold tracking-tight">Waterhole</h1>
     <p class="mt-2 text-sm text-stone-600 dark:text-stone-300">
-      Collaborative moderation for Mastodon registration requests.
+      <%= ApplicationHelper::TAGLINE %>
     </p>
   </div>
 

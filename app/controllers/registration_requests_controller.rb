@@ -12,7 +12,8 @@ class RegistrationRequestsController < ApplicationController
     @counts = {
       pending: awaiting.count,
       unclaimed: awaiting.unclaimed.count,
-      mine: awaiting.claimed_by_moderator(current_moderator).count,
+      # a moderator can claim unconfirmed registrations. Count them, too.
+      mine: pending.claimed_by_moderator(current_moderator).count,
       # Hidden by default, so say how many there are rather than let them vanish.
       unconfirmed: pending.email_unconfirmed.count
     }

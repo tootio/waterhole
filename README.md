@@ -20,7 +20,7 @@ go back through each instance's own admin API, made by its own moderators.
 
 ## Tech Stack
 
-* Ruby on Rails (with Solid Cable, Solid Jobs, Solid Cache, and Turbo)
+* Ruby on Rails (with Solid Cable, Solid Queue, Solid Cache, and Turbo)
 * PostgreSQL
 
 ## Configuration

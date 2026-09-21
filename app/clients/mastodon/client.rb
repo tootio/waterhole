@@ -75,7 +75,7 @@ module Mastodon
       record_rate_limit(response)
       raise_for_status(response)
       response
-    rescue Faraday::TimeoutError, Faraday::ConnectionFailed, Faraday::SSLError => e
+    rescue Faraday::TimeoutError, Faraday::ConnectionFailed, Faraday::SSLError, SsrfGuard::BlockedHost => e
       raise ConnectionError, "#{e.class}: #{e.message}"
     end
 
@@ -118,7 +118,9 @@ module Mastodon
         f.headers["User-Agent"] = "Waterhole (+#{Waterhole::Deployment.base_url})"
         f.options.open_timeout = OPEN_TIMEOUT
         f.options.timeout = @read_timeout
-        f.adapter Faraday.default_adapter
+        f.adapter Faraday.default_adapter do |http|
+          SsrfGuard.pin!(http)
+        end
       end
     end
   end

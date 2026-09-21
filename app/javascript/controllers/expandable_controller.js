@@ -7,10 +7,25 @@ export default class extends Controller {
   static values = { collapsedHeight: { type: Number, default: 240 } }
 
   connect() {
+    this.reconcile = this.reconcile.bind(this)
+    this.reconcile()
+
+    // A Turbo morph refresh (see local_time_controller) resets this element's
+    // inline max-height and toggle label back to the server defaults without
+    // disconnecting the controller, silently re-collapsing a moderator's
+    // expanded reason. Reapply whatever they last chose after every render.
+    document.addEventListener("turbo:render", this.reconcile)
+  }
+
+  disconnect() {
+    document.removeEventListener("turbo:render", this.reconcile)
+  }
+
+  reconcile() {
     if (this.contentTarget.scrollHeight <= this.collapsedHeightValue) return
 
-    this.collapse()
     this.toggleTarget.classList.remove("hidden")
+    this.expanded ? this.expand() : this.collapse()
   }
 
   toggle() {

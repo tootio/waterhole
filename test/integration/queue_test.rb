@@ -127,6 +127,28 @@ class QueueTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "an empty default queue congratulates the moderator instead of showing a dull empty state" do
+    sign_in_as @moderator
+    @moderator.instance.registration_requests.destroy_all
+
+    get root_path
+
+    assert_response :success
+    assert_select "body", /waterhole is quiet/
+    assert_select "body", { count: 0, text: /Nothing here/ }
+  end
+
+  test "an empty filtered queue still shows the plain empty state" do
+    sign_in_as @moderator
+    @moderator.instance.registration_requests.destroy_all
+
+    get root_path, params: { search: "nobody-matches-this" }
+
+    assert_response :success
+    assert_select "body", /Nothing here/
+    assert_select "body", { count: 0, text: /waterhole is quiet/ }
+  end
+
   test "flags are shown by their labels, not their rule names" do
     sign_in_as @moderator
     request = registration_requests(:pending_alpha)

@@ -30,6 +30,11 @@ module RegistrationRequests
 
     def active? = filters.except(*DEFAULT.keys) != {} || filters != DEFAULT
 
+    # Same as the plain queue landing page: pending, verified, unclaimed-or-not,
+    # any moderator. Sort order doesn't count as a filter here — an empty
+    # "newest" queue and an empty "riskiest" queue are the same empty queue.
+    def unfiltered? = filters.except(:sort) == DEFAULT.except(:sort)
+
     private
 
     def apply_claim(relation)

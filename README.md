@@ -64,12 +64,7 @@ Put a TLS-terminating reverse proxy (nginx, Caddy, …) in front of
 `127.0.0.1:3000`; [`config/nginx.conf.example`](config/nginx.conf.example) is a
 complete nginx setup, including the websocket for live updates. To upgrade, run `docker compose pull && docker compose up -d`.
 
-**Kamal** is an alternative if you already use it:
-`cp config/deploy.yml.example config/deploy.yml` (gitignored), then
-`bin/kamal deploy --skip-push --version <release>` to run a released image.
-kamal-proxy handles TLS.
-
-Either way, **back up the database together with `.env.production`.**
+**Back up the database together with `.env.production`.**
 
 Release images are published to `ghcr.io/tootio/waterhole` for amd64 and arm64.
 Pushing a tag such as `v1.2.0` runs CI against it and, if it passes, publishes

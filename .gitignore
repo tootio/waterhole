@@ -28,11 +28,6 @@
 
 /public/assets
 
-# Each deployment's own Kamal config, copied from config/deploy.yml.example
-# (including per-destination files such as deploy.staging.yml).
-/config/deploy.yml
-/config/deploy.*.yml
-
 # Ignore key files for decrypting credentials and more.
 /config/*.key
 

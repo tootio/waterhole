@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 # check=error=true
 
-# This Dockerfile is designed for production, not development. Use with Kamal or build'n'run by hand:
+# This Dockerfile is designed for production, not development. Build and run by hand:
 # docker build -t waterhole .
 # docker run -d -p 80:80 --env-file .env.production -v waterhole_storage:/rails/storage --name waterhole waterhole
 # Every setting comes from ENV; see .env.production.sample.

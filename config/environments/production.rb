@@ -22,8 +22,8 @@ Rails.application.configure do
   # config.asset_host = "http://assets.example.com"
 
   # Waterhole is always served over HTTPS behind a TLS-terminating proxy
-  # (kamal-proxy, or nginx/Caddy in front of docker compose): WATERHOLE_HOST is
-  # published in instances' DNS records and the OAuth redirect URI is https.
+  # (nginx/Caddy in front of docker compose): WATERHOLE_HOST is published in
+  # instances' DNS records and the OAuth redirect URI is https.
   config.assume_ssl = true
 
   # Strict-Transport-Security and secure cookies.

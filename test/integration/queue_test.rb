@@ -159,7 +159,9 @@ class QueueTest < ActionDispatch::IntegrationTest
     assert_select "select[name=flag] option[value=datacenter_asn]", "Datacenter ASN"
 
     get registration_request_path(request)
-    assert_select "p", "IP active elsewhere"
+    # The label's <p> also carries the "About this flag" link, so match by
+    # substring rather than exact text.
+    assert_select "p", /IP active elsewhere/
     assert_select "body", { count: 0, text: /Ip active elsewhere/ }
   end
 end

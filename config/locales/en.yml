@@ -5,27 +5,74 @@ en:
   flags:
     no_invite_request:
       label: "No reason given"
+      help: "The applicant left the \"why do you want to join\" field empty. Genuine
+        applicants usually say something, even briefly, so a blank reason is a weak
+        signal worth a second look rather than an automatic rejection."
     short_invite_request:
       label: "Short reason"
+      help: "The applicant's join reason was only a few words. Very short reasons are
+        sometimes genuine, but they're also what low-effort signup scripts and spam
+        accounts tend to produce, so this flag just asks a moderator to read it
+        before deciding."
     disposable_email:
       label: "Disposable email"
+      help: "The applicant signed up with an address from a known disposable or
+        temporary email provider. These are commonly used to create throwaway
+        accounts and evade bans, since the address can't be used to contact the
+        person again."
     shared_ip:
       label: "Shared IP"
+      help: "This applicant shares an IP address with one or more other pending
+        requests. That can be an innocent coincidence (a shared network, a school,
+        an office) but it can also mean the same person is submitting multiple
+        applications at once."
     datacenter_asn:
       label: "Datacenter ASN"
+      help: "The signup came from an IP address belonging to a hosting or cloud
+        provider rather than a residential or mobile network. Real applicants
+        rarely sign up directly from a datacenter, so this often indicates a VPN,
+        proxy, or automated signup."
     tor_relay:
       label: "Tor relay"
+      help: "The signup came from the address of a known, currently running Tor
+        exit or relay node. Tor use isn't inherently suspicious, but it does make
+        it much harder to tell repeat or automated signups apart from genuine new
+        applicants."
     reapplication:
       label: "Reapplication"
+      help: "This application closely matches one or more earlier requests that
+        were rejected, based on shared details like email or IP. It's surfaced so a
+        moderator can decide whether the applicant addressed the reason for the
+        earlier rejection."
     keyword_hit:
       label: "Watchword match"
+      help: "The join reason matched one of this instance's configured watchwords.
+        Watchwords are moderator-edited phrases (see the Watchwords page) meant to
+        catch known spam wording or topics the instance wants a human to review."
     email_active_elsewhere:
       label: "Email active elsewhere"
+      help: "This applicant's email address is already active on another
+        participating instance. That can be entirely normal for someone with
+        multiple accounts, but it's useful context when weighing an application."
     ip_active_elsewhere:
       label: "IP active elsewhere"
+      help: "This applicant's IP address (or, for IPv6, the containing /64 network)
+        is already associated with requests on other participating instances. This
+        is shared context across instances, not proof of anything on its own."
     similar_reason:
       label: "Similar join reason"
+      help: "The applicant's join reason is nearly identical, word for word, to one
+        or more other requests. Coordinated or scripted signups often reuse the
+        same or templated wording, which is what this flag looks for."
     signup_burst:
       label: "Signup burst"
+      help: "A cluster of signups arrived within a short window of each other, from
+        multiple networks, sharing a pattern such as the same email domain and a
+        similar username shape. This is the kind of pattern automated signup
+        campaigns produce."
     app_signup:
       label: "Signed up via app"
+      help: "This account was created through Mastodon's API by an app, rather than
+        through the instance's own website sign-up form. That's a normal way to
+        sign up used by e.g, mobile apps, but it's noted because it bypasses any additional checks the
+        website's own form might present and because of this it is commonly used by spammers."

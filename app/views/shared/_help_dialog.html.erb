@@ -1,0 +1,15 @@
+<dialog data-modal-target="dialog"
+        data-action="click->modal#closeOnBackdrop close->modal#clear"
+        aria-labelledby="help-dialog-title"
+        class="fixed inset-0 m-auto hidden max-h-[85vh] w-full max-w-lg flex-col rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-0 text-stone-900 dark:text-stone-100 shadow-xl [&[open]]:flex backdrop:bg-stone-950/60">
+  <div class="flex shrink-0 items-center justify-between gap-3 border-b border-stone-200 dark:border-stone-800 px-4 py-3">
+    <%# Filled from the fetched page's own <h1> -- see modal_controller.js. %>
+    <h2 id="help-dialog-title" data-modal-target="title" class="text-sm font-semibold text-stone-900 dark:text-stone-100"></h2>
+    <button type="button" data-action="modal#close"
+            class="shrink-0 rounded p-1 text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-stone-700 dark:hover:text-stone-200"
+            aria-label="Close">
+      ✕
+    </button>
+  </div>
+  <div data-modal-target="content" class="min-h-0 flex-1 overflow-y-auto p-5"></div>
+</dialog>

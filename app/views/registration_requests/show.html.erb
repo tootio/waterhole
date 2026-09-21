@@ -1,4 +1,4 @@
-<% content_for :title, "@#{@registration_request.username} — Waterhole" %>
+<% content_for :page_title, "@#{@registration_request.username}" %>
 
 <%# Per-request stream: notes append, and claim/decision changes refresh. %>
 <%= turbo_stream_from @registration_request %>

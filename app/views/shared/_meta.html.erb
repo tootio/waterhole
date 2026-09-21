@@ -1,0 +1,23 @@
+<%# Canonical and query-free: the path alone identifies the page, and a filter
+    or a ?instance_domain= a moderator happened to have open is nobody's
+    business to republish in a link preview. %>
+<% url = "#{Waterhole::Deployment.base_url}#{request.path}" %>
+
+<meta name="description" content="<%= page_description %>">
+<link rel="canonical" href="<%= url %>">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="<%= ApplicationHelper::SITE_NAME %>">
+<meta property="og:title" content="<%= page_title %>">
+<meta property="og:description" content="<%= page_description %>">
+<meta property="og:url" content="<%= url %>">
+<meta property="og:image" content="<%= share_image_url %>">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A woolly mammoth beside the word Waterhole.">
+
+<%# Mastodon and Slack both read og:* first, but fall back to these. %>
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="<%= page_title %>">
+<meta name="twitter:description" content="<%= page_description %>">
+<meta name="twitter:image" content="<%= share_image_url %>">

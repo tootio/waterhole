@@ -1,7 +1,30 @@
 module ApplicationHelper
+  SITE_NAME = "Waterhole"
+
+  # The one-line description of the app. Also the copy under the wordmark on
+  # the sign-in and About pages, and the first line of README.md -- keep them
+  # in step.
+  TAGLINE = "Collaborative moderation for Mastodon registration requests."
+
   # Past this the exact number stops changing anyone's next move, and a wider
   # badge starts pushing the navigation around on a phone.
   QUEUE_BADGE_MAX = 99
+
+  # Views name only the page; the suffix lives here, so the browser tab and
+  # the unfurled link preview can never drift apart.
+  def page_title
+    name = content_for(:page_title)
+    name.present? ? "#{name} — #{SITE_NAME}" : SITE_NAME
+  end
+
+  def page_description
+    content_for(:description).presence || TAGLINE
+  end
+
+  # Absolute, because an unfurler fetches it from somewhere else entirely.
+  def share_image_url
+    "#{Waterhole::Deployment.base_url}/og.png"
+  end
 
   # Nothing waiting is worth saying with an absence, not with a "0".
   def queue_badge(count)

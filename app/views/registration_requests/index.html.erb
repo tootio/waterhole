@@ -41,6 +41,12 @@
 
     <%= render "shared/pagination", pagination: @pagination, noun: "request",
           path: ->(page) { queue_page_path(page) } %>
+  <% elsif @query.unfiltered? %>
+    <div class="rounded-lg border border-dashed border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-6 py-12 text-center">
+      <p class="text-3xl" aria-hidden="true">🎉</p>
+      <p class="mt-2 font-medium text-stone-700 dark:text-stone-300">The waterhole is quiet.</p>
+      <p class="mt-1 text-sm text-stone-500 dark:text-stone-400">Every applicant has been seen to. The herd can graze in peace.</p>
+    </div>
   <% else %>
     <div class="rounded-lg border border-dashed border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-6 py-12 text-center">
       <p class="font-medium text-stone-700 dark:text-stone-300">Nothing here.</p>

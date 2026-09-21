@@ -22,6 +22,9 @@ class RegistrationRequestsController < ApplicationController
   def show
     @notes = @registration_request.notes.roots.includes(:moderator, replies: :moderator).chronological
     @note  = @registration_request.notes.new
+    # Rebuilt from the permitted filters the row link handed back to us, never
+    # from a raw url, so this can't be turned into an open redirect.
+    @back_to_queue_path = registration_requests_path(filter_params)
   end
 
   private
@@ -37,6 +40,6 @@ class RegistrationRequestsController < ApplicationController
   def queue_page_path(page) = registration_requests_path(filter_params.merge(page:))
 
   def filter_params
-    params.permit(:status, :claim, :email, :flag, :search, :sort).to_h
+    params.permit(*RegistrationRequestsHelper::FILTER_PARAMS).to_h
   end
 end

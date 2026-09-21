@@ -1,4 +1,10 @@
 module RegistrationRequestsHelper
+  # The only filters a queue link may carry. Handing url_for the raw query
+  # string would let ?host= or ?protocol= rewrite a link into another origin
+  # or a javascript: URL, so links are always rebuilt from this allowlist
+  # instead of from whatever the request happens to have on it.
+  FILTER_PARAMS = %i[status claim email flag search sort].freeze
+
   STATUS_STYLES = {
     "pending"            => "bg-amber-100 dark:bg-amber-900 text-amber-900 dark:text-amber-200",
     "approved"           => "bg-emerald-100 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-200",
@@ -7,6 +13,14 @@ module RegistrationRequestsHelper
     "rejected_elsewhere" => "bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 ring-1 ring-stone-300 dark:ring-stone-700",
     "expired"            => "bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 ring-1 ring-stone-200 dark:ring-stone-700"
   }.freeze
+
+  # Carries the queue's current filters onto a row's link, so "back to queue"
+  # from the detail page can restore them. A plain helper rather than a
+  # controller method, since this partial is also rendered from
+  # ClaimsController's turbo_stream responses.
+  def queue_row_path(registration_request)
+    registration_request_path(registration_request, params.permit(*FILTER_PARAMS))
+  end
 
   def status_badge(request)
     label = request.expired? ? "Expired" : request.status.humanize

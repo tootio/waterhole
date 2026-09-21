@@ -22,6 +22,14 @@ module RegistrationRequestsHelper
     registration_request_path(registration_request, params.permit(*FILTER_PARAMS))
   end
 
+  def next_in_list_path(registration_request)
+    next_registration_request_path(registration_request, params.permit(*FILTER_PARAMS))
+  end
+
+  def previous_in_list_path(registration_request)
+    previous_registration_request_path(registration_request, params.permit(*FILTER_PARAMS))
+  end
+
   def status_badge(request)
     label = request.expired? ? "Expired" : request.status.humanize
     label += " (in Mastodon)" if request.resolved_elsewhere?

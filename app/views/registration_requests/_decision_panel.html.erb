@@ -39,12 +39,34 @@
       </div>
     <% end %>
     <div class="flex flex-wrap gap-3">
-      <%= button_to "Approve", registration_request_decision_path(registration_request, decision_action: "approve"),
-            form: { data: { turbo_confirm: "Approve @#{registration_request.username} on #{registration_request.instance.domain}?" } },
-            class: "rounded bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700" %>
-      <%= button_to "Reject", registration_request_decision_path(registration_request, decision_action: "reject"),
-            form: { data: { turbo_confirm: "Reject @#{registration_request.username}? Mastodon deletes the account on rejection, and this cannot be undone." } },
-            class: "rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700" %>
+      <div class="inline-flex rounded overflow-hidden">
+        <%= button_to registration_request_decision_path(registration_request, decision_action: "approve"),
+              form: { data: { turbo_confirm: "Approve @#{registration_request.username} on #{registration_request.instance.domain}?" } },
+              class: "bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700" do %>
+          <span aria-hidden="true">✔︎ </span>Approve
+        <% end %>
+        <%= button_to "→", registration_request_decision_path(registration_request, decision_action: "approve", advance: 1),
+              title: "Approve and go to next request",
+              form: { data: {
+                turbo_confirm: "Approve @#{registration_request.username} on #{registration_request.instance.domain}?",
+                detail_nav_target: "approveAndNextForm"
+              } },
+              class: "border-l border-emerald-700 bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700" %>
+      </div>
+      <div class="inline-flex rounded overflow-hidden">
+        <%= button_to registration_request_decision_path(registration_request, decision_action: "reject"),
+              form: { data: { turbo_confirm: "Reject @#{registration_request.username}? Mastodon deletes the account on rejection, and this cannot be undone." } },
+              class: "bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700" do %>
+          <span aria-hidden="true">✘ </span>Reject
+        <% end %>
+        <%= button_to "→", registration_request_decision_path(registration_request, decision_action: "reject", advance: 1),
+              title: "Reject and go to next request",
+              form: { data: {
+                turbo_confirm: "Reject @#{registration_request.username}? Mastodon deletes the account on rejection, and this cannot be undone.",
+                detail_nav_target: "rejectAndNextForm"
+              } },
+              class: "border-l border-red-700 bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700" %>
+      </div>
     </div>
     <p class="mt-3 text-xs text-stone-500 dark:text-stone-400">
       Acts as <%= current_moderator.handle %>, so it appears under your name in Mastodon's audit log.

@@ -1,5 +1,7 @@
 class RegistrationRequestsController < ApplicationController
-  before_action :set_registration_request, only: :show
+  include RegistrationRequestFilters
+
+  before_action :set_registration_request, only: %i[show next previous]
 
   helper_method :queue_page_path
 
@@ -25,9 +27,24 @@ class RegistrationRequestsController < ApplicationController
     # Rebuilt from the permitted filters the row link handed back to us, never
     # from a raw url, so this can't be turned into an open redirect.
     @back_to_queue_path = registration_requests_path(filter_params)
+    @show_list_nav = RegistrationRequests::Neighbors.new(filtered_registration_requests, @registration_request).in_list?
   end
 
+  def next     = redirect_to_neighbor(:after)
+  def previous = redirect_to_neighbor(:before)
+
   private
+
+  def redirect_to_neighbor(direction)
+    target = RegistrationRequests::Neighbors.new(filtered_registration_requests, @registration_request).public_send(direction)
+
+    if target
+      redirect_to registration_request_path(target, filter_params)
+    else
+      redirect_to registration_requests_path(filter_params),
+        notice: "No more requests in this list — back to the queue."
+    end
+  end
 
   def set_registration_request
     @registration_request = registration_requests_scope
@@ -38,8 +55,4 @@ class RegistrationRequestsController < ApplicationController
   # let ?host= and ?protocol= rewrite the link into another origin or a
   # javascript: URL.
   def queue_page_path(page) = registration_requests_path(filter_params.merge(page:))
-
-  def filter_params
-    params.permit(*RegistrationRequestsHelper::FILTER_PARAMS).to_h
-  end
 end

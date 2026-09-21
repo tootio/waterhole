@@ -4,6 +4,8 @@
 #
 # Only a transport failure falls back to a background retry.
 class DecisionsController < ApplicationController
+  include RegistrationRequestFilters
+
   PUSH_TIMEOUT = 10
 
   before_action :set_registration_request
@@ -16,11 +18,22 @@ class DecisionsController < ApplicationController
       return redirect_back_or_to(path, alert: "This request is already #{@registration_request.status.humanize.downcase}.")
     end
 
+    advance = params[:advance].present?
+    # Looked up before push() changes @registration_request's status, so it's
+    # still found in a status-filtered list like the default "pending" queue.
+    next_request = RegistrationRequests::Neighbors.new(filtered_registration_requests, @registration_request).after if advance
+
     decision = build_decision(action)
     return redirect_back_or_to(path, alert: decision.errors.full_messages.to_sentence) unless decision.persisted?
 
     push(decision)
-    redirect_back_or_to path, **(@flash || {})
+
+    if advance
+      redirect_to (next_request ? registration_request_path(next_request, filter_params) : registration_requests_path(filter_params)),
+        **(@flash || {})
+    else
+      redirect_back_or_to path, **(@flash || {})
+    end
   end
 
   private

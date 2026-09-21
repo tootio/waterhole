@@ -14,6 +14,14 @@ export default class extends Controller {
     this.counterTarget.textContent = length === 0 ? "" : `${length} characters`
   }
 
+  // Cmd+Return on Mac, Ctrl+Return elsewhere -- bound to both since a keydown
+  // modifier is real, not the platform. preventDefault so the newline Enter
+  // would otherwise insert doesn't land in the textarea before it's cleared.
+  submit(event) {
+    event.preventDefault()
+    this.element.requestSubmit()
+  }
+
   reset(event) {
     // Only clear when the note actually saved; a validation failure should leave
     // the text where the moderator can fix it.

@@ -33,6 +33,6 @@ regulatory authority, professional body.]
 This is a Waterhole deployment — a moderation tool for Mastodon registration
 requests. It is operated independently of the Mastodon instances that connect to
 it, and independently of the Mastodon project. Any Mastodon instance can apply
-by publishing the DNS record described on [the authorisation page](/verification).
+by publishing the DNS record described on [the authorisation page](/about).
 
 _Last updated: [DATE]_

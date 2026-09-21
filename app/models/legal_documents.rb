@@ -9,7 +9,7 @@
 #   - pages fall back to the template text behind an unmissable banner
 #   - `digest` is nil, so `accepted` is omitted from the expected DNS record
 #     and the terms gate is simply not active
-#   - the operator is told, on the instances page and in `waterhole:policy`
+#   - the operator is told, on the instances page and in `waterhole:herd:policy`
 class LegalDocuments
   # Templates ship with the code and are never digested; the real documents are
   # the operator's and live in Waterhole::Deployment.legal_directory.

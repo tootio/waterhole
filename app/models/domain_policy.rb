@@ -4,8 +4,10 @@
 # WATERHOLE_POLICY_MODE=allowlist_only inverts that.
 class DomainPolicy < ApplicationRecord
   KINDS = %w[allowed blocked].freeze
+  SOURCES = %w[manual iftas_dni].freeze
 
   enum :kind, KINDS.index_by(&:itself), validate: true
+  enum :source, SOURCES.index_by(&:itself), validate: true
 
   normalizes :domain, with: ->(d) { d.to_s.strip.downcase }
 

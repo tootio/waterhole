@@ -36,3 +36,13 @@
   contributes to it, so the herds shown as on are exactly the ones yours is
   matched against. Nothing here says anything about anyone's applicants.
 </p>
+
+<div class="mt-10">
+  <h2 class="text-lg font-semibold tracking-tight">Domain blocklist</h2>
+  <p class="mt-1 text-sm text-stone-600 dark:text-stone-300">
+    Domains refused a herd here, whether blocked by <%= Waterhole::Deployment.host %>'s operator or
+    synced from a shared list.
+  </p>
+
+  <%= render "shared/domain_blocklist", domain_policies: @domain_policies %>
+</div>

@@ -62,6 +62,10 @@ end
 gem "faraday", "~> 2.14"
 gem "faraday-retry", "~> 2.4"
 
+# Ruby 3.4 unbundled csv from the default gems; parsing the IFTAS DNI export
+# needs it explicitly declared.
+gem "csv", "~> 3.3"
+
 gem "webmock", "~> 3.26", group: :test
 
 # Ruby 4.0 bundles json 3.x, which dropped positional options from JSON.parse.

@@ -6,6 +6,7 @@ class InstancesController < ApplicationController
   # secret from the people it is shared with.
   def index
     @instances = herds.order(:domain)
+    @domain_policies = DomainPolicy.blocked.order(:domain)
   end
 
   # Every herd has a page; yours is simply the one you can see the plumbing of.

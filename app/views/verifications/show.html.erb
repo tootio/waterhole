@@ -26,5 +26,44 @@
 
   <% if @domain.present? %>
     <%= render "verifications/instructions", domain: @domain, signals: @signals, admission: @admission %>
+  <% else %>
+    <%= turbo_frame_tag "verification_result", target: "_top" do %>
+      <div class="mt-8">
+        <h2 class="text-lg font-semibold tracking-tight">This Waterhole</h2>
+
+        <dl class="mt-3 rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 divide-y divide-stone-200 dark:divide-stone-800">
+          <div class="flex justify-between gap-4 px-4 py-3">
+            <dt class="text-stone-500 dark:text-stone-400">Version</dt>
+            <dd class="font-medium"><%= Waterhole::Deployment.version %></dd>
+          </div>
+          <div class="flex justify-between gap-4 px-4 py-3">
+            <dt class="text-stone-500 dark:text-stone-400">Admission policy</dt>
+            <dd class="font-medium"><%= Waterhole::Deployment.policy_mode.humanize %></dd>
+          </div>
+          <div class="flex justify-between gap-4 px-4 py-3">
+            <dt class="text-stone-500 dark:text-stone-400">IFTAS DNI sync</dt>
+            <dd class="font-medium"><%= Waterhole::Deployment.iftas_dni_sync_enabled? ? "Enabled (weekly)" : "Disabled" %></dd>
+          </div>
+        </dl>
+
+        <p class="mt-3 text-xs text-stone-500 dark:text-stone-400">
+          <% if Waterhole::Deployment.allowlist_only? %>
+            Allowlist only: an instance may bring its herd here only once its domain has been added with
+            <code>bin/rails waterhole:herd:allow</code>.
+          <% else %>
+            Allow all: any instance publishing the DNS record may bring its herd here, except domains on
+            the blocklist below.
+          <% end %>
+        </p>
+
+        <h3 class="mt-6 text-sm font-semibold">Domain blocklist</h3>
+        <p class="mt-2 text-sm text-stone-700 dark:text-stone-300">
+          Domains refused a herd here, whether blocked by the operator directly or synced from a shared
+          list such as IFTAS's DNI.
+        </p>
+
+        <%= render "shared/domain_blocklist", domain_policies: @domain_policies %>
+      </div>
+    <% end %>
   <% end %>
 </div>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_19_170000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_21_180000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -38,10 +38,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_170000) do
     t.boolean "include_subdomains", default: false, null: false
     t.string "kind", null: false
     t.text "reason"
+    t.string "source", default: "manual", null: false
     t.datetime "updated_at", null: false
     t.index ["domain"], name: "index_domain_policies_on_domain", unique: true
     t.index ["kind"], name: "index_domain_policies_on_kind"
     t.check_constraint "kind::text = ANY (ARRAY['allowed'::text, 'blocked'::text])", name: "domain_policies_kind_check"
+    t.check_constraint "source::text = ANY (ARRAY['manual'::text, 'iftas_dni'::text])", name: "domain_policies_source_check"
   end
 
   create_table "flags", force: :cascade do |t|

@@ -2,7 +2,7 @@
 class OperatorMailer < ApplicationMailer
   # An instance's DNS record now asks for cross-instance signals, and nothing
   # happens until the operator approves -- so without this, a request could
-  # sit unnoticed for as long as nobody runs `rake waterhole:signals`.
+  # sit unnoticed for as long as nobody runs `rake waterhole:herd:signals`.
   def signals_requested(instance)
     @instance = instance
     @host = Waterhole::Deployment.host

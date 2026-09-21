@@ -1,14 +1,24 @@
 blocked_spam:
   domain: spam.example
   kind: blocked
+  source: manual
   reason: Repeatedly used to farm accounts.
 
 blocked_with_subdomains:
   domain: badnet.example
   kind: blocked
   include_subdomains: true
+  source: manual
   reason: Whole network is a problem.
 
 allowed_alpha:
   domain: alpha.example
   kind: allowed
+  source: manual
+
+blocked_synced:
+  domain: synced.example
+  kind: blocked
+  include_subdomains: true
+  source: iftas_dni
+  reason: "iftas:hate-speech"

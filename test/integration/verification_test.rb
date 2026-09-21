@@ -40,7 +40,7 @@ class VerificationTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :redirect
-    assert_redirected_to verification_path(instance_domain: "example.social")
+    assert_redirected_to verification_path(instance_domain: "example.social", anchor: "bring-your-herd")
   end
 
   # :domain is a reserved url_for option -- it sets the URL's own domain -- so

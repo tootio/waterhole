@@ -36,7 +36,7 @@ class VerificationsController < ApplicationController
       VerifyInstanceJob.perform_now(instance)
     end
 
-    redirect_to verification_path(instance_domain: @domain)
+    redirect_to verification_path(instance_domain: @domain, anchor: "bring-your-herd")
   end
 
   private

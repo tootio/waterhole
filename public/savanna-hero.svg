@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="640" viewBox="0 0 1600 640" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="220" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#fef6e4"/>
+      <stop offset="60%" stop-color="#fdeccb"/>
+      <stop offset="100%" stop-color="#f6ceac"/>
+    </linearGradient>
+    <linearGradient id="ground" x1="0" y1="210" x2="0" y2="640" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#f6dfa0"/>
+      <stop offset="100%" stop-color="#cf9f52"/>
+    </linearGradient>
+    <linearGradient id="water" x1="0" y1="500" x2="0" y2="620" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#075985"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1600" height="640" fill="#fef6e4"/>
+  <rect x="0" y="0" width="1600" height="220" fill="url(#sky)"/>
+
+  <!-- low sun -->
+  <circle cx="1430" cy="150" r="120" fill="#fde68a" opacity="0.45"/>
+  <circle cx="1430" cy="150" r="58" fill="#fcd34d"/>
+
+  <!-- distant hills, right at the horizon -->
+  <path d="M0,196 C200,178 400,192 600,182 C800,172 1000,196 1200,184 C1350,176 1480,190 1600,180 L1600,220 L0,220 Z" fill="#e8b287" opacity="0.55"/>
+
+  <!-- acacia tree, far left -->
+  <path d="M78,220 L83,120 L89,120 L93,220 Z" fill="#4a3327"/>
+  <ellipse cx="86" cy="108" rx="98" ry="26" fill="#4a3327"/>
+  <ellipse cx="34" cy="117" rx="44" ry="15" fill="#4a3327"/>
+  <ellipse cx="140" cy="117" rx="42" ry="15" fill="#4a3327"/>
+
+  <!-- savanna ground, a tall warm band so it still reads at a shallow crop -->
+  <path d="M0,220 C160,204 320,228 480,214 C660,198 860,224 1040,210 C1240,194 1420,218 1600,204 L1600,640 L0,640 Z" fill="url(#ground)"/>
+
+  <!-- the waterhole, kept low so it survives being cropped by the content card -->
+  <ellipse cx="1220" cy="562" rx="260" ry="66" fill="#3f5d52" opacity="0.35"/>
+  <ellipse cx="1220" cy="552" rx="232" ry="55" fill="url(#water)"/>
+  <ellipse cx="1190" cy="532" rx="86" ry="13" fill="#ffffff" opacity="0.3"/>
+
+  <!-- reeds beside the water -->
+  <g stroke="#4d7c0f" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.7">
+    <path d="M978,558 C986,532 976,506 990,482"/>
+    <path d="M1000,564 C1010,540 1002,514 1018,490"/>
+    <path d="M1022,560 C1030,538 1024,516 1038,494"/>
+  </g>
+
+  <!-- foreground grass tufts, spread across the lower band -->
+  <g stroke="#92702a" stroke-width="4" stroke-linecap="round" opacity="0.6" fill="none">
+    <path d="M180,606 C176,588 182,576 178,560"/>
+    <path d="M192,608 C194,590 202,580 202,562"/>
+    <path d="M204,606 C208,590 204,578 212,564"/>
+
+    <path d="M420,618 C416,600 422,588 418,572"/>
+    <path d="M432,620 C434,602 442,592 442,574"/>
+
+    <path d="M660,596 C656,578 662,566 658,550"/>
+    <path d="M672,598 C674,580 682,570 682,552"/>
+    <path d="M684,596 C688,580 684,568 692,554"/>
+
+    <path d="M900,614 C896,596 902,584 898,568"/>
+    <path d="M912,616 C914,598 922,588 922,570"/>
+
+    <path d="M1350,610 C1346,592 1352,580 1348,564"/>
+    <path d="M1362,612 C1364,594 1372,584 1372,566"/>
+    <path d="M1374,610 C1378,594 1374,582 1382,568"/>
+
+    <path d="M1510,600 C1506,582 1512,570 1508,554"/>
+    <path d="M1522,602 C1524,584 1532,574 1532,556"/>
+  </g>
+</svg>

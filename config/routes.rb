@@ -27,20 +27,8 @@ Rails.application.routes.draw do
   resource  :sync,      only: :create
   resources :sync_runs, only: :index
   resources :keyword_rules, except: :show
-  # "Herds" in the interface: the app's own word for the servers that come down
-  # to this waterhole (see shared/_about). The model stays Instance, which is
-  # what Mastodon calls them.
-  #
-  # Addressed by domain, including your own -- there is nothing special about
-  # being the viewer. Instance#to_param supplies it.
-  #
-  # The segment stays :id rather than the truer :domain, because url_for treats
-  # :domain as part of the HOST -- subdomain, domain, tld -- so a :domain
-  # segment is dropped on the floor and every path helper raises "missing
-  # required keys". The constraint is what lets a dotted domain through: the
-  # format segment would otherwise take the TLD for an .html.
-  resources :herds, only: %i[index show], controller: "instances",
-    constraints: { id: /[^\/]+/ }
+
+  resources :herds, only: %i[index show], controller: "instances", constraints: { id: /[^\/]+/ }
 
   # Development only; the controller refuses to act in any other environment.
   get "/dev/sign_in", to: "dev_sessions#create" if Rails.env.local?

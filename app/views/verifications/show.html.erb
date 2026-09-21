@@ -1,24 +1,59 @@
 <% content_for :page_title, "About" %>
 <% content_for :description, "How #{Waterhole::Deployment.host} moderates Mastodon registrations with Waterhole, and how to bring your own instance's herd." %>
 
-<div class="mx-auto max-w-2xl">
-  <div class="mb-8 text-center">
-    <%= image_tag "/mammoth-3d.webp", alt: "", class: "mx-auto size-24" %>
-    <h1 class="mt-2 text-2xl font-semibold tracking-tight">About <%= Waterhole::Deployment.host %></h1>
-    <p class="mt-2 text-sm text-stone-600 dark:text-stone-300">
-      <%= ApplicationHelper::TAGLINE %>
-    </p>
+<div class="relative isolate -mt-6 grid grid-cols-1 grid-rows-1">
+  <div class="relative col-start-1 row-start-1 -z-10 ml-[calc(50%-50vw)] w-screen aspect-square sm:aspect-5/2 pb-6" aria-hidden="true">
+    <%= image_tag "/savanna-hero.svg", alt: "", class: "h-full w-full object-cover" %>
+    <div class="absolute inset-0 hidden dark:block dark:bg-stone-950/70"></div>
   </div>
 
-  <%= render "shared/about", class: "mt-3 text-stone-700 dark:text-stone-300 text-xl [&>p]:my-2" %>
+  <div class="col-start-1 row-start-1 mx-auto w-28 mt-8 sm:w-36 sm:mt-14 px-4" aria-hidden="true">
+    <%= image_tag "/mammoth-3d.webp", alt: "",
+          class: "pointer-events-none block w-full opacity-90 drop-shadow-xl" %>
+  </div>
 
+  <div class="col-start-1 row-start-1 mx-auto w-full max-w-2xl px-4 pt-20 sm:pt-28">
+    <div class="rounded-3xl border border-white/60 bg-white/55 p-6 backdrop-blur-xl backdrop-saturate-150 drop-shadow-l dark:border-white/10 dark:bg-stone-900/55 sm:p-10">
+      <div class="text-center">
+        <h1 class="text-2xl font-semibold tracking-tight">About <%= Waterhole::Deployment.host %></h1>
+        <p class="mt-2 text-sm text-stone-600 dark:text-stone-300">
+          <%= ApplicationHelper::TAGLINE %>
+        </p>
+      </div>
+
+      <div class="mt-6 text-stone-700 dark:text-stone-300 text-xl [&>p]:my-2">
+        <p>
+          Herds that roam apart all come down to the same waterhole, and that is where they keep watch together.
+        </p>
+        <p>
+          Waterhole is that place for Mastodon instances that approve their signups by hand.
+        </p>
+        <p>
+          Each instance's moderation team
+          gets its queue of pending registrations mirrored here, can claim requests so nobody works the same one twice,
+          discuss them in notes, and see advisory flags for the tracks spammers leave: throwaway addresses, datacenter
+          networks, templated reasons for joining, bursts of look-alike signups.
+        </p>
+        <p>
+          Instances that opt in also warn each other when the same newcomer is prowling around several herds, sharing
+          only the tracks, never the applicants' details. Every herd still decides for itself who joins: approvals and
+          rejections go back through each instance's own admin API, made by its own moderators.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mx-auto max-w-2xl" id="bring-your-herd">
   <h2 class="mt-8 text-lg font-semibold tracking-tight">Bring your herd</h2>
   <p class="mt-2 text-stone-700 dark:text-stone-300">
     Before your moderators can sign in, someone who controls your instance's DNS
-    has to say they want this Waterhole.
+    has to allow coming down to this Waterhole.
   </p>
 
-  <%= form_with url: verification_path, method: :post, class: "mt-6 flex gap-2" do |f| %>
+  <%= form_with url: verification_path, method: :post, class: "mt-6 flex gap-2",
+        data: { controller: "preserve-scroll",
+                action: "submit->preserve-scroll#remember turbo:load@document->preserve-scroll#restore" } do |f| %>
     <%= f.text_field :instance_domain, value: @domain, placeholder: "mastodon.example", required: true,
           class: "flex-1 rounded border border-stone-300 dark:border-stone-700 px-3 py-2" %>
     <%= f.submit "Check", class: "rounded bg-stone-900 dark:bg-stone-100 px-4 py-2 text-white dark:text-stone-900" %>
@@ -39,10 +74,6 @@
           <div class="flex justify-between gap-4 px-4 py-3">
             <dt class="text-stone-500 dark:text-stone-400">Admission policy</dt>
             <dd class="font-medium"><%= Waterhole::Deployment.policy_mode.humanize %></dd>
-          </div>
-          <div class="flex justify-between gap-4 px-4 py-3">
-            <dt class="text-stone-500 dark:text-stone-400">IFTAS DNI sync</dt>
-            <dd class="font-medium"><%= Waterhole::Deployment.iftas_dni_sync_enabled? ? "Enabled (weekly)" : "Disabled" %></dd>
           </div>
         </dl>
 

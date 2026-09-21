@@ -3,7 +3,7 @@
       exists for filtering and paging. Without it the link would try to load the
       detail page INTO that frame, and the detail page has no "queue" frame, so
       the list would just empty itself. %>
-  <%= link_to registration_request_path(registration_request),
+  <%= link_to queue_row_path(registration_request),
         data: {
           turbo_frame: "_top",
           keyboard_nav_target: "item",

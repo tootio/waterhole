@@ -12,7 +12,8 @@ class RegistrationRequestsController < ApplicationController
     @counts = {
       pending: awaiting.count,
       unclaimed: awaiting.unclaimed.count,
-      mine: awaiting.claimed_by_moderator(current_moderator).count,
+      # a moderator can claim unconfirmed registrations. Count them, too.
+      mine: pending.claimed_by_moderator(current_moderator).count,
       # Hidden by default, so say how many there are rather than let them vanish.
       unconfirmed: pending.email_unconfirmed.count
     }
@@ -21,6 +22,9 @@ class RegistrationRequestsController < ApplicationController
   def show
     @notes = @registration_request.notes.roots.includes(:moderator, replies: :moderator).chronological
     @note  = @registration_request.notes.new
+    # Rebuilt from the permitted filters the row link handed back to us, never
+    # from a raw url, so this can't be turned into an open redirect.
+    @back_to_queue_path = registration_requests_path(filter_params)
   end
 
   private
@@ -36,6 +40,6 @@ class RegistrationRequestsController < ApplicationController
   def queue_page_path(page) = registration_requests_path(filter_params.merge(page:))
 
   def filter_params
-    params.permit(:status, :claim, :email, :flag, :search, :sort).to_h
+    params.permit(*RegistrationRequestsHelper::FILTER_PARAMS).to_h
   end
 end

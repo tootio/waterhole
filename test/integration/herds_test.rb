@@ -60,4 +60,13 @@ class HerdsTest < ActionDispatch::IntegrationTest
     assert_select "li a[href=?]", herd_path(instances(:beta)), { count: 1 }
     assert_select "li", /Yours/
   end
+
+  test "the domain blocklist is listed, with its source" do
+    get herds_path
+
+    assert_select "li", { text: /#{Regexp.escape(domain_policies(:blocked_spam).domain)}/ }
+    assert_select "li", /Manual/
+    assert_select "li", { text: /#{Regexp.escape(domain_policies(:blocked_synced).domain)}/ }
+    assert_select "li", /IFTAS DNI/
+  end
 end

@@ -20,7 +20,7 @@ class OperatorMailerTest < ActionMailer::TestCase
 
     assert_equal [ "ops@example.org" ], mail.to
     assert_match "gamma.example asks to join cross-instance signals", mail.subject
-    assert_match %(bin/rails "waterhole:signals[gamma.example,approve]"), mail.body.to_s
+    assert_match %(bin/rails "waterhole:herd:signals[gamma.example,approve]"), mail.body.to_s
     assert_match "signals=on", mail.body.to_s
   end
 

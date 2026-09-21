@@ -13,7 +13,12 @@ class VerificationsController < ApplicationController
   before_action :set_domain
 
   def show
-    return if @domain.blank?
+    if @domain.blank?
+      # Nothing to check yet, so the result frame shows this deployment's own
+      # details instead: version, admission policy, and its blocklist.
+      @domain_policies = DomainPolicy.blocked.order(:domain)
+      return
+    end
 
     @admission = Admission.call(@domain)
     @signals = @admission.suggest_signals?(@domain)

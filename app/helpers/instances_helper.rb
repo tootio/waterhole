@@ -23,4 +23,15 @@ module InstancesHelper
     tag.span participating ? "Signals on" : "Signals off",
       class: "#{BADGE} #{participating ? "bg-sky-100 dark:bg-sky-900 text-sky-900 dark:text-sky-200" : "bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400"}"
   end
+
+  BLOCKLIST_SOURCE_LABELS = { "manual" => "Manual", "iftas_dni" => "IFTAS DNI" }.freeze
+  BLOCKLIST_SOURCE_STYLES = {
+    "manual"    => "bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 ring-1 ring-stone-200 dark:ring-stone-700",
+    "iftas_dni" => "bg-amber-100 dark:bg-amber-900 text-amber-900 dark:text-amber-200"
+  }.freeze
+
+  def blocklist_source_badge(policy)
+    tag.span BLOCKLIST_SOURCE_LABELS.fetch(policy.source, policy.source.humanize),
+      class: "#{BADGE} #{BLOCKLIST_SOURCE_STYLES.fetch(policy.source, "bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300")}"
+  end
 end

@@ -11,15 +11,15 @@ instance's applicants or members.
 
 To approve:
 
-  bin/rails "waterhole:signals[<%= @instance.domain %>,approve]"
+  bin/rails "waterhole:herd:signals[<%= @instance.domain %>,approve]"
 
 or, with Docker Compose:
 
-  docker compose exec web bin/rails "waterhole:signals[<%= @instance.domain %>,approve]"
+  docker compose exec web bin/rails "waterhole:herd:signals[<%= @instance.domain %>,approve]"
 
 To see every instance and what it is waiting for:
 
-  bin/rails waterhole:signals
+  bin/rails waterhole:herd:signals
 
 The record as we read it:
 

@@ -105,4 +105,28 @@ class DeploymentTest < ActiveSupport::TestCase
       end
     end
   end
+
+  test "iftas_dni_sync_enabled? defaults to false" do
+    ENV.delete("WATERHOLE_IFTAS_DNI_SYNC")
+    assert_not Waterhole::Deployment.iftas_dni_sync_enabled?
+  end
+
+  test "iftas_dni_sync_enabled? reads WATERHOLE_IFTAS_DNI_SYNC as a boolean" do
+    ENV["WATERHOLE_IFTAS_DNI_SYNC"] = "true"
+    assert Waterhole::Deployment.iftas_dni_sync_enabled?
+  ensure
+    ENV.delete("WATERHOLE_IFTAS_DNI_SYNC")
+  end
+
+  test "iftas_dni_url defaults to the published sheet" do
+    ENV.delete("WATERHOLE_IFTAS_DNI_URL")
+    assert_equal Blocklists::IftasDni::DEFAULT_CSV_URL, Waterhole::Deployment.iftas_dni_url
+  end
+
+  test "iftas_dni_url can be overridden" do
+    ENV["WATERHOLE_IFTAS_DNI_URL"] = "https://example.org/dni.csv"
+    assert_equal "https://example.org/dni.csv", Waterhole::Deployment.iftas_dni_url
+  ensure
+    ENV.delete("WATERHOLE_IFTAS_DNI_URL")
+  end
 end

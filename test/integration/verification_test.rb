@@ -6,6 +6,31 @@ class VerificationTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  # This deployment's own details -- version, policy, blocklist -- live in the
+  # result frame until a domain is checked, rather than on a page of their own.
+  test "with no domain checked yet, the result frame shows this deployment's own details" do
+    get verification_path
+
+    assert_select "turbo-frame#verification_result" do
+      assert_select "dd", Waterhole::Deployment.version
+      assert_select "li", { text: /#{Regexp.escape(domain_policies(:blocked_spam).domain)}/ }
+      assert_select "li", /Manual/
+      assert_select "li", { text: /#{Regexp.escape(domain_policies(:blocked_synced).domain)}/ }
+      assert_select "li", /IFTAS DNI/
+    end
+  end
+
+  test "checking a domain replaces this deployment's details with the instructions" do
+    DnsAllowlist.stub_resolver(dns_records([])) do
+      get verification_path, params: { instance_domain: "example.social" }
+    end
+
+    assert_select "turbo-frame#verification_result" do
+      assert_select "h2", { count: 0, text: "This Waterhole" }
+      assert_select "h2", "1. Read the terms, and decide"
+    end
+  end
+
   # Turbo rejects a 200 HTML body for a form submission with
   # "Form responses must redirect to another location", so this action must
   # redirect rather than render.

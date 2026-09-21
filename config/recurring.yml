@@ -38,6 +38,14 @@ defaults: &defaults
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
+<% if ActiveModel::Type::Boolean.new.cast(ENV["WATERHOLE_IFTAS_DNI_SYNC"]) %>
+  # Optional, operator opt-in: see Waterhole::Deployment.iftas_dni_sync_enabled?.
+  # Omitted entirely rather than checked inside the job, so a deployment that
+  # hasn't opted in never enqueues it at all.
+  sync_iftas_dni_blocklist:
+    class: SyncIftasDniBlocklistJob
+    schedule: every monday at 3:35am
+<% end %>
 
 development:
   <<: *defaults

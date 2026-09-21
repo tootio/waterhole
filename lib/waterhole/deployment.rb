@@ -193,5 +193,18 @@ module Waterhole
     def missing_settings
       REQUIRED_IN_PRODUCTION.select { ENV[it].blank? }
     end
+
+    # Whether the weekly IFTAS DNI sync (SyncIftasDniBlocklistJob) is
+    # scheduled at all -- see config/recurring.yml, which reads this same
+    # variable to decide whether to enqueue the recurring task in the first
+    # place. Running `waterhole:blocklists:sync_iftas_dni` by hand ignores
+    # this: an explicit operator run always goes ahead.
+    def iftas_dni_sync_enabled?
+      ActiveModel::Type::Boolean.new.cast(ENV["WATERHOLE_IFTAS_DNI_SYNC"]) || false
+    end
+
+    def iftas_dni_url
+      ENV["WATERHOLE_IFTAS_DNI_URL"].presence || Blocklists::IftasDni::DEFAULT_CSV_URL
+    end
   end
 end

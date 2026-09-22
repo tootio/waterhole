@@ -13,9 +13,9 @@ class VerificationTest < ActionDispatch::IntegrationTest
 
     assert_select "turbo-frame#verification_result" do
       assert_select "dd", Waterhole::Deployment.version
-      assert_select "li", { text: /#{Regexp.escape(domain_policies(:blocked_spam).domain)}/ }
+      assert_select "li", { text: /#{Regexp.escape(domain_policies(:blocked_spam).domain.gsub(".", "[dot]"))}/ }
       assert_select "li", /Manual/
-      assert_select "li", { text: /#{Regexp.escape(domain_policies(:blocked_synced).domain)}/ }
+      assert_select "li", { text: /#{Regexp.escape(domain_policies(:blocked_synced).domain.gsub(".", "[dot]"))}/ }
       assert_select "li", /IFTAS DNI/
     end
   end

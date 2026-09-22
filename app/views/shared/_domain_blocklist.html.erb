@@ -1,22 +1,27 @@
 <% if domain_policies.empty? %>
   <p class="mt-3 text-sm text-stone-500 dark:text-stone-400">No domains are blocked.</p>
 <% else %>
-  <ul class="mt-3 divide-y divide-stone-200 dark:divide-stone-800 rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900">
-    <% domain_policies.each do |policy| %>
-      <li class="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
-        <span class="font-medium"><%= policy.domain %></span>
-        <% if policy.include_subdomains? %>
-          <span class="text-xs text-stone-500 dark:text-stone-400">+subdomains</span>
-        <% end %>
+  <details>
+    <summary class="cursor-pointer mt-3 text-sm text-stone-500 dark:text-stone-400">Show <%= domain_policies.size %> blocked <%= domain_policies.size == 1 ? 'domains' : 'domain' %></summary>
+    <ul class="mt-3 divide-y divide-stone-200 dark:divide-stone-800 rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900">
+      <% domain_policies.each do |policy| %>
+        <li class="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
+          <span class="font-medium">
+            <%= safe_join(policy.domain.split("."), tag.span("[dot]", class: "text-stone-500 dark:text-stone-400")) %>
+          </span>
+          <% if policy.include_subdomains? %>
+            <span class="text-xs text-stone-500 dark:text-stone-400">+subdomains</span>
+          <% end %>
 
-        <span class="ml-auto flex flex-wrap items-center gap-2">
-          <%= blocklist_source_badge(policy) %>
-        </span>
+          <span class="ml-auto flex flex-wrap items-center gap-2">
+            <%= blocklist_source_badge(policy) %>
+          </span>
 
-        <% if policy.reason.present? %>
-          <span class="basis-full text-sm text-stone-600 dark:text-stone-300"><%= policy.reason %></span>
-        <% end %>
-      </li>
-    <% end %>
-  </ul>
+          <% if policy.reason.present? %>
+            <span class="basis-full text-sm text-stone-600 dark:text-stone-300"><%= policy.reason %></span>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  </details>
 <% end %>

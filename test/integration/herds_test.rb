@@ -64,9 +64,9 @@ class HerdsTest < ActionDispatch::IntegrationTest
   test "the domain blocklist is listed, with its source" do
     get herds_path
 
-    assert_select "li", { text: /#{Regexp.escape(domain_policies(:blocked_spam).domain)}/ }
+    assert_select "li", { text: /#{Regexp.escape(domain_policies(:blocked_spam).domain.gsub(".", "[dot]"))}/ }
     assert_select "li", /Manual/
-    assert_select "li", { text: /#{Regexp.escape(domain_policies(:blocked_synced).domain)}/ }
+    assert_select "li", { text: /#{Regexp.escape(domain_policies(:blocked_synced).domain.gsub(".", "[dot]"))}/ }
     assert_select "li", /IFTAS DNI/
   end
 end

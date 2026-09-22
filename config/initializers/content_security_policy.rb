@@ -23,6 +23,8 @@ Rails.application.configure do
     policy.base_uri        :none
     policy.object_src      :none
     policy.frame_ancestors :none
+    policy.require_trusted_types_for :script
+    policy.trusted_types "default", "dompurify"
   end
 
   config.content_security_policy_nonce_generator = ->(_request) { SecureRandom.base64(16) }

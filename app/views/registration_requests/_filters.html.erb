@@ -38,6 +38,7 @@
           options_for_select([ %w[Confirmed confirmed], [ "Not confirmed", "unconfirmed" ], %w[Either any] ],
                              query.filters[:email]),
           {}, data: { action: "change->auto-submit#submit" },
+          autocomplete: "none", # it's called email, but email autofill is wrong
           class: "mt-1 rounded border border-stone-300 dark:border-stone-700 px-2 py-1.5 text-sm" %>
   </div>
 

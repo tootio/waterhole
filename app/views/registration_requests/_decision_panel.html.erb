@@ -45,7 +45,7 @@
               class: "rounded-l bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 #{focus_ring_classes}" do %>
           <span aria-hidden="true">✔︎ </span>Approve
         <% end %>
-        <%= button_to "→", registration_request_decision_path(registration_request, decision_action: "approve", advance: 1),
+        <%= button_to "→", registration_request_decision_path(registration_request, params.permit(*RegistrationRequestsHelper::FILTER_PARAMS).merge(decision_action: "approve", advance: 1)),
               title: "Approve and go to next request",
               form: { data: {
                 turbo_confirm: "Approve @#{registration_request.username} on #{registration_request.instance.domain}?",
@@ -59,7 +59,7 @@
               class: "rounded-l bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 #{focus_ring_classes}" do %>
           <span aria-hidden="true">✘ </span>Reject
         <% end %>
-        <%= button_to "→", registration_request_decision_path(registration_request, decision_action: "reject", advance: 1),
+        <%= button_to "→", registration_request_decision_path(registration_request, params.permit(*RegistrationRequestsHelper::FILTER_PARAMS).merge(decision_action: "reject", advance: 1)),
               title: "Reject and go to next request",
               form: { data: {
                 turbo_confirm: "Reject @#{registration_request.username}? Mastodon deletes the account on rejection, and this cannot be undone.",

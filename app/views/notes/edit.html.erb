@@ -6,9 +6,9 @@
   <%= form_with model: @note, class: "rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-5" do |f| %>
     <%= f.text_area :body, rows: 5, class: "w-full rounded border border-stone-300 dark:border-stone-700 px-3 py-2 text-sm" %>
     <div class="mt-3 flex gap-3">
-      <%= f.submit "Save", class: "rounded bg-stone-900 dark:bg-stone-100 px-4 py-2 text-sm text-white dark:text-stone-900" %>
+      <%= f.submit "Save", class: button_classes(:solid, "px-4 py-2 text-sm") %>
       <%= link_to "Cancel", registration_request_path(@note.registration_request),
-            class: "rounded border border-stone-300 dark:border-stone-700 px-4 py-2 text-sm" %>
+            class: button_classes(:outline, "px-4 py-2 text-sm") %>
     </div>
   <% end %>
 </div>

@@ -6,10 +6,10 @@
 
     <% if note.moderator_id == current_moderator&.id %>
       <span class="ml-auto flex gap-2 text-xs">
-        <%= link_to "Edit", edit_note_path(note), class: "text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300" %>
+        <%= link_to "Edit", edit_note_path(note), class: button_classes(:ghost, "rounded hover:text-stone-700 dark:hover:text-stone-300") %>
         <%= button_to "Delete", note_path(note), method: :delete,
               form: { data: { turbo_confirm: "Delete this note?" } },
-              class: "text-stone-500 dark:text-stone-400 hover:text-red-700 dark:hover:text-red-400" %>
+              class: button_classes(:ghost, "rounded hover:text-red-700 dark:hover:text-red-400") %>
       </span>
     <% end %>
   </div>
@@ -21,7 +21,7 @@
       <%= render partial: "notes/note", collection: note.replies.chronological, as: :note %>
     </div>
     <details class="mt-2">
-      <summary class="cursor-pointer text-xs text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300">Reply</summary>
+      <summary class="<%= button_classes(:ghost, "cursor-pointer rounded text-xs hover:text-stone-700 dark:hover:text-stone-300") %>">Reply</summary>
       <%= render "notes/form", registration_request: note.registration_request,
             note: Note.new(parent_id: note.id), parent: note %>
     </details>

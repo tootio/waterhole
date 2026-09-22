@@ -30,7 +30,7 @@
   <%- domain, pattern, locale = d["shape"].to_s.split(" ", 3) -%>
   <%= d["count"] %> signups within <%= d["window_minutes"] %> minutes of each other from <%= d["networks"] %> different networks, all <%= domain %> addresses with usernames shaped like <%= pattern %><%= " and locale #{locale}" unless locale == "-" %><%= " (also on #{d["instances"].to_a.to_sentence})" if d["instances"].to_a.any? %>
 <%- when "app_signup" -%>
-  created through an app (Mastodon's API, app #<%= d["application_id"] %> on this instance), not the website's sign-up form
+  created through an OAuth app (#<%= d["application_id"] %>), not the website's sign-up form
 <%- else -%>
   <%= d.to_json %>
 <%- end -%>

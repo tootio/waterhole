@@ -17,6 +17,4 @@ class Flag < ApplicationRecord
   def self.label_for(rule) = I18n.t("flags.#{rule}.label")
 
   def label = self.class.label_for(rule)
-
-  def explanation = I18n.t("flags.#{rule}.explanation", **details.symbolize_keys, default: "")
 end

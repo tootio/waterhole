@@ -43,6 +43,10 @@ Rails.application.routes.draw do
   get "/privacy", to: "legal#show", slug: "privacy_policy",   as: :privacy
   get "/imprint", to: "legal#show", slug: "imprint",          as: :imprint
 
+  # --- moderator help section -------------------------------------------------
+  get "/help/shortcuts", to: "help#shortcuts", as: :keyboard_shortcuts_help
+  get "/help/flags/:id", to: "help#flag",       as: :flag_help
+
   # Reveal health status on /up
   get "up" => "rails/health#show", as: :rails_health_check
 

@@ -1,0 +1,37 @@
+<% content_for :page_title, "About: #{@flag.label}" %>
+
+<% unless request.xhr? %>
+  <%# Redundant with the dialog's own close button when this is fetched into
+      the modal, so only shown when this page is visited on its own. %>
+  <div class="mb-4">
+    <%= link_to "← Back to request", registration_request_path(@flag.registration_request),
+          class: "text-sm text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100" %>
+  </div>
+<% end %>
+
+<h1 class="mb-4 text-2xl font-semibold tracking-tight"><%= @flag.label %></h1>
+
+<section class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-5">
+  <dl class="space-y-3 text-sm">
+    <div>
+      <dt class="text-xs text-stone-500 dark:text-stone-400">Severity</dt>
+      <dd>
+        <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium <%= severity_style(@flag.severity) %>">
+          <%= @flag.severity.humanize %>
+        </span>
+      </dd>
+    </div>
+
+    <div>
+      <dt class="text-xs text-stone-500 dark:text-stone-400">Why this is flagged</dt>
+      <dd class="leading-relaxed text-stone-700 dark:text-stone-300"><%= t("flags.#{@flag.rule}.help") %></dd>
+    </div>
+
+    <% if @flag.details.present? %>
+      <div>
+        <dt class="text-xs text-stone-500 dark:text-stone-400">On this request</dt>
+        <dd class="text-stone-700 dark:text-stone-300"><%= render "registration_requests/flag_detail", flag: @flag %></dd>
+      </div>
+    <% end %>
+  </dl>
+</section>

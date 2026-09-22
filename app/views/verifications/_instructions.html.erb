@@ -79,7 +79,7 @@
         <legend class="sr-only">Cross-instance signals</legend>
         <div class="inline-flex rounded border [&>label:first-child]:rounded-l [&>label:last-child]:rounded-r border-stone-300 dark:border-stone-700 text-sm">
           <% [ [ "off", "Don't share signals" ], [ "on", "Share signals" ] ].each_with_index do |(value, label), index| %>
-            <label class="cursor-pointer px-3 py-1.5 hover:bg-stone-100 dark:hover:bg-stone-800 has-[:checked]:bg-stone-900 dark:has-[:checked]:bg-stone-100 has-[:checked]:text-white dark:has-[:checked]:text-stone-900 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-stone-400 dark:has-[:focus-visible]:ring-stone-500 <%= "border-l border-stone-300 dark:border-stone-700" if index.positive? %>">
+            <label class="cursor-pointer px-3 py-1.5 hover:bg-stone-100 dark:hover:bg-stone-800 has-[:checked]:bg-stone-900 dark:has-[:checked]:bg-stone-100 has-[:checked]:text-white dark:has-[:checked]:text-stone-900 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-white dark:has-[:focus-visible]:ring-offset-stone-900 has-[:focus-visible]:ring-stone-900 dark:has-[:focus-visible]:ring-stone-100 <%= "border-l border-stone-300 dark:border-stone-700" if index.positive? %>">
               <input type="radio" name="signals" value="<%= value %>" class="sr-only"
                      data-action="change->signals-choice#choose" <%= "checked" if (value == "on") == signals %>>
               <%= label %>
@@ -97,9 +97,9 @@
           <pre class="mt-3 overflow-x-auto rounded bg-stone-900 dark:bg-stone-950 dark:ring-1 dark:ring-stone-800 p-3 text-xs text-stone-100 dark:text-stone-200"><code><%= suggestion.record %></code></pre>
           <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
             <button type="button" data-action="clipboard#copy" data-clipboard-value="<%= suggestion.record %>"
-                    class="text-stone-500 dark:text-stone-400 underline hover:text-stone-900 dark:hover:text-stone-100">Copy whole record (zone-file line)</button>
+                    class="<%= button_classes(:ghost, "rounded underline hover:text-stone-900 dark:hover:text-stone-100") %>">Copy whole record (zone-file line)</button>
             <button type="button" data-action="clipboard#copy" data-clipboard-value="<%= suggestion.value %>"
-                    class="text-stone-500 dark:text-stone-400 underline hover:text-stone-900 dark:hover:text-stone-100">Copy value only (for your DNS provider's form)</button>
+                    class="<%= button_classes(:ghost, "rounded underline hover:text-stone-900 dark:hover:text-stone-100") %>">Copy value only (for your DNS provider's form)</button>
           </div>
         </div>
       <% end %>
@@ -152,7 +152,7 @@
         <div data-signals-choice-target="variant" data-signals="<%= value %>" <%= "hidden" unless on == signals %>>
           <pre class="mt-3 max-h-72 overflow-auto whitespace-pre-wrap rounded bg-stone-100 dark:bg-stone-800 p-3 text-xs text-stone-800 dark:text-stone-200"><code><%= notice %></code></pre>
           <button type="button" data-action="clipboard#copy" data-clipboard-value="<%= notice %>"
-                  class="mt-2 text-xs text-stone-500 dark:text-stone-400 underline hover:text-stone-900 dark:hover:text-stone-100">Copy text</button>
+                  class="<%= button_classes(:ghost, "mt-2 rounded text-xs underline hover:text-stone-900 dark:hover:text-stone-100") %>">Copy text</button>
         </div>
       <% end %>
     </div>

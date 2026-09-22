@@ -18,7 +18,10 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body class="flex min-h-dvh flex-col overflow-x-hidden bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 antialiased">
+  <body class="flex min-h-dvh flex-col overflow-x-hidden bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 antialiased"
+        data-controller="modal">
+    <%= render "shared/skip_links" %>
+
     <%# Only the navigation badge, and only ever the badge: a queue change
         replaces that one element, so a moderator halfway through a watchword on
         another page never has the page refreshed under them. The queue's own
@@ -38,14 +41,15 @@
         <% if signed_in? %>
           <div class="order-2 ml-auto flex items-center gap-3 text-sm sm:order-3">
             <% if current_moderator.consent_current? %>
-              <%= button_to "Sync now", sync_path, class: "rounded border border-stone-300 dark:border-stone-700 px-2 py-1 whitespace-nowrap text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800" %>
+              <%= button_to "Sync now", sync_path, class: button_classes(:outline, "px-2 py-1 whitespace-nowrap text-stone-700 dark:text-stone-300") %>
             <% end %>
             <span class="hidden text-stone-500 dark:text-stone-400 sm:inline"><%= current_moderator.handle %></span>
-            <%= button_to "Sign out", session_path, method: :delete, class: "whitespace-nowrap text-stone-500 dark:text-stone-400 underline hover:text-stone-900 dark:hover:text-stone-100" %>
+            <%= button_to "Sign out", session_path, method: :delete, class: button_classes(:ghost, "rounded whitespace-nowrap underline hover:text-stone-900 dark:hover:text-stone-100") %>
           </div>
 
           <% if current_moderator.consent_current? %>
-          <nav class="order-3 -mx-4 flex w-full items-center gap-1 overflow-x-auto px-4 text-sm sm:order-2 sm:mx-0 sm:w-auto sm:gap-4 sm:overflow-visible sm:px-0">
+          <nav id="main-navigation" tabindex="-1"
+               class="order-3 -mx-4 flex w-full items-center gap-1 overflow-x-auto px-4 text-sm outline-none sm:order-2 sm:mx-0 sm:w-auto sm:gap-4 sm:overflow-visible sm:px-0">
             <%= link_to root_path, class: "#{nav_class(controller_name == "registration_requests")} inline-flex items-center gap-1.5 whitespace-nowrap" do %>
               Queue <%= render "shared/queue_badge", instance: current_instance %>
             <% end %>
@@ -60,7 +64,7 @@
                   class: "#{nav_class(controller_name == "verifications")} whitespace-nowrap" %>
             <% unless controller_name == "sessions" && action_name == "new" %>
               <%= link_to "Sign in", new_session_path,
-                    class: "rounded border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 px-3 py-1 whitespace-nowrap text-stone-900 dark:text-stone-100 hover:bg-stone-100 dark:hover:bg-stone-800" %>
+                    class: button_classes(:outline, "bg-white dark:bg-stone-800 px-3 py-1 whitespace-nowrap text-stone-900 dark:text-stone-100") %>
             <% end %>
           </div>
         <% end %>
@@ -73,10 +77,15 @@
 
     <%= render "shared/flash" %>
 
-    <main class="mx-auto w-full max-w-6xl flex-1 px-4 py-6">
+    <main id="main-content" tabindex="-1" class="mx-auto w-full max-w-6xl flex-1 px-4 py-6 outline-none">
       <%= yield %>
     </main>
 
     <%= render "shared/footer" %>
+
+    <% if signed_in? %>
+      <%= render "shared/help_dialog" %>
+      <%= render "shared/confirm_dialog" %>
+    <% end %>
   </body>
 </html>

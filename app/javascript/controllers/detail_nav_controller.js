@@ -7,12 +7,11 @@ import { Turbo } from "@hotwired/turbo-rails"
 //   a / r  approve / reject and advance to the next in the list
 //   n      jump to the note composer
 export default class extends Controller {
-  static targets = ["approveAndNextForm", "rejectAndNextForm", "noteInput"]
+  static targets = ["approveAndNextForm", "rejectAndNextForm", "noteInput", "claimBanner"]
   static values = {
     previousUrl: String,
     nextUrl: String,
-    claimUrl: String,
-    claimedByMe: Boolean
+    claimUrl: String
   }
 
   connect() {
@@ -42,16 +41,16 @@ export default class extends Controller {
     event.preventDefault()
   }
 
-  // Same mechanism as keyboard_nav_controller.js's toggleClaim -- there's only
-  // one target here, so no "which list row" bookkeeping is needed.
+  // Same mechanism as keyboard_nav_controller.js's toggleClaim, including
+  // reading the current state off the DOM rather than a Stimulus value.
   async toggleClaim() {
     if (!this.hasClaimUrlValue || this.toggling) return
-    const method = this.claimedByMeValue ? "DELETE" : "POST"
+    const method = this.claimBannerTarget.dataset.claimedByMe === "true" ? "DELETE" : "POST"
 
     this.toggling = true
     try {
       const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
-      const response = await fetch(this.claimUrlValue, {
+      const response = await Turbo.fetch(this.claimUrlValue, {
         method,
         headers: {
           "Accept": "text/vnd.turbo-stream.html",

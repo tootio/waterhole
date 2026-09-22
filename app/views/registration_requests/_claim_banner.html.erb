@@ -1,6 +1,8 @@
 <%# Claiming is what stops two people working the same request, so this has to be
     unmissable and has to update for other viewers without a refresh. %>
-<div id="<%= dom_id(registration_request, :claim_banner) %>" class="mb-6">
+<div id="<%= dom_id(registration_request, :claim_banner) %>" class="mb-6"
+     data-detail-nav-target="claimBanner"
+     data-claimed-by-me="<%= registration_request.claimed_by == current_moderator %>">
   <% if registration_request.resolved? %>
     <div class="rounded-lg border border-stone-200 dark:border-stone-800 bg-stone-100 dark:bg-stone-800 px-4 py-3 text-sm text-stone-600 dark:text-stone-300">
       Resolved <%= local_time(registration_request.resolved_at) %>.

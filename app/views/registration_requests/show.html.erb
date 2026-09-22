@@ -22,10 +22,10 @@
 </div>
 
 <div class="mb-4 flex flex-wrap items-center gap-3">
-  <h1 class="text-2xl font-semibold tracking-tight">@<%= @registration_request.username %></h1>
+  <h1 class="text-2xl font-semibold tracking-tight">@<%= highlight_keywords(@registration_request.username) %></h1>
   <%= status_badge(@registration_request) %>
   <% if @registration_request.display_name.present? %>
-    <span class="text-stone-500 dark:text-stone-400"><%= @registration_request.display_name %></span>
+    <span class="text-stone-500 dark:text-stone-400"><%= highlight_keywords(@registration_request.display_name) %></span>
   <% end %>
 </div>
 
@@ -37,7 +37,7 @@
       <h2 class="mb-2 text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">Why they want to join</h2>
       <% if @registration_request.invite_request.present? %>
         <div data-controller="expandable" data-expandable-collapsed-height-value="240">
-          <div data-expandable-target="content" class="overflow-hidden whitespace-pre-wrap text-lg leading-relaxed"><%= @registration_request.invite_request %></div>
+          <div data-expandable-target="content" class="overflow-hidden whitespace-pre-wrap text-lg leading-relaxed"><%= highlight_keywords(@registration_request.invite_request) %></div>
           <button type="button" data-expandable-target="toggle" data-action="expandable#toggle"
                   class="<%= button_classes(:ghost, "mt-2 hidden rounded text-sm underline") %>">Show more</button>
         </div>

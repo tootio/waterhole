@@ -30,7 +30,39 @@ class KeywordRule < ApplicationRecord
     end
   end
 
+  def match_indices(text)
+    return [] if text.blank?
+
+    regexp = to_regexp
+    return [] unless regexp
+
+    indices = []
+    text.scan(regexp) do
+      m = Regexp.last_match
+      off = m&.offset(0)
+      indices << off if off && off.first < off.second # nothing to highlight for empty matches
+    end
+    indices
+  rescue Regexp::TimeoutError, RegexpError
+    []
+  end
+
   private
+
+  def to_regexp
+    return nil if pattern.blank?
+
+    @to_regexp ||= begin
+      case match_type
+      when "substring" then Regexp.new(Regexp.escape(pattern), Regexp::IGNORECASE, timeout: REGEX_TIMEOUT)
+      when "word"      then Regexp.new("\\b#{Regexp.escape(pattern)}\\b", Regexp::IGNORECASE, timeout: REGEX_TIMEOUT)
+      when "regex"     then Regexp.new(pattern, Regexp::IGNORECASE, timeout: REGEX_TIMEOUT)
+      end
+    rescue Regexp::TimeoutError, RegexpError
+      # we do not care that this error does not get memoized. Invalid regex patterns are validated on creation.
+      nil
+    end
+  end
 
   def matches_regex?(text)
     Regexp.new(pattern, Regexp::IGNORECASE, timeout: REGEX_TIMEOUT).match?(text)

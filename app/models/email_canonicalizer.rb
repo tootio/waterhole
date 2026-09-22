@@ -83,6 +83,11 @@ module EmailCanonicalizer
   # the queue filter need the real one.
   def domain_of(email) = split(email)&.last
 
+  # resolves a normalised domain to its canonical domain
+  def resolve_canonical_domain(domain)
+    PROVIDERS[domain]&.canonical_domain.presence || domain
+  end
+
   # HMAC rather than a bare digest: the space of email addresses is small enough
   # to enumerate against an unsalted hash, so a leaked index would be reversible.
   def hash_for(email)

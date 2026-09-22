@@ -214,7 +214,9 @@ class RegistrationRequest < ApplicationRecord
   def derive_pattern_fields
     self.invite_fingerprint = ReasonFingerprint.call(invite_request) if invite_request_changed? || new_record?
     if new_record? || email_domain_changed? || username_changed? || locale_changed?
-      self.signup_shape = SignupShape.call(email_domain:, username:, locale:)
+      self.signup_shape = SignupShape.call(
+        email_domain: EmailCanonicalizer.resolve_canonical_domain(email_domain),
+        username:, locale:)
     end
   end
 end

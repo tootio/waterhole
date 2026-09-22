@@ -2,11 +2,14 @@
 # arrives through a different residential proxy: the email provider, the
 # pattern of the username, and the browser's language.
 #
-# The username pattern keeps separators and turns each run of letters into "a"
-# and each run of digits into "9": john.smith84 and anna.berg2 are both a.a9.
+# The username pattern keeps separators, turns runs of hex chars+numbers into
+# "x", each run of letters into "a" and each run of digits into "9":
+# john.smith84 and anna.berg2 are both a.a9.
 #
 #   "gmail.com a.a9 en"
 module SignupShape
+  HEX_RUN = /(?=[a-f0-9]*(?:[a-f]+[0-9]+[a-f]|[0-9]+[a-f]+[0-9]))[a-f0-9]+/
+
   module_function
 
   def call(email_domain:, username:, locale:)
@@ -15,5 +18,11 @@ module SignupShape
     [ email_domain, pattern(username), locale.presence || "-" ].join(" ")
   end
 
-  def pattern(username) = username.downcase.gsub(/\p{L}+/, "a").gsub(/\p{N}+/, "9")
+  def pattern(username)
+    username.downcase
+      .gsub(HEX_RUN, "\x00")
+      .gsub(/\p{L}+/, "a")
+      .gsub(/\p{N}+/, "9")
+      .gsub("\x00", "x")
+  end
 end

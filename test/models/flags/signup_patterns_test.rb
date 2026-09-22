@@ -94,7 +94,7 @@ class Flags::SignupPatternsTest < ActiveSupport::TestCase
   test "same-shaped signups within an hour, each from a different network, are a burst" do
     now = Time.current
     requests = 5.times.map do |i|
-      signup(i.even? ? @alpha : @beta, 10 + i, username: "name#{rand(10..99)}", email: "x#{i}@gmail.com",
+      signup(i.even? ? @alpha : @beta, 10 + i, username: "name#{rand(10..99)}", email: "x#{i}+#{rand(10..99)}@#{i.even? ? "gmail.com" : "googlemail.com"}",
         ip: "203.0.113.#{10 + i}", at: now + i.minutes)
     end
 
@@ -123,6 +123,11 @@ class Flags::SignupPatternsTest < ActiveSupport::TestCase
   test "the shape keeps separators and collapses runs" do
     assert_equal "a.a9", SignupShape.pattern("John.Smith84")
     assert_equal "a_a9", SignupShape.pattern("anna_berg2")
+    assert_equal "ax", SignupShape.pattern("bpac455adb6e244c47")
+    assert_equal "x", SignupShape.pattern("ac455adb6e244c47")
+    assert_equal "x", SignupShape.pattern("455ADb6E244C47")
+    assert_equal "a_x", SignupShape.pattern("user_455adb6e244c47")
+    assert_equal SignupShape.pattern("bpac455adb6e244c47"), SignupShape.pattern("bp621291304a0fbf9a")
     assert_equal "gmail.com a9 -", SignupShape.call(email_domain: "gmail.com", username: "bob7", locale: nil)
   end
 

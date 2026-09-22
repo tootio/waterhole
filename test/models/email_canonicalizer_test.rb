@@ -95,6 +95,12 @@ class EmailCanonicalizerTest < ActiveSupport::TestCase
     assert_nil EmailCanonicalizer.domain_of("nodomain@")
   end
 
+  test "resolve_canonical_domain canonicalise domains" do
+    assert_equal "gmail.com", EmailCanonicalizer.resolve_canonical_domain("googlemail.com")
+    assert_equal "gmail.com", EmailCanonicalizer.resolve_canonical_domain("gmail.com")
+    assert_equal "example.com", EmailCanonicalizer.resolve_canonical_domain("example.com")
+  end
+
   test "hashes are stable, and equal for addresses that canonicalise the same" do
     a = EmailCanonicalizer.hash_for("Ju.les+alpha@googlemail.com")
     b = EmailCanonicalizer.hash_for("jules@gmail.com")

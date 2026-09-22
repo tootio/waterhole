@@ -174,4 +174,34 @@ class DecisionsTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to registration_request_path(@pending)
   end
+
+  # Regression: the "→" buttons used to link to decision_action/advance only,
+  # dropping whatever filter the moderator was actually viewing. The neighbor
+  # lookup on the next request then ran against the *default* filter instead,
+  # so it usually missed and fell back to the plain, unfiltered queue instead
+  # of the next item the moderator was actually working through.
+  test "the approve/reject and next buttons carry the active filter and sort along" do
+    jules_alpha = registration_requests(:jules_alpha) # oldest of the three pending alpha requests
+
+    get registration_request_path(jules_alpha, sort: "oldest")
+
+    assert_response :success
+    assert_select "form[data-detail-nav-target=approveAndNextForm]" do |forms|
+      assert_match(/sort=oldest/, forms.first["action"])
+    end
+    assert_select "form[data-detail-nav-target=rejectAndNextForm]" do |forms|
+      assert_match(/sort=oldest/, forms.first["action"])
+    end
+  end
+
+  test "reject and advance follows the filter carried on the button, landing on the right next request" do
+    jules_alpha   = registration_requests(:jules_alpha)   # oldest, so first under sort: oldest
+    claimed_alpha = registration_requests(:claimed_alpha) # next after jules_alpha under sort: oldest
+    stub_decision(@instance, id: jules_alpha.mastodon_account_id, action: "reject")
+
+    post registration_request_decision_path(jules_alpha, decision_action: "reject", advance: 1, sort: "oldest")
+
+    assert_equal "rejected", jules_alpha.reload.status
+    assert_redirected_to registration_request_path(claimed_alpha, sort: "oldest")
+  end
 end

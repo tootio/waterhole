@@ -13,7 +13,7 @@
         class: "block px-4 py-3 hover:bg-stone-50 dark:hover:bg-stone-800 focus-visible:bg-stone-50 dark:focus-visible:bg-stone-800",
         id: dom_id(registration_request, :link) do %>
     <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-      <span class="font-medium">@<%= registration_request.username %></span>
+      <span class="font-medium">@<%= highlight_keywords(registration_request.username) %></span>
       <%= status_badge(registration_request) %>
       <% unless registration_request.confirmed? %>
         <span class="rounded-full bg-stone-100 dark:bg-stone-800 px-2 py-0.5 text-xs text-stone-600 dark:text-stone-300 ring-1 ring-stone-300 dark:ring-stone-700">Email not confirmed</span>
@@ -31,7 +31,9 @@
     </div>
 
     <p class="mt-1 line-clamp-2 text-sm text-stone-600 dark:text-stone-300">
-      <%= registration_request.invite_request.presence || tag.em("No reason given", class: "text-stone-500 dark:text-stone-400") %>
+      <%= registration_request.invite_request.present? ?
+            highlight_keywords(registration_request.invite_request) :
+            tag.em("No reason given", class: "text-stone-500 dark:text-stone-400") %>
     </p>
 
     <% if registration_request.flags.any? %>

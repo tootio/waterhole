@@ -1,0 +1,20 @@
+<dialog data-controller="confirm"
+        data-confirm-target="dialog"
+        data-action="click->confirm#closeOnBackdrop"
+        role="alertdialog"
+        aria-labelledby="confirm-message"
+        aria-describedby="confirm-message"
+        class="fixed inset-0 m-auto hidden w-full max-w-sm flex-col rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-0 text-stone-900 dark:text-stone-100 shadow-xl [&[open]]:flex backdrop:bg-stone-950/60">
+  <form method="dialog" class="flex flex-col">
+    <p id="confirm-message" data-confirm-target="message" class="p-5 text-sm leading-relaxed"></p>
+    <div class="flex justify-end gap-2 border-t border-stone-200 dark:border-stone-800 px-4 py-3">
+      <button type="submit" value="cancel"
+              class="rounded px-3 py-1.5 text-sm text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 <%= focus_ring_classes %>">
+        Cancel
+      </button>
+      <button type="submit" value="confirm" class="<%= button_classes(:solid, "px-3 py-1.5 text-sm") %>">
+        Confirm
+      </button>
+    </div>
+  </form>
+</dialog>

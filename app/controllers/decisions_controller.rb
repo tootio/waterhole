@@ -66,7 +66,7 @@ class DecisionsController < ApplicationController
     decision.update!(state: "succeeded", performed_at: Time.current,
       attempts: decision.attempts + 1)
     @registration_request.update!(status: decision.resolved_status, resolved_at: Time.current)
-    @flash = { notice: "#{decision.action.capitalize}d @#{@registration_request.username}." }
+    @flash = { notice: "#{decision.resolved_status.capitalize} @#{@registration_request.username}." }
   rescue Mastodon::Forbidden
     handle_forbidden(decision)
   rescue Mastodon::NotFound

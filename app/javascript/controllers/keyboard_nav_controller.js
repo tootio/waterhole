@@ -62,7 +62,7 @@ export default class extends Controller {
     this.toggling = true
     try {
       const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
-      const response = await fetch(url, {
+      const response = await Turbo.fetch(url, {
         method,
         headers: {
           "Accept": "text/vnd.turbo-stream.html",

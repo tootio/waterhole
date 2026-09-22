@@ -5,7 +5,6 @@
 
 <div data-controller="detail-nav"
      data-detail-nav-claim-url-value="<%= registration_request_claim_path(@registration_request) %>"
-     data-detail-nav-claimed-by-me-value="<%= @registration_request.claimed_by == current_moderator %>"
      <% if @show_list_nav %>
        data-detail-nav-previous-url-value="<%= previous_in_list_path(@registration_request) %>"
        data-detail-nav-next-url-value="<%= next_in_list_path(@registration_request) %>"

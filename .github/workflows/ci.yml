@@ -110,3 +110,52 @@ jobs:
           PGUSER: postgres
           PGPASSWORD: postgres
         run: bin/rails db:test:prepare test
+
+  test_system:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: --health-cmd="pg_isready -U postgres" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+      - name: Install packages
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libpq-dev
+
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      # System tests hit a real headless Chrome, which loads the actual compiled
+      # CSS from disk -- unlike the other tests, which never need it to exist.
+      # ubuntu-latest ships Chrome and a matching chromedriver already; Selenium
+      # Manager (bundled with selenium-webdriver) finds them on its own.
+      - name: Build Tailwind CSS
+        run: bin/rails tailwindcss:build
+
+      - name: Run system tests
+        env:
+          RAILS_ENV: test
+          PGHOST: localhost
+          PGUSER: postgres
+          PGPASSWORD: postgres
+        run: bin/rails db:test:prepare test:system
+
+      - name: Upload screenshots of failed system tests
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: system-test-screenshots
+          path: tmp/screenshots
+          if-no-files-found: ignore
+          retention-days: 14

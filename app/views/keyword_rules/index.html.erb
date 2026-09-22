@@ -5,7 +5,7 @@
     <h1 class="text-2xl font-semibold tracking-tight">Watchwords</h1>
     <p class="mt-1 text-sm text-stone-600 dark:text-stone-300">Patterns checked against each applicant's reason, bio and display name.</p>
   </div>
-  <%= link_to "Add watchword", new_keyword_rule_path, class: "rounded bg-stone-900 dark:bg-stone-100 px-4 py-2 text-sm text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-white" %>
+  <%= link_to "Add watchword", new_keyword_rule_path, class: button_classes(:solid, "px-4 py-2 text-sm") %>
 </div>
 
 <% if @keyword_rules.any? %>
@@ -18,9 +18,9 @@
         <% unless rule.enabled? %><span class="text-xs text-stone-500 dark:text-stone-400">disabled</span><% end %>
         <% if rule.description.present? %><span class="text-sm text-stone-600 dark:text-stone-300"><%= rule.description %></span><% end %>
         <span class="ml-auto flex gap-3 text-sm">
-          <%= link_to "Edit", edit_keyword_rule_path(rule), class: "text-stone-500 dark:text-stone-400 underline" %>
+          <%= link_to "Edit", edit_keyword_rule_path(rule), class: button_classes(:ghost, "rounded underline") %>
           <%= button_to "Delete", keyword_rule_path(rule), method: :delete,
-                form: { data: { turbo_confirm: "Delete this watchword?" } }, class: "text-stone-500 dark:text-stone-400 underline hover:text-red-700 dark:hover:text-red-400" %>
+                form: { data: { turbo_confirm: "Delete this watchword?" } }, class: button_classes(:ghost, "rounded underline hover:text-red-700 dark:hover:text-red-400") %>
         </span>
       </li>
     <% end %>

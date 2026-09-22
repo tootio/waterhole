@@ -39,10 +39,10 @@
         <% if signed_in? %>
           <div class="order-2 ml-auto flex items-center gap-3 text-sm sm:order-3">
             <% if current_moderator.consent_current? %>
-              <%= button_to "Sync now", sync_path, class: "rounded border border-stone-300 dark:border-stone-700 px-2 py-1 whitespace-nowrap text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800" %>
+              <%= button_to "Sync now", sync_path, class: button_classes(:outline, "px-2 py-1 whitespace-nowrap text-stone-700 dark:text-stone-300") %>
             <% end %>
             <span class="hidden text-stone-500 dark:text-stone-400 sm:inline"><%= current_moderator.handle %></span>
-            <%= button_to "Sign out", session_path, method: :delete, class: "whitespace-nowrap text-stone-500 dark:text-stone-400 underline hover:text-stone-900 dark:hover:text-stone-100" %>
+            <%= button_to "Sign out", session_path, method: :delete, class: button_classes(:ghost, "rounded whitespace-nowrap underline hover:text-stone-900 dark:hover:text-stone-100") %>
           </div>
 
           <% if current_moderator.consent_current? %>
@@ -61,7 +61,7 @@
                   class: "#{nav_class(controller_name == "verifications")} whitespace-nowrap" %>
             <% unless controller_name == "sessions" && action_name == "new" %>
               <%= link_to "Sign in", new_session_path,
-                    class: "rounded border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 px-3 py-1 whitespace-nowrap text-stone-900 dark:text-stone-100 hover:bg-stone-100 dark:hover:bg-stone-800" %>
+                    class: button_classes(:outline, "bg-white dark:bg-stone-800 px-3 py-1 whitespace-nowrap text-stone-900 dark:text-stone-100") %>
             <% end %>
           </div>
         <% end %>

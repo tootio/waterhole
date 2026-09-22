@@ -37,7 +37,8 @@ module ApplicationHelper
 
   def nav_class(active)
     base = "rounded px-2 py-1 "
-    base + (active ? "bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900" : "text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800")
+    base + (active ? "bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900" : "text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800") +
+      " #{ButtonHelper::FOCUS_RING}"
   end
 
   # The page each legal document is served at. config/routes.rb maps the

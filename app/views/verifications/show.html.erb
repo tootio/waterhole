@@ -56,7 +56,7 @@
                 action: "submit->preserve-scroll#remember turbo:load@document->preserve-scroll#restore" } do |f| %>
     <%= f.text_field :instance_domain, value: @domain, placeholder: "mastodon.example", required: true,
           class: "flex-1 rounded border border-stone-300 dark:border-stone-700 px-3 py-2" %>
-    <%= f.submit "Check", class: "rounded bg-stone-900 dark:bg-stone-100 px-4 py-2 text-white dark:text-stone-900" %>
+    <%= f.submit "Check", class: button_classes(:solid, "px-4 py-2") %>
   <% end %>
 
   <% if @domain.present? %>

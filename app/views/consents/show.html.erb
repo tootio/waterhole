@@ -34,9 +34,9 @@
 
   <div class="mt-6 flex flex-wrap items-center gap-3">
     <%= button_to "Agree and continue", consent_path, method: :post,
-          class: "rounded bg-stone-900 dark:bg-stone-100 px-4 py-2 font-medium text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-white" %>
+          class: button_classes(:solid, "px-4 py-2 font-medium") %>
     <%= button_to "Decline and delete my data", consent_path, method: :delete,
           form: { data: { turbo_confirm: "Decline? You will be signed out, and we delete what we stored about you." } },
-          class: "rounded border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 px-4 py-2 text-stone-900 dark:text-stone-100 hover:bg-stone-100 dark:hover:bg-stone-800" %>
+          class: button_classes(:outline, "bg-white dark:bg-stone-800 px-4 py-2 text-stone-900 dark:text-stone-100") %>
   </div>
 </div>

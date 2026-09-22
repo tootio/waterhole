@@ -12,7 +12,7 @@
   <% @instances.each do |instance| %>
     <li>
       <%= link_to herd_path(instance),
-            class: "flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 hover:bg-stone-50 dark:hover:bg-stone-800" do %>
+            class: "flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 hover:bg-stone-50 dark:hover:bg-stone-800 focus-visible:bg-stone-50 dark:focus-visible:bg-stone-800" do %>
         <span class="font-medium"><%= instance.domain %></span>
 
         <% if instance == current_instance %>

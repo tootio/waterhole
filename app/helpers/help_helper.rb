@@ -4,7 +4,7 @@ module HelpHelper
   def keyboard_shortcuts_link
     tag.p class: "mt-6 text-sm" do
       link_to keyboard_shortcuts_help_path,
-        class: "text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100",
+        class: button_classes(:ghost, "rounded hover:text-stone-900 dark:hover:text-stone-100"),
         data: { action: "modal#open" } do
         tag.span("ⓘ ", aria_hidden: true) + "Keyboard shortcuts"
       end

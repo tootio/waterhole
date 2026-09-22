@@ -12,7 +12,7 @@
       <dd class="flex items-center gap-2">
         <span class="break-all font-mono text-xs"><%= registration_request.email.presence || "—" %></span>
         <% if registration_request.email.present? %>
-          <button type="button" class="text-xs text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300"
+          <button type="button" class="<%= button_classes(:ghost, "rounded text-xs hover:text-stone-700 dark:hover:text-stone-300") %>"
                   data-action="clipboard#copy" data-clipboard-value="<%= registration_request.email %>">copy</button>
         <% end %>
       </dd>
@@ -31,7 +31,7 @@
       <dd class="flex items-center gap-2">
         <span class="font-mono text-xs"><%= registration_request.ip.presence || "—" %></span>
         <% if registration_request.ip.present? %>
-          <button type="button" class="text-xs text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300"
+          <button type="button" class="<%= button_classes(:ghost, "rounded text-xs hover:text-stone-700 dark:hover:text-stone-300") %>"
                   data-action="clipboard#copy" data-clipboard-value="<%= registration_request.ip %>">copy</button>
         <% end %>
       </dd>

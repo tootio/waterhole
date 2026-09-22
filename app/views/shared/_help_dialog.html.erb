@@ -6,7 +6,7 @@
     <%# Filled from the fetched page's own <h1> -- see modal_controller.js. %>
     <h2 id="help-dialog-title" data-modal-target="title" class="text-sm font-semibold text-stone-900 dark:text-stone-100"></h2>
     <button type="button" data-action="modal#close"
-            class="shrink-0 rounded p-1 text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-stone-700 dark:hover:text-stone-200"
+            class="shrink-0 rounded p-1 text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-stone-700 dark:hover:text-stone-200 <%= focus_ring_classes %>"
             aria-label="Close">
       ✕
     </button>

@@ -1,11 +1,11 @@
 <% content_for :page_title, @instance.domain %>
 
 <div class="mb-4">
-  <p class="text-sm"><%= link_to "← Herds", herds_path, class: "text-stone-500 dark:text-stone-400 underline hover:text-stone-900 dark:hover:text-stone-100" %></p>
+  <p class="text-sm"><%= link_to "← Herds", herds_path, class: button_classes(:ghost, "rounded underline hover:text-stone-900 dark:hover:text-stone-100") %></p>
   <h1 class="mt-1 text-2xl font-semibold tracking-tight"><%= @instance.domain %></h1>
   <p class="mt-1 text-sm">
     <%= link_to @instance.base_url, @instance.base_url, rel: "noopener",
-          class: "text-indigo-700 dark:text-indigo-400 underline hover:text-indigo-900 dark:hover:text-indigo-300" %>
+          class: "rounded text-indigo-700 dark:text-indigo-400 underline hover:text-indigo-900 dark:hover:text-indigo-300 #{focus_ring_classes}" %>
   </p>
 </div>
 

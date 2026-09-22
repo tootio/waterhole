@@ -39,7 +39,7 @@
   </label>
 
   <div class="flex gap-3">
-    <%= f.submit class: "rounded bg-stone-900 dark:bg-stone-100 px-4 py-2 text-sm text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-white" %>
-    <%= link_to "Cancel", keyword_rules_path, class: "rounded border border-stone-300 dark:border-stone-700 px-4 py-2 text-sm" %>
+    <%= f.submit class: button_classes(:solid, "px-4 py-2 text-sm") %>
+    <%= link_to "Cancel", keyword_rules_path, class: button_classes(:outline, "px-4 py-2 text-sm") %>
   </div>
 <% end %>

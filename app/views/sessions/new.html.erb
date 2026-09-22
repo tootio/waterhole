@@ -28,7 +28,7 @@
       <%= f.check_box :remember, { class: "rounded border-stone-300 dark:border-stone-700" }, "1", "0" %>
       Remember this instance in this browser
     </label>
-    <%= f.submit "Continue", class: "mt-4 w-full rounded bg-stone-900 dark:bg-stone-100 px-4 py-2.5 font-medium text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-white" %>
+    <%= f.submit "Continue", class: button_classes(:solid, "mt-4 w-full px-4 py-2.5 font-medium") %>
   <% end %>
 
   <% if recent_instance_domains.any? %>
@@ -41,10 +41,10 @@
           <li class="flex items-center">
             <%= button_to domain, session_path, params: { domain:, remember: "1" },
                   form_class: "min-w-0 flex-1", form: { data: { turbo: false } },
-                  class: "w-full truncate px-4 py-2.5 text-left hover:bg-stone-50 dark:hover:bg-stone-800" %>
+                  class: "w-full truncate px-4 py-2.5 text-left hover:bg-stone-50 dark:hover:bg-stone-800 #{focus_ring_classes}" %>
             <%= button_to "Forget", session_recent_instance_path, method: :delete, params: { domain: },
                   title: "Remove #{domain} from this list",
-                  class: "px-4 py-2.5 text-xs text-stone-500 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800 hover:text-stone-900 dark:hover:text-stone-100" %>
+                  class: button_classes(:ghost, "px-4 py-2.5 text-xs hover:bg-stone-50 dark:hover:bg-stone-800 hover:text-stone-900 dark:hover:text-stone-100") %>
           </li>
         <% end %>
       </ul>

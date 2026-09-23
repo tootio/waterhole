@@ -112,3 +112,40 @@
     }
   }
 }
+
+/* A hand-drawn highlighter stroke for watchword matches (KeywordRulesHelper).
+   The padding/margin pair lets the stroke overshoot the word without moving
+   the text; clone repeats the rounded ends on every line a match wraps onto.
+   Severity only picks the ink. */
+@layer components {
+  .text-marker {
+    display: inline;
+    background-color: var(--text-marker-color, rgba(255, 241, 118, 0.85));
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    padding: 0.125em 4px;
+    margin: 0 -4px;
+    border-radius: 250px 15px 225px 15px / 5px 125px 50px 205px;
+    vertical-align: baseline;
+    color: inherit;
+    /* The slight blur and ink bleed of a real marker. */
+    box-shadow: 0 0 0.75px var(--text-marker-color, rgba(255, 241, 118, 0.85));
+  }
+
+  /* Two matches touching: no overshoot on the shared edge, or the second
+     stroke would paint over the first one's last letter. */
+  .text-marker-joined-start { margin-left: 0; padding-left: 0; }
+  .text-marker-joined-end   { margin-right: 0; padding-right: 0; }
+
+  .text-marker-info     { --text-marker-color: color-mix(in oklab, var(--color-sky-200) 85%, transparent); }
+  .text-marker-warning  { --text-marker-color: rgba(255, 241, 118, 0.85); }
+  .text-marker-critical { --text-marker-color: color-mix(in oklab, var(--color-red-300) 85%, transparent); }
+
+  /* color: inherit keeps the light text of a dark page, so the ink goes dark
+     instead. Must stay AFTER the light rules above. */
+  @variant dark {
+    .text-marker-info     { --text-marker-color: color-mix(in oklab, var(--color-sky-700) 75%, transparent); }
+    .text-marker-warning  { --text-marker-color: color-mix(in oklab, var(--color-yellow-700) 75%, transparent); }
+    .text-marker-critical { --text-marker-color: color-mix(in oklab, var(--color-red-800) 80%, transparent); }
+  }
+}

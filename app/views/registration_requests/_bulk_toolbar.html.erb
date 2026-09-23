@@ -1,0 +1,32 @@
+<%# Selection is per page: filtering or paging replaces this frame and starts
+    over, so nothing can be acted on that is not on screen. Sticky, because
+    a probe wave is picked by scrolling down a long page. %>
+<div class="sticky top-0 z-10 mb-2 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-stone-200 dark:border-stone-800 bg-white/95 dark:bg-stone-900/95 px-4 py-2 backdrop-blur">
+  <label class="flex cursor-pointer items-center gap-2 text-sm text-stone-600 dark:text-stone-300">
+    <input type="checkbox"
+           aria-label="Select all pending requests on this page"
+           class="size-4 rounded accent-stone-900 dark:accent-stone-100 <%= focus_ring_classes %>"
+           data-bulk-select-target="all"
+           data-action="bulk-select#toggleAll">
+    <span data-bulk-select-target="count" aria-live="polite">Select all</span>
+  </label>
+
+  <div class="ml-auto flex flex-wrap gap-2">
+    <button type="button" disabled data-bulk-select-target="button" data-action="bulk-select#claim"
+            class="<%= button_classes(:outline, "px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-40") %>">
+      Claim
+    </button>
+    <button type="button" disabled data-bulk-select-target="button" data-action="bulk-select#release"
+            class="<%= button_classes(:outline, "px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-40") %>">
+      Release
+    </button>
+    <button type="button" disabled data-bulk-select-target="button" data-action="bulk-select#approve"
+            class="rounded bg-emerald-600 px-3 py-1 text-sm font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-40 <%= focus_ring_classes %>">
+      <span aria-hidden="true">✔︎ </span>Approve
+    </button>
+    <button type="button" disabled data-bulk-select-target="button" data-action="bulk-select#reject"
+            class="rounded bg-red-600 px-3 py-1 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40 <%= focus_ring_classes %>">
+      <span aria-hidden="true">✘ </span>Reject
+    </button>
+  </div>
+</div>

@@ -152,7 +152,7 @@ class RefreshIpDatabasesJob < ApplicationJob
       f.response :follow_redirects, limit: 5
       f.options.open_timeout = 10
       f.options.timeout = 300 # 18 MB over a slow link
-      f.adapter Faraday.default_adapter
+      f.adapter SecureAdapter.adapter
     end
   end
 end

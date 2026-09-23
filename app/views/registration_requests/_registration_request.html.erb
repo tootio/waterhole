@@ -1,4 +1,25 @@
-<li id="<%= dom_id(registration_request) %>">
+<li id="<%= dom_id(registration_request) %>"
+    class="flex hover:bg-stone-50 dark:hover:bg-stone-800 has-[a:focus-visible]:bg-stone-50 dark:has-[a:focus-visible]:bg-stone-800">
+  <%# Beside the link, not inside it: a checkbox within an <a> would open the
+      detail page on every tick. Only pending requests can be acted on in bulk,
+      but the others keep the gutter so the list stays aligned. %>
+  <% if registration_request.pending? %>
+    <label class="flex shrink-0 cursor-pointer items-start py-3.5 pl-4 pr-1" title="Select @<%= registration_request.username %>">
+      <input type="checkbox"
+             value="<%= registration_request.id %>"
+             aria-label="Select @<%= registration_request.username %>"
+             class="size-4 rounded border-stone-300 dark:border-stone-600 accent-stone-900 dark:accent-stone-100 <%= focus_ring_classes %>"
+             data-bulk-select-target="checkbox"
+             data-action="bulk-select#toggle"
+             data-username="<%= registration_request.username %>"
+             data-decision-url="<%= registration_request_decision_path(registration_request) %>"
+             data-claim-url="<%= registration_request_claim_path(registration_request) %>"
+             data-claimed-by="<%= !registration_request.claimed? ? "none" : registration_request.claimed_by == current_moderator ? "me" : "other" %>"
+             data-claimer-name="<%= registration_request.claimed_by&.name %>">
+    </label>
+  <% else %>
+    <span class="w-9 shrink-0" aria-hidden="true"></span>
+  <% end %>
   <%# turbo_frame "_top" because this row sits inside the "queue" frame, which
       exists for filtering and paging. Without it the link would try to load the
       detail page INTO that frame, and the detail page has no "queue" frame, so
@@ -10,7 +31,7 @@
           claim_url: registration_request_claim_path(registration_request),
           claimed_by_me: registration_request.claimed_by == current_moderator
         },
-        class: "block px-4 py-3 hover:bg-stone-50 dark:hover:bg-stone-800 focus-visible:bg-stone-50 dark:focus-visible:bg-stone-800",
+        class: "block min-w-0 flex-1 py-3 pl-2 pr-4",
         id: dom_id(registration_request, :link) do %>
     <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
       <span class="font-medium">@<%= highlight_keywords(registration_request.username) %></span>

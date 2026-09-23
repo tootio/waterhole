@@ -204,4 +204,84 @@ class DecisionsTest < ActionDispatch::IntegrationTest
     assert_equal "rejected", jules_alpha.reload.status
     assert_redirected_to registration_request_path(claimed_alpha, sort: "oldest")
   end
+
+  # --- JSON, for the queue page's bulk actions (bulk_select_controller.js) ---
+
+  test "json: a successful decision answers with the outcome and Mastodon's rate-limit budget" do
+    stub_request(:post, "#{@instance.base_url}/api/v1/admin/accounts/#{@pending.mastodon_account_id}/reject")
+      .to_return(status: 200, body: "{}", headers: { "Content-Type" => "application/json",
+        "X-RateLimit-Remaining" => "42", "X-RateLimit-Reset" => 3.minutes.from_now.iso8601 })
+
+    post registration_request_decision_path(@pending, decision_action: "reject"), as: :json
+
+    assert_response :ok
+    assert_equal "rejected", @pending.reload.status
+    assert_equal "succeeded", response.parsed_body["outcome"]
+    assert_equal @pending.username, response.parsed_body["username"]
+    assert_equal 42, response.parsed_body.dig("rate_limit", "remaining")
+    assert response.parsed_body.dig("rate_limit", "reset_at").present?
+  end
+
+  test "json: a 429 queues the decision and says how long to back off" do
+    stub_decision_rate_limited(@instance, id: @pending.mastodon_account_id, action: "reject", reset_at: 30.seconds.from_now)
+
+    assert_enqueued_with(job: PushDecisionJob) do
+      post registration_request_decision_path(@pending, decision_action: "reject"), as: :json
+    end
+
+    assert_response :accepted
+    assert_equal "queued", response.parsed_body["outcome"]
+    assert_in_delta 30, response.parsed_body["retry_after"], 2
+    assert_equal 0, response.parsed_body.dig("rate_limit", "remaining")
+    assert @pending.reload.decision.state_pending?
+  end
+
+  test "json: Mastodon being unreachable is queued without a retry_after" do
+    stub_request(:post, "#{@instance.base_url}/api/v1/admin/accounts/#{@pending.mastodon_account_id}/reject").to_timeout
+
+    post registration_request_decision_path(@pending, decision_action: "reject"), as: :json
+
+    assert_response :accepted
+    assert_equal "queued", response.parsed_body["outcome"]
+    assert_nil response.parsed_body["retry_after"]
+  end
+
+  test "json: a conflict is a 409" do
+    stub_decision_forbidden(@instance, id: @pending.mastodon_account_id)
+    stub_admin_account(@instance, id: @pending.mastodon_account_id,
+      body: { "id" => @pending.mastodon_account_id, "approved" => true })
+
+    post registration_request_decision_path(@pending, decision_action: "approve"), as: :json
+
+    assert_response :conflict
+    assert_equal "conflict", response.parsed_body["outcome"]
+    assert_match(/Already approved/, response.parsed_body["message"])
+  end
+
+  test "json: an already-resolved request is a 409 and never reaches Mastodon" do
+    @pending.update!(status: "rejected", resolved_at: Time.current)
+
+    post registration_request_decision_path(@pending, decision_action: "reject"), as: :json
+
+    assert_response :conflict
+    assert_equal "already_resolved", response.parsed_body["outcome"]
+    assert_nil @pending.reload.decision
+  end
+
+  test "json: an unknown action is a 422" do
+    post registration_request_decision_path(@pending, decision_action: "banish"), as: :json
+
+    assert_response :unprocessable_content
+    assert_equal "failed", response.parsed_body["outcome"]
+  end
+
+  test "json: a dead token is a 401, so the bulk loop stops" do
+    stub_decision(@instance, id: @pending.mastodon_account_id, action: "reject", status: 401,
+      body: { "error" => "The access token is invalid" })
+
+    post registration_request_decision_path(@pending, decision_action: "reject"), as: :json
+
+    assert_response :unauthorized
+    assert_equal "unauthorized", response.parsed_body["outcome"]
+  end
 end

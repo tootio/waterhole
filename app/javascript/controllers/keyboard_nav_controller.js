@@ -4,7 +4,7 @@ import { Turbo } from "@hotwired/turbo-rails"
 // Triage speed. Working a queue of eighty signups with a mouse is miserable, and
 // this is the one thing server-rendered HTML genuinely cannot do.
 //
-//   j / k  move down / up      Enter  open        c  claim
+//   j / k  move down / up      Enter  open        c  claim      x  select
 export default class extends Controller {
   static targets = ["item"]
 
@@ -19,9 +19,12 @@ export default class extends Controller {
   }
 
   handle(event) {
-    // Never steal keys from someone typing a note or a filter.
-    const tag = document.activeElement?.tagName
-    if (tag === "INPUT" || tag === "TEXTAREA" || document.activeElement?.isContentEditable) return
+    // Never steal keys from someone typing a note or a filter. A checkbox is
+    // not typing: after ticking a row with the mouse, j/k should still work.
+    const active = document.activeElement
+    const typing = (active?.tagName === "INPUT" && active.type !== "checkbox") ||
+      active?.tagName === "TEXTAREA" || active?.isContentEditable
+    if (typing) return
     if (event.metaKey || event.ctrlKey || event.altKey) return
 
     switch (event.key) {
@@ -30,6 +33,10 @@ export default class extends Controller {
       case "c":
         if (!this.currentItem) return
         this.toggleClaim();
+        break
+      case "x":
+        if (!this.currentItem) return
+        this.toggleSelection()
         break
       default: return
     }
@@ -42,6 +49,13 @@ export default class extends Controller {
     this.index = Math.max(0, Math.min(this.itemTargets.length - 1, this.index + delta))
     const item = this.itemTargets[this.index]
     item.focus()
+  }
+
+  // Clicks the row's bulk-select checkbox (a sibling of the link, see
+  // _registration_request.html.erb), so bulk_select_controller.js sees an
+  // ordinary tick. Resolved rows have none.
+  toggleSelection() {
+    this.currentItem.closest("li")?.querySelector("input[type=checkbox]")?.click()
   }
 
   get currentItem() {

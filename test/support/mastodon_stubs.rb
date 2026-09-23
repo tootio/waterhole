@@ -53,6 +53,13 @@ module MastodonStubs
     stub_decision(instance, id:, action:, status: 403, body: { "error" => "This action is not allowed" })
   end
 
+  def stub_decision_rate_limited(instance, id:, action: "approve", reset_at: 30.seconds.from_now)
+    stub_request(:post, "#{instance.base_url}/api/v1/admin/accounts/#{id}/#{action}")
+      .to_return(status: 429, body: { "error" => "Too many requests" }.to_json,
+        headers: { "Content-Type" => "application/json",
+                   "X-RateLimit-Remaining" => "0", "X-RateLimit-Reset" => reset_at.iso8601 })
+  end
+
   # Resolver doubles for DnsAllowlist.
   def dns_ok(host = Waterhole::Deployment.host)
     Class.new { def initialize(h) = @h = h

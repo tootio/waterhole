@@ -9,14 +9,14 @@ class ClaimsController < ApplicationController
       respond_to do |format|
         format.turbo_stream
         format.html { redirect_back_or_to registration_request_path(@registration_request) }
+        format.json { render json: result_json("claimed") }
       end
     else
+      message = "#{@registration_request.reload.claimed_by&.name || "Someone else"} claimed this first."
       respond_to do |format|
         format.turbo_stream
-        format.html do
-          redirect_back_or_to registration_request_path(@registration_request),
-            alert: "#{@registration_request.reload.claimed_by&.name || "Someone else"} claimed this first."
-        end
+        format.html { redirect_back_or_to registration_request_path(@registration_request), alert: message }
+        format.json { render json: result_json("taken", message), status: :conflict }
       end
     end
   end
@@ -27,6 +27,7 @@ class ClaimsController < ApplicationController
     respond_to do |format|
       format.turbo_stream
       format.html { redirect_back_or_to registration_request_path(@registration_request) }
+      format.json { render json: result_json("released") }
     end
   end
 
@@ -49,6 +50,11 @@ class ClaimsController < ApplicationController
     return false unless params[:force].present? && @registration_request.reload.claim_stale?
 
     @registration_request.update!(claimed_by: current_moderator, claimed_at: Time.current)
+  end
+
+  # For the queue page's bulk claim/release, which runs one request per row.
+  def result_json(outcome, message = nil)
+    { id: @registration_request.id, username: @registration_request.username, outcome:, message: }.compact
   end
 
   # update_all skips callbacks, so the broadcast is explicit.

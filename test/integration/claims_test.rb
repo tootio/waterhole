@@ -90,4 +90,35 @@ class ClaimsTest < ActionDispatch::IntegrationTest
 
     assert_equal 1, won
   end
+
+  # --- JSON, for the queue page's bulk claim/release ---
+
+  test "json: claiming answers claimed" do
+    post registration_request_claim_path(@pending), as: :json
+
+    assert_response :ok
+    assert_equal "claimed", response.parsed_body["outcome"]
+    assert_equal @moderator, @pending.reload.claimed_by
+  end
+
+  test "json: a request someone else holds is a 409, and stays theirs" do
+    claimed = registration_requests(:claimed_alpha)
+
+    post registration_request_claim_path(claimed), as: :json
+
+    assert_response :conflict
+    assert_equal "taken", response.parsed_body["outcome"]
+    assert_match(/claimed this first/, response.parsed_body["message"])
+    assert_equal moderators(:blake), claimed.reload.claimed_by
+  end
+
+  test "json: releasing answers released" do
+    @pending.update!(claimed_by: @moderator, claimed_at: Time.current)
+
+    delete registration_request_claim_path(@pending), as: :json
+
+    assert_response :ok
+    assert_equal "released", response.parsed_body["outcome"]
+    assert_nil @pending.reload.claimed_by
+  end
 end

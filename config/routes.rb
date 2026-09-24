@@ -24,6 +24,8 @@ Rails.application.routes.draw do
     # Clears the applicant's personal data here; sync never imports it again.
     resource  :purge,    only: :create
     resources :notes,    only: :create
+    # The current moderator's own vote: cast or change (update), withdraw (destroy).
+    resource  :vote,     only: %i[update destroy]
   end
   resources :notes, only: %i[edit update destroy] # shallow: these need only the note id
 

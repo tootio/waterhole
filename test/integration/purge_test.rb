@@ -11,12 +11,14 @@ class PurgeTest < ActionDispatch::IntegrationTest
 
   test "a moderator purges a request with everything about it" do
     @applicant.notes.create!(moderator: moderators(:blake), body: "Looks fine.")
+    @applicant.votes.create!(moderator: moderators(:blake), vote: "approve")
 
     post registration_request_purge_path(@applicant)
 
     assert_redirected_to root_path
     refute RegistrationRequest.exists?(@applicant.id)
     assert_equal 0, Note.where(registration_request_id: @applicant.id).count
+    assert_equal 0, Vote.where(registration_request_id: @applicant.id).count
     get registration_request_path(@applicant)
     assert_response :not_found
   end

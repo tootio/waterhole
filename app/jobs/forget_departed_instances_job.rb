@@ -8,10 +8,10 @@
 # keep purged ones from being imported again have nothing left to guard. So, in
 # this order:
 #
-#   1. its applications are purged, with their notes, flags and decisions,
+#   1. its applications are purged, with their notes, votes, flags and decisions,
 #   2. its tombstones go (should it return, sync simply starts afresh),
 #   3. its moderators are forgotten -- deleted outright, since step 1 removed
-#      the notes and decisions that would otherwise keep them anonymised.
+#      the notes, decisions and votes that would otherwise keep them anonymised.
 class ForgetDepartedInstancesJob < ApplicationJob
   queue_as :default
 

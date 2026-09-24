@@ -1,5 +1,5 @@
 # A pending signup mirrored from Mastodon. This table is a projection of
-# Mastodon's state; the local workflow (claims, notes, flags, decisions) hangs
+# Mastodon's state; the local workflow (claims, notes, votes, flags, decisions) hangs
 # off it.
 class RegistrationRequest < ApplicationRecord
   STATUSES = %w[pending approved rejected approved_elsewhere rejected_elsewhere expired].freeze
@@ -19,6 +19,7 @@ class RegistrationRequest < ApplicationRecord
   belongs_to :claimed_by, class_name: "Moderator", optional: true
 
   has_many :notes, dependent: :destroy
+  has_many :votes, dependent: :delete_all
   has_many :flags, dependent: :destroy
   has_one  :decision, dependent: :destroy
 
@@ -99,7 +100,7 @@ class RegistrationRequest < ApplicationRecord
   def claimed? = claimed_by_id.present?
 
   # Deletes the request and everything hanging off it -- the applicant's data,
-  # notes, flags, claim and decision -- and keeps only Mastodon's account ID
+  # notes, votes, flags, claim and decision -- and keeps only Mastodon's account ID
   # (PurgedRegistration), so sync never imports it again. After the retention
   # period (PurgeResolvedRequestsJob), or on demand by a moderator.
   def purge!

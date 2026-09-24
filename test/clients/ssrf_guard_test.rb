@@ -32,9 +32,22 @@ class SsrfGuardTest < ActiveSupport::TestCase
     assert SsrfGuard.allowed?(IPAddr.new("::ffff:8.8.8.8"))
   end
 
+  test "blocks deprecated IPv4-compatible IPv6 addresses (::a.b.c.d, RFC 4291)" do
+    refute SsrfGuard.allowed?(IPAddr.new("::169.254.169.254")) # cloud metadata
+    refute SsrfGuard.allowed?(IPAddr.new("::10.0.0.1"))
+    refute SsrfGuard.allowed?(IPAddr.new("::8.8.8.8")) # not routable as IPv4 either way
+  end
+
   test "unwraps a NAT64-embedded IPv4 address before checking" do
     refute SsrfGuard.allowed?(IPAddr.new("64:ff9b::a9fe:a9fe")) # embeds 169.254.169.254
     assert SsrfGuard.allowed?(IPAddr.new("64:ff9b::808:808"))   # embeds 8.8.8.8
+  end
+
+  # see https://github.com/mastodon/mastodon/blob/main/spec/lib/private_address_check_spec.rb
+  test "refute the same addresses as Mastodon" do
+    %w[192.168.1.7 0.0.0.0 127.0.0.1 ::ffff:0.0.0.1 ::127.0.0.1 ::ffff:127.0.0.1 ::ffff:10.0.0.1 ::ffff:169.254.169.254 ::].each do |private_address|
+      refute SsrfGuard.allowed?(IPAddr.new(private_address))
+    end
   end
 
   test "a literal IP address in the host position is checked directly, without a DNS lookup" do

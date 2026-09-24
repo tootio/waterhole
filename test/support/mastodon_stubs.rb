@@ -25,6 +25,15 @@ module MastodonStubs
     }.merge(overrides)
   end
 
+  # Payloads for the instance's pending rows, i.e. an upstream queue that still
+  # holds everything we know of. A sync whose listing leaves them out would go
+  # and verify each one as a departure.
+  def pending_account_payloads(instance, except: nil)
+    instance.registration_requests.pending.reject { except && it.id == except.id }.map do |request|
+      admin_account_payload(id: request.mastodon_account_id, username: request.username)
+    end
+  end
+
   def stub_pending_accounts(instance, accounts:, next_max_id: nil)
     headers = { "Content-Type" => "application/json" }
     if next_max_id

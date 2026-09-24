@@ -133,6 +133,10 @@ class RegistrationRequest < ApplicationRecord
   # Resolved by someone acting directly in Mastodon rather than here.
   def resolved_elsewhere? = status.end_with?("_elsewhere")
 
+  # Resolved on Mastodon's word rather than a decision here, so Mastodon listing
+  # the account as pending again overrules it.
+  def resolved_upstream? = resolved_elsewhere? || status == "expired"
+
   # What an account that now 404s in Mastodon most likely became. Mastodon
   # deletes the user both on rejection and when the email stays unconfirmed for
   # UNCONFIRMED_ACCOUNT_LIFETIME, and the 404 looks the same either way.

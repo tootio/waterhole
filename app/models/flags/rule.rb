@@ -7,6 +7,11 @@ module Flags
 
     def initialize(request) = @request = request
 
+    # Evaluate the rule for the given request.
+    # This method should return a Flags::Detection object if the rule is triggered, or nil if it is not.
+    #
+    # Evaluation takes place inside a transaction and with a row lock on the request to prevent races.
+    # Thus, it should not do heavy work.
     def call
       raise NotImplementedError
     end

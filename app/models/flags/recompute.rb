@@ -8,12 +8,19 @@ module Flags
     def initialize(request) = @request = request
 
     def call
-      detections = Flags.registry.filter_map { |rule| rule.call(@request) }
-      by_rule    = detections.index_by(&:rule)
-
       changed = false
 
       @request.transaction do
+        # Serialise concurrent recomputes of one request (a job racing the
+        # hourly sweep, say): two find_or_initialize_by calls would otherwise
+        # both insert the same (request, rule) flag and trip the unique index.
+        # Rules are evaluated under the lock so a slower, staler pass can't
+        # overwrite a newer one.
+        RegistrationRequest.lock.where(id: @request.id).pick(:id)
+
+        detections = Flags.registry.filter_map { |rule| rule.call(@request) }
+        by_rule    = detections.index_by(&:rule)
+
         # Destroy rather than delete_all so flags_count's counter cache stays true.
         @request.flags.where.not(rule: by_rule.keys).find_each do |flag|
           flag.destroy

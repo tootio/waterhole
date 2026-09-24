@@ -27,7 +27,7 @@ class PurgeTest < ActionDispatch::IntegrationTest
   test "a purged request is not imported again" do
     post registration_request_purge_path(@applicant)
     @instance.update!(sync_moderator: moderators(:avery))
-    stub_pending_accounts(@instance, accounts: [
+    stub_pending_accounts(@instance, accounts: pending_account_payloads(@instance) + [
       admin_account_payload(id: @applicant.mastodon_account_id, username: @applicant.username)
     ])
 
@@ -41,7 +41,7 @@ class PurgeTest < ActionDispatch::IntegrationTest
     @applicant.update_columns(status: "rejected", resolved_at: 1.year.ago)
     PurgeResolvedRequestsJob.perform_now
     @instance.update!(sync_moderator: moderators(:avery))
-    stub_pending_accounts(@instance, accounts: [
+    stub_pending_accounts(@instance, accounts: pending_account_payloads(@instance) + [
       admin_account_payload(id: @applicant.mastodon_account_id, username: @applicant.username)
     ])
 

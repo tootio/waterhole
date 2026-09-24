@@ -11,7 +11,8 @@ class SyncInstanceJobTest < ActiveSupport::TestCase
   def pending_ids = @instance.registration_requests.pending.pluck(:mastodon_account_id)
 
   test "mirrors new requests" do
-    stub_pending_accounts(@instance, accounts: [ admin_account_payload(id: 5000, username: "newcomer") ])
+    stub_pending_accounts(@instance,
+      accounts: still_pending_payloads + [ admin_account_payload(id: 5000, username: "newcomer") ])
 
     assert_difference -> { @instance.registration_requests.count }, 1 do
       SyncInstanceJob.perform_now(@instance)
@@ -24,7 +25,7 @@ class SyncInstanceJobTest < ActiveSupport::TestCase
   end
 
   test "is idempotent: running twice creates one record" do
-    stub_pending_accounts(@instance, accounts: [ admin_account_payload(id: 5000) ])
+    stub_pending_accounts(@instance, accounts: still_pending_payloads + [ admin_account_payload(id: 5000) ])
 
     SyncInstanceJob.perform_now(@instance)
     assert_no_difference -> { @instance.registration_requests.count } do
@@ -34,8 +35,8 @@ class SyncInstanceJobTest < ActiveSupport::TestCase
 
   test "a request that vanished and reads back approved is marked approved elsewhere" do
     existing = registration_requests(:pending_alpha)
-    # Only this one leaves the queue; the rest are still upstream. (If they all
-    # vanished at once the mass-resolve guard would -- correctly -- refuse.)
+    # Only this one leaves the queue; the rest are still upstream, so the
+    # mass-resolve guard stays out of it.
     stub_pending_accounts(@instance, accounts: still_pending_payloads(except: existing))
     stub_admin_account(@instance, id: existing.mastodon_account_id,
       body: { "id" => existing.mastodon_account_id, "approved" => true })
@@ -113,20 +114,48 @@ class SyncInstanceJobTest < ActiveSupport::TestCase
       "a failed walk must not look like a clean sync"
   end
 
-  test "refuses to resolve more than half the queue in one pass" do
+  # A moderator clearing the whole queue in Mastodon's admin UI is a normal
+  # thing to do, not a data problem.
+  test "resolves a queue that was emptied upstream all at once" do
     stub_pending_accounts(@instance, accounts: [])
-    # Every vanished row would read back as approved: plausible individually,
-    # implausible all at once.
-    @instance.registration_requests.pending.find_each do |request|
+    departed = @instance.registration_requests.pending.to_a
+    departed.each do |request|
       stub_admin_account(@instance, id: request.mastodon_account_id,
         body: { "id" => request.mastodon_account_id, "approved" => true })
     end
 
     SyncInstanceJob.perform_now(@instance)
 
-    assert_equal 0, @instance.registration_requests.where(status: "approved_elsewhere").count,
-      "the circuit breaker should have refused the whole batch"
-    assert_equal "failed", @instance.sync_runs.order(:started_at).last.status
+    assert_empty pending_ids
+    assert_equal "succeeded", @instance.sync_runs.order(:started_at).last.status
+  end
+
+  # What a short walk produces: every missing row reads back as still pending.
+  test "a walk that comes back empty but reads back pending resolves nothing" do
+    stub_pending_accounts(@instance, accounts: [])
+    before = pending_ids.sort
+    @instance.registration_requests.pending.each do |request|
+      stub_admin_account(@instance, id: request.mastodon_account_id,
+        body: { "id" => request.mastodon_account_id, "approved" => false })
+    end
+
+    SyncInstanceJob.perform_now(@instance)
+
+    assert_equal before, pending_ids.sort
+  end
+
+  test "a request resolved on Mastodon's word is pending again when it reappears" do
+    %w[expired rejected_elsewhere approved_elsewhere].each do |status|
+      existing = registration_requests(:pending_alpha)
+      existing.update_columns(status:, resolved_at: 1.hour.ago)
+      stub_pending_accounts(@instance, accounts: pending_account_payloads(@instance) + [
+        admin_account_payload(id: existing.mastodon_account_id, username: existing.username)
+      ])
+
+      SyncInstanceJob.perform_now(@instance)
+
+      assert_equal "pending", existing.reload.status, "#{status} should have been reopened"
+    end
   end
 
   test "a dead sync token is invalidated and sync rotates to another moderator" do
@@ -306,10 +335,5 @@ class SyncInstanceJobTest < ActiveSupport::TestCase
 
   private
 
-  # Payloads for the requests that are still in the upstream queue.
-  def still_pending_payloads(except: nil)
-    @instance.registration_requests.pending.reject { except && it.id == except.id }.map do |request|
-      admin_account_payload(id: request.mastodon_account_id, username: request.username)
-    end
-  end
+  def still_pending_payloads(except: nil) = pending_account_payloads(@instance, except:)
 end

@@ -15,7 +15,7 @@ class RegistrationRequests::EnrichmentTest < ActiveSupport::TestCase
 
   test "sync records country and ASN for the signup address" do
     with_ip_databases do
-      stub_pending_accounts(@instance, accounts: [ payload_from(7001, IpStubs::DATACENTER_V4) ])
+      stub_pending_accounts(@instance, accounts: pending_account_payloads(@instance) + [ payload_from(7001, IpStubs::DATACENTER_V4) ])
 
       SyncInstanceJob.perform_now(@instance)
 
@@ -29,7 +29,7 @@ class RegistrationRequests::EnrichmentTest < ActiveSupport::TestCase
 
   test "the datacenter flag follows from enrichment in the same pass" do
     with_ip_databases do
-      stub_pending_accounts(@instance, accounts: [ payload_from(7002, IpStubs::DATACENTER_V4) ])
+      stub_pending_accounts(@instance, accounts: pending_account_payloads(@instance) + [ payload_from(7002, IpStubs::DATACENTER_V4) ])
 
       SyncInstanceJob.perform_now(@instance)
 
@@ -71,7 +71,7 @@ class RegistrationRequests::EnrichmentTest < ActiveSupport::TestCase
   test "sync succeeds with no databases installed" do
     Dir.mktmpdir do |dir|
       Ip::Databases.stub_directory(dir) do
-        stub_pending_accounts(@instance, accounts: [ admin_account_payload(id: 7003) ])
+        stub_pending_accounts(@instance, accounts: pending_account_payloads(@instance) + [ admin_account_payload(id: 7003) ])
 
         assert_nothing_raised { SyncInstanceJob.perform_now(@instance) }
         assert @instance.registration_requests.exists?(mastodon_account_id: "7003")

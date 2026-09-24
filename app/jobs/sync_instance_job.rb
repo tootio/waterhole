@@ -27,10 +27,6 @@ class SyncInstanceJob < ApplicationJob
   # 300 requests per 5 minutes per account, so cap it and let the next run finish.
   VERIFICATION_CAP = 50
 
-  # If a run is about to resolve more than this share of the pending queue at
-  # once, something is wrong with the data rather than with the applicants.
-  MASS_RESOLVE_RATIO = 0.5
-
   retry_on Mastodon::ConnectionError, Mastodon::ServerError,
     wait: :polynomially_longer, attempts: 5
   retry_on Mastodon::RateLimited, attempts: 3,
@@ -44,15 +40,14 @@ class SyncInstanceJob < ApplicationJob
     @run      = instance.sync_runs.create!(status: "running", started_at: Time.current)
 
     seen_ids, walk_complete = walk_pending
-    refused = walk_complete ? reconcile_departures(seen_ids) : false
-    clean   = walk_complete && !refused
+    reconcile_departures(seen_ids) if walk_complete
 
-    @run.update!(status: clean ? "succeeded" : "failed", finished_at: Time.current)
+    @run.update!(status: walk_complete ? "succeeded" : "failed", finished_at: Time.current)
 
-    if clean
+    if walk_complete
       instance.update!(last_synced_at: Time.current, last_sync_error: nil, last_sync_error_at: nil)
     else
-      # A partial or refused run is not a successful sync, and saying otherwise
+      # A partial run is not a successful sync, and saying otherwise
       # would hide a stuck instance behind a fresh timestamp.
       instance.update!(last_sync_error: @run.error_message, last_sync_error_at: Time.current)
     end
@@ -146,7 +141,7 @@ class SyncInstanceJob < ApplicationJob
     RegistrationRequests::Enrichment.apply(record)
     # A row that reappears in the pending list is pending again, whatever we
     # last believed.
-    record.status = "pending" if record.resolved_elsewhere?
+    record.status = "pending" if record.resolved_upstream?
     changed = record.changed?
     # Skipped when nothing changed: a no-op save still runs the commit
     # callbacks, i.e. a refresh broadcast per pending row on every run.
@@ -168,25 +163,16 @@ class SyncInstanceJob < ApplicationJob
   end
 
   # Rows we still think are pending but which no longer appear upstream. Don't
-  # guess why -- ask. Returns true if the run REFUSED to reconcile.
+  # guess why -- ask, one at a time. No limit on how many may leave at once: a
+  # short walk only produces rows that read back as still pending, and a
+  # moderator clearing the whole queue in Mastodon is a normal thing to do.
   def reconcile_departures(seen_ids)
     departed = instance.registration_requests.pending
       .where.not(mastodon_account_id: seen_ids)
       .limit(VERIFICATION_CAP)
-      .to_a
-    return false if departed.empty?
-
-    pending_total = instance.registration_requests.pending.count
-    if pending_total.positive? && departed.size > pending_total * MASS_RESOLVE_RATIO
-      run.update!(error_message: "Refused to resolve #{departed.size} of #{pending_total} " \
-        "pending requests in one pass; this looks like a data problem, not #{departed.size} decisions.")
-      Rails.logger.error("[waterhole] mass-resolve guard tripped for #{instance.domain}")
-      return true
-    end
 
     resolved = departed.count { |request| verify_departure(request) }
     run.increment!(:records_resolved, resolved)
-    false
   end
 
   def verify_departure(request)

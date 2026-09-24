@@ -1,6 +1,6 @@
 <% content_for :page_title, "@#{@registration_request.username}" %>
 
-<%# Per-request stream: notes append, and claim/decision changes refresh. %>
+<%# Per-request stream: notes append, and claim/decision/vote changes refresh. %>
 <%= turbo_stream_from @registration_request %>
 
 <div data-controller="detail-nav"
@@ -50,8 +50,10 @@
 
     <section class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-5">
       <h2 class="mb-3 text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
-        Moderator notes (<span id="notes_count"><%= @registration_request.notes_count %></span>)
+        Moderator notes and votes (<span id="notes_count"><%= @registration_request.notes_count %></span>)
       </h2>
+
+      <%= render "votes/votes", registration_request: @registration_request, votes: @votes %>
 
       <div id="notes" class="space-y-4">
         <%= render partial: "notes/note", collection: @notes, as: :note %>
@@ -69,7 +71,7 @@
       <h2 class="mb-2 text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">Purge from this Waterhole</h2>
       <p class="text-sm text-stone-600 dark:text-stone-300">
         Deletes this request here with everything about it: the applicant's data,
-        the notes, flags and decision. Decided requests are purged automatically
+        the notes, votes, flags and decision. Decided requests are purged automatically
         <%= pluralize(Waterhole::Deployment.retention.in_days.to_i, "day") %> after the decision. Nothing
         changes in Mastodon, and the request is not imported again.
       </p>

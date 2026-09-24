@@ -24,6 +24,7 @@ class RegistrationRequestsController < ApplicationController
   def show
     @notes = @registration_request.notes.roots.includes(:moderator, replies: :moderator).chronological
     @note  = @registration_request.notes.new
+    @votes = @registration_request.votes.includes(:moderator).order(:created_at)
     # Rebuilt from the permitted filters the row link handed back to us, never
     # from a raw url, so this can't be turned into an open redirect.
     @back_to_queue_path = registration_requests_path(filter_params)

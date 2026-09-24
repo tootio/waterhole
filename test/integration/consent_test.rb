@@ -70,6 +70,17 @@ class ConsentTest < ActionDispatch::IntegrationTest
     refute_equal @moderator.id, instances(:alpha).reload.sync_moderator_id, "sync must not keep a forgotten token"
   end
 
+  # A vote alone keeps the row too, so the tally does not shift under the team.
+  test "declining anonymises a moderator who only voted" do
+    registration_requests(:claimed_alpha).votes.create!(moderator: @moderator, vote: "approve")
+    sign_in_as @moderator
+
+    delete consent_path
+
+    assert_equal "former-moderator", Moderator.find(@moderator.id).username
+    assert_equal 1, registration_requests(:claimed_alpha).votes.where(moderator_id: @moderator.id).count
+  end
+
   test "a changed privacy policy asks again" do
     with_legal_documents do
       @moderator.update!(consented_at: 1.day.ago, consented_privacy_digest: LegalDocuments.privacy_digest)

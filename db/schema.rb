@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_21_180000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_24_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -224,6 +224,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_21_180000) do
     t.check_constraint "status::text = ANY (ARRAY['running'::text, 'succeeded'::text, 'failed'::text])", name: "sync_runs_status_check"
   end
 
+  create_table "votes", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "moderator_id", null: false
+    t.bigint "registration_request_id", null: false
+    t.datetime "updated_at", null: false
+    t.string "vote", null: false
+    t.index ["moderator_id"], name: "index_votes_on_moderator_id"
+    t.index ["registration_request_id", "moderator_id"], name: "index_votes_on_registration_request_id_and_moderator_id", unique: true
+    t.check_constraint "vote::text = ANY (ARRAY['approve'::text, 'reject'::text])", name: "votes_vote_check"
+  end
+
   add_foreign_key "decisions", "moderators"
   add_foreign_key "decisions", "registration_requests"
   add_foreign_key "flags", "registration_requests"
@@ -238,4 +249,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_21_180000) do
   add_foreign_key "registration_requests", "moderators", column: "claimed_by_id"
   add_foreign_key "sessions", "moderators"
   add_foreign_key "sync_runs", "instances"
+  add_foreign_key "votes", "moderators"
+  add_foreign_key "votes", "registration_requests"
 end

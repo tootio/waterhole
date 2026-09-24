@@ -8,3 +8,4 @@ pin "dompurify", to: "dompurify.min.js" # @3.4.15
 pin "domfortify", to: "domfortify.min.js" # @1.0.2
 pin "domfortify_init"
 pin_all_from "app/javascript/controllers", under: "controllers"
+pin_all_from "app/javascript/lib", under: "lib"

@@ -6,6 +6,19 @@
    dark page keeps white checkboxes and a bright scrollbar. */
 @layer base {
   html { color-scheme: light dark; }
+
+  /* A modal dialog covers the viewport, but the page behind it can still be
+     scrolled with a wheel or touch unless we say otherwise. Following the
+     dialog's own state means no close path can leave the page locked. */
+  html:has(dialog:modal) { overflow: hidden; }
+}
+
+/* One disabled look for every control.
+   aria-disabled is used for temporary disabling without loosing focus. */
+:is(button, input, select, textarea):disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.4;
 }
 
 /* Typography for the operator-authored legal documents. Deliberately hand-rolled

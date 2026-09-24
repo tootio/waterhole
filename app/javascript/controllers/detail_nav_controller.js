@@ -1,5 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 import { Turbo } from "@hotwired/turbo-rails"
+import { isTyping } from "lib/typing"
 
 // Keyboard shortcuts for a single registration request's page:
 //   j / k  next / previous in the list (only when the request is in one)
@@ -10,8 +11,7 @@ export default class extends Controller {
   static targets = ["approveAndNextForm", "rejectAndNextForm", "noteInput", "claimBanner"]
   static values = {
     previousUrl: String,
-    nextUrl: String,
-    claimUrl: String
+    nextUrl: String
   }
 
   connect() {
@@ -24,9 +24,7 @@ export default class extends Controller {
   }
 
   handle(event) {
-    // Never steal keys from someone typing a note or a filter.
-    const tag = document.activeElement?.tagName
-    if (tag === "INPUT" || tag === "TEXTAREA" || document.activeElement?.isContentEditable) return
+    if (isTyping()) return
     if (event.metaKey || event.ctrlKey || event.altKey) return
 
     switch (event.key) {
@@ -41,30 +39,7 @@ export default class extends Controller {
     event.preventDefault()
   }
 
-  // Same mechanism as keyboard_nav_controller.js's toggleClaim, including
-  // reading the current state off the DOM rather than a Stimulus value.
-  async toggleClaim() {
-    if (!this.hasClaimUrlValue || this.toggling) return
-    const method = this.claimBannerTarget.dataset.claimedByMe === "true" ? "DELETE" : "POST"
-
-    this.toggling = true
-    try {
-      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
-      const response = await Turbo.fetch(this.claimUrlValue, {
-        method,
-        headers: {
-          "Accept": "text/vnd.turbo-stream.html",
-          "X-Requested-With": "XMLHttpRequest",
-          ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {})
-        }
-      })
-
-      if (response.ok) {
-        const html = await response.text()
-        Turbo.renderStreamMessage(html)
-      }
-    } finally {
-      this.toggling = false
-    }
+  toggleClaim() {
+    this.claimBannerTarget.querySelector("button")?.click()
   }
 }

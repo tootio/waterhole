@@ -1,36 +1,32 @@
 import { Controller } from "@hotwired/stimulus"
 
+// The page language, not the browser one: see relative_time_controller.
+export const pageLocale = () => document.documentElement.lang || "en"
+
+let formatter = null
+
+// Shared with relative_time_controller's tooltip, so the two always read the
+// same, and built once: a queue page formats a timestamp on every row, again
+// on every morph refresh.
+export function formatLocal(date) {
+  formatter ??= new Intl.DateTimeFormat(pageLocale(), {
+    year: "numeric", month: "short", day: "numeric",
+    hour: "2-digit", minute: "2-digit"
+  })
+  return formatter.format(date)
+}
+
 // Renders server timestamps in the viewer's own timezone. Moderation teams are
 // spread across zones, and "when did they sign up?" should not need arithmetic.
 export default class extends Controller {
   connect() {
-    this.render = this.render.bind(this)
     this.render()
-
-    // A Turbo morph refresh (see turbo_refreshes_with in the layout, and
-    // broadcast_refresh_later on RegistrationRequest) patches this element's
-    // text back to the server-rendered, un-localized value in place, without
-    // disconnecting the controller — so connect() alone won't catch it.
-    document.addEventListener("turbo:render", this.render)
-  }
-
-  disconnect() {
-    document.removeEventListener("turbo:render", this.render)
   }
 
   render() {
-    const iso = this.element.getAttribute("datetime")
-    if (!iso) return
-
-    const date = new Date(iso)
+    const date = new Date(this.element.getAttribute("datetime"))
     if (isNaN(date)) return
 
-    // The page language, not the browser one: see relative_time_controller.
-    const locale = document.documentElement.lang || "en"
-
-    this.element.textContent = date.toLocaleString(locale, {
-      year: "numeric", month: "short", day: "numeric",
-      hour: "2-digit", minute: "2-digit"
-    })
+    this.element.textContent = formatLocal(date)
   }
 }

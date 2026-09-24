@@ -51,11 +51,10 @@
   </p>
 
   <%= form_with url: verification_path, method: :post, class: "mt-6 flex gap-2",
-        data: { controller: "preserve-scroll",
-                action: "submit->preserve-scroll#remember turbo:load@document->preserve-scroll#restore" } do |f| %>
+        data: { turbo_action: "replace" } do |f| %>
     <%= f.text_field :instance_domain, value: @domain, placeholder: "mastodon.example", required: true,
           class: "flex-1 rounded border border-stone-300 dark:border-stone-700 px-3 py-2" %>
-    <%= f.submit "Check", id: "verification_check", class: button_classes(:solid, "px-4 py-2") %>
+    <%= f.submit "Check", class: button_classes(:solid, "px-4 py-2") %>
   <% end %>
 
   <% if @domain.present? %>

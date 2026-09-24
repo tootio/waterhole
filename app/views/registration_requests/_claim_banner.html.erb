@@ -1,16 +1,8 @@
-<%# Claiming is what stops two people working the same request, so this has to be
-    unmissable and has to update for other viewers without a refresh.
-
-    Every button here shares one id, so retain_focus_controller.js can find the
-    replacement after a button press swaps the whole banner via a turbo stream.
-    Without it, a keyboard user is dropped back on <body>. %>
 <div id="<%= dom_id(registration_request, :claim_banner) %>" class="mb-6"
-     data-detail-nav-target="claimBanner"
-     data-controller="retain-focus" data-action="submit->retain-focus#remember"
-     data-claimed-by-me="<%= registration_request.claimed_by == current_moderator %>">
+     data-detail-nav-target="claimBanner">
   <% if registration_request.resolved? %>
-    <div class="rounded-lg border border-stone-200 dark:border-stone-800 bg-stone-100 dark:bg-stone-800 px-4 py-3 text-sm text-stone-600 dark:text-stone-300">
-      Resolved <%= local_time(registration_request.resolved_at) %>.
+    <div class="flex min-h-14 items-center rounded-lg border border-stone-200 dark:border-stone-800 bg-stone-100 dark:bg-stone-800 px-4 py-3 text-sm text-stone-600 dark:text-stone-300">
+      <span>Resolved <%= local_time(registration_request.resolved_at) %>.</span>
     </div>
   <% elsif registration_request.claimed_by == current_moderator %>
     <div class="flex flex-wrap items-center gap-3 rounded-lg border border-indigo-200 dark:border-indigo-900 bg-indigo-50 dark:bg-indigo-950 px-4 py-3">
@@ -20,7 +12,7 @@
             class: "ml-auto rounded border border-indigo-300 dark:border-indigo-700 bg-white dark:bg-indigo-900 px-3 py-1 text-sm text-indigo-900 dark:text-indigo-200 hover:bg-indigo-100 dark:hover:bg-indigo-800 #{focus_ring_classes}" %>
     </div>
   <% elsif registration_request.claimed? %>
-    <div class="flex flex-wrap items-center gap-3 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950 px-4 py-3">
+    <div class="flex min-h-14 flex-wrap items-center gap-3 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950 px-4 py-3">
       <span class="text-sm text-amber-900 dark:text-amber-200">
         <strong><%= registration_request.claimed_by.name %></strong> is reviewing this
         (claimed <%= relative_time(registration_request.claimed_at) %>).
@@ -35,6 +27,6 @@
   <% else %>
     <%= button_to "Claim this request", registration_request_claim_path(registration_request),
           id: dom_id(registration_request, :claim_button),
-          class: "w-full rounded-lg bg-stone-900 dark:bg-stone-100 px-4 py-2.5 text-sm font-medium text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-white #{focus_ring_classes}" %>
+          class: "w-full rounded-lg bg-stone-900 dark:bg-stone-100 px-4 py-4.5 text-sm font-medium text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-white #{focus_ring_classes}" %>
   <% end %>
 </div>

@@ -16,12 +16,7 @@ export default class extends Controller {
     // the triggering link's own accessible name is the best guess until then.
     this.titleTarget.textContent = event.currentTarget.getAttribute("aria-label") || event.currentTarget.textContent.trim()
     this.contentTarget.innerHTML = '<p class="text-sm text-stone-500 dark:text-stone-400">Loading…</p>'
-    if (!this.dialogTarget.open) {
-      this.dialogTarget.showModal()
-      // The dialog covers the viewport, but the page behind it can still be
-      // scrolled with a wheel or touch unless we say otherwise ourselves.
-      document.documentElement.classList.add("overflow-hidden")
-    }
+    if (!this.dialogTarget.open) this.dialogTarget.showModal()
 
     try {
       const response = await fetch(href, { headers: { "X-Requested-With": "XMLHttpRequest", "Accept": "text/html" } })
@@ -53,9 +48,8 @@ export default class extends Controller {
 
   // Fires on Esc too, since that also triggers the dialog's native close.
   // Clears the content rather than leaving applicant details sitting in a
-  // hidden dialog until the next one is opened, and restores page scrolling.
+  // hidden dialog until the next one is opened.
   clear() {
-    document.documentElement.classList.remove("overflow-hidden")
     this.titleTarget.textContent = ""
     this.contentTarget.innerHTML = ""
   }

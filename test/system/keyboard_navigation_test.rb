@@ -66,6 +66,25 @@ class KeyboardNavigationTest < ApplicationSystemTestCase
            "releasing with \"c\" reloaded the page instead of updating the row in place"
   end
 
+  test "the claim button keeps focus when it replaces itself on the detail page" do
+    button_id = ActionView::RecordIdentifier.dom_id(@pending, :claim_button)
+    visit registration_request_path(@pending)
+    assert_text "@#{@pending.username}"
+
+    page.execute_script("document.getElementById(#{button_id.inspect}).focus()")
+    claim_and_wait_for_refresh_broadcast { press :enter }
+
+    assert_text "You claimed this"
+    assert page.evaluate_script("document.activeElement.id === #{button_id.inspect}"),
+           "claim button lost focus after claiming"
+
+    claim_and_wait_for_refresh_broadcast { press :enter }
+
+    assert_text "Claim this request"
+    assert page.evaluate_script("document.activeElement.id === #{button_id.inspect}"),
+           "claim button lost focus after releasing"
+  end
+
   test "page thru the list on detail page" do
     pending_queue_scope = RegistrationRequests::Query.new(@moderator.instance.registration_requests, {}, viewer: @moderator).call
     ordered_ids = RegistrationRequests::Neighbors.new(pending_queue_scope, @pending).send(:ordered_ids)

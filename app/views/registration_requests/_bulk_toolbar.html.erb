@@ -13,19 +13,19 @@
 
   <div class="ml-auto flex flex-wrap gap-2">
     <button type="button" disabled data-bulk-select-target="button" data-action="bulk-select#claim"
-            class="<%= button_classes(:outline, "px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-40") %>">
+            class="<%= button_classes(:outline, "px-3 py-1 text-sm") %>">
       Claim
     </button>
     <button type="button" disabled data-bulk-select-target="button" data-action="bulk-select#release"
-            class="<%= button_classes(:outline, "px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-40") %>">
+            class="<%= button_classes(:outline, "px-3 py-1 text-sm") %>">
       Release
     </button>
     <button type="button" disabled data-bulk-select-target="button" data-action="bulk-select#approve"
-            class="rounded bg-emerald-600 px-3 py-1 text-sm font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-40 <%= focus_ring_classes %>">
+            class="rounded bg-emerald-600 px-3 py-1 text-sm font-medium text-white hover:bg-emerald-700 <%= focus_ring_classes %>">
       <span aria-hidden="true">✔︎ </span>Approve
     </button>
     <button type="button" disabled data-bulk-select-target="button" data-action="bulk-select#reject"
-            class="rounded bg-red-600 px-3 py-1 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40 <%= focus_ring_classes %>">
+            class="rounded bg-red-600 px-3 py-1 text-sm font-medium text-white hover:bg-red-700 <%= focus_ring_classes %>">
       <span aria-hidden="true">✘ </span>Reject
     </button>
   </div>

@@ -20,12 +20,10 @@ export default class extends Controller {
     // submit button closes it, so a stale value from a previous confirmation
     // would otherwise survive an Escape press or a backdrop click here.
     this.dialogTarget.returnValue = ""
-    document.documentElement.classList.add("overflow-hidden")
     this.dialogTarget.showModal()
 
     return new Promise((resolve) => {
       this.dialogTarget.addEventListener("close", () => {
-        document.documentElement.classList.remove("overflow-hidden")
         resolve(this.dialogTarget.returnValue === "confirm")
       }, { once: true })
     })

@@ -4,7 +4,6 @@
 <%= turbo_stream_from @registration_request %>
 
 <div data-controller="detail-nav"
-     data-detail-nav-claim-url-value="<%= registration_request_claim_path(@registration_request) %>"
      <% if @show_list_nav %>
        data-detail-nav-previous-url-value="<%= previous_in_list_path(@registration_request) %>"
        data-detail-nav-next-url-value="<%= next_in_list_path(@registration_request) %>"
@@ -35,7 +34,7 @@
     <section class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-5">
       <h2 class="mb-2 text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">Why they want to join</h2>
       <% if @registration_request.invite_request.present? %>
-        <div data-controller="expandable" data-expandable-collapsed-height-value="240">
+        <div data-controller="expandable" data-action="turbo:render@document->expandable#reconcile">
           <div data-expandable-target="content" class="overflow-hidden whitespace-pre-wrap text-lg leading-relaxed"><%= highlight_keywords(@registration_request.invite_request) %></div>
           <button type="button" data-expandable-target="toggle" data-action="expandable#toggle"
                   class="<%= button_classes(:ghost, "mt-2 hidden rounded text-sm underline") %>">Show more</button>

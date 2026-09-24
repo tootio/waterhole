@@ -67,7 +67,7 @@ module RegistrationRequestsHelper
     phrase   = time.future? ? "in #{distance}" : "#{distance} ago"
 
     tag.time phrase, datetime: time.iso8601, title: time.to_fs(:long),
-      data: { controller: "relative-time" }
+      data: { controller: "relative-time", action: "turbo:render@document->relative-time#refresh" }
   end
 
   # Rendered from a datetime attribute so Stimulus can localise it client-side.
@@ -75,6 +75,6 @@ module RegistrationRequestsHelper
     return tag.span("—") if time.blank?
 
     tag.time time.to_fs(format), datetime: time.iso8601, title: time.to_fs(:long),
-      data: { controller: "local-time" }
+      data: { controller: "local-time", action: "turbo:render@document->local-time#render" }
   end
 end

@@ -78,15 +78,17 @@ export default class extends Controller {
   // checkbox to the server's (unticked) markup. Put the ticks back, and forget
   // rows that have left the list.
   restore() {
-    const present = new Set(this.checkboxTargets.map(checkbox => checkbox.value))
+    const checkboxes = this.checkboxTargets
+    const present = new Set(checkboxes.map(checkbox => checkbox.value))
     for (const id of this.selected) if (!present.has(id)) this.selected.delete(id)
-    for (const checkbox of this.checkboxTargets) checkbox.checked = this.selected.has(checkbox.value)
+    for (const checkbox of checkboxes) checkbox.checked = this.selected.has(checkbox.value)
     this.sync()
   }
 
   sync() {
-    const total = this.checkboxTargets.length
-    const count = this.checkboxTargets.filter(checkbox => this.selected.has(checkbox.value)).length
+    const checkboxes = this.checkboxTargets
+    const total = checkboxes.length
+    const count = checkboxes.filter(checkbox => this.selected.has(checkbox.value)).length
 
     if (this.hasAllTarget) {
       this.allTarget.checked = count > 0 && count === total
@@ -328,7 +330,6 @@ export default class extends Controller {
       this.render(row, { label: "Waiting", tone: "muted" })
     }
 
-    document.documentElement.classList.add("overflow-hidden")
     this.dialogTarget.showModal()
     return rows
   }
@@ -351,9 +352,5 @@ export default class extends Controller {
 
   closeOnBackdrop(event) {
     if (!this.running && event.target === this.dialogTarget) this.dialogTarget.close()
-  }
-
-  closed() {
-    document.documentElement.classList.remove("overflow-hidden")
   }
 }

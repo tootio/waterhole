@@ -33,6 +33,7 @@ Rails.application.routes.draw do
   resource  :sync,      only: :create
   resources :sync_runs, only: :index
   resources :keyword_rules, except: :show
+  resources :email_templates, except: :show
 
   resources :herds, only: %i[index show], controller: "instances", constraints: { id: /[^\/]+/ }
 
@@ -48,6 +49,7 @@ Rails.application.routes.draw do
   # --- moderator help section -------------------------------------------------
   get "/help/shortcuts", to: "help#shortcuts", as: :keyboard_shortcuts_help
   get "/help/flags/:id", to: "help#flag",       as: :flag_help
+  get "/help/regexp",    to: "help#regexp",     as: :regexp_help
 
   # Reveal health status on /up
   get "up" => "rails/health#show", as: :rails_health_check

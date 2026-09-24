@@ -2,7 +2,7 @@
   <p class="mt-3 text-sm text-stone-500 dark:text-stone-400">No domains are blocked.</p>
 <% else %>
   <details>
-    <summary class="cursor-pointer mt-3 text-sm text-stone-500 dark:text-stone-400">Show <%= domain_policies.size %> blocked <%= domain_policies.size == 1 ? 'domains' : 'domain' %></summary>
+    <summary class="cursor-pointer mt-3 text-sm text-stone-500 dark:text-stone-400">Show <%= domain_policies.size %> blocked <%= domain_policies.size == 1 ? 'domain' : 'domains' %></summary>
     <ul class="mt-3 divide-y divide-stone-200 dark:divide-stone-800 rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900">
       <% domain_policies.each do |policy| %>
         <li class="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">

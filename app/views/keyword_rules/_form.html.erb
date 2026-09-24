@@ -6,7 +6,13 @@
   <% end %>
 
   <div>
-    <%= f.label :pattern, class: "block text-sm font-medium" %>
+    <div class="flex items-center justify-between gap-3">
+      <%= f.label :pattern, class: "block text-sm font-medium" %>
+      <%= link_to regexp_help_path, data: { action: "modal#open" }, aria: { label: "Regexp help" },
+            class: button_classes(:ghost, "rounded text-sm hover:text-stone-900 dark:hover:text-stone-100") do %>
+        <span aria-hidden="true">ⓘ</span> Regexp help
+      <% end %>
+    </div>
     <%= f.text_field :pattern, required: true, class: "mt-1 w-full rounded border border-stone-300 dark:border-stone-700 px-3 py-2" %>
   </div>
 

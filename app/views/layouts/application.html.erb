@@ -53,9 +53,8 @@
             <%= link_to root_path, class: "#{nav_class(controller_name == "registration_requests")} inline-flex items-center gap-1.5 whitespace-nowrap" do %>
               Queue <%= render "shared/queue_badge", instance: current_instance %>
             <% end %>
-            <%= link_to "Watchwords", keyword_rules_path, class: "#{nav_class(controller_name == "keyword_rules")} whitespace-nowrap" %>
-            <%= link_to "Sync history", sync_runs_path, class: "#{nav_class(controller_name == "sync_runs")} whitespace-nowrap" %>
-            <%= link_to "Herds", herds_path, class: "#{nav_class(controller_name == "instances")} whitespace-nowrap" %>
+            <%= link_to "My herd", herd_path(current_instance), class: "#{nav_class(my_herd_page?)} whitespace-nowrap" %>
+            <%= link_to "Herds", herds_path, class: "#{nav_class(controller_name == "instances" && !my_herd_page?)} whitespace-nowrap" %>
           </nav>
           <% end %>
         <% else %>

@@ -65,7 +65,7 @@
 
   <aside class="space-y-6">
     <%= render "flags", registration_request: @registration_request %>
-    <%= render "identity", registration_request: @registration_request %>
+    <%= render "identity", registration_request: @registration_request, email_templates: @email_templates %>
 
     <section class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-5">
       <h2 class="mb-2 text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">Purge from this Waterhole</h2>

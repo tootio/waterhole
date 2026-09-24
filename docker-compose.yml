@@ -1,14 +1,13 @@
 # Running Waterhole with Docker Compose.
 #
 #   cp .env.production.sample .env.production
-#   bin/rails waterhole:secrets        # paste the output into .env.production
+#   # fill in the secrets: the openssl snippet under "Configuration" in README.md
+#   # (or, with Ruby at hand, paste the output of bin/rails waterhole:secrets)
 #   # in .env.production: DB_HOST=db, and leave DB_PASS empty (see "db" below)
 #   mkdir legal && cp config/legal/*.md legal/   # then make them yours
 #   docker compose up -d
 #
 # Upgrading: docker compose pull && docker compose up -d
-# Until release images are published, build locally instead:
-#   docker compose up -d --build
 #
 # Waterhole speaks plain HTTP on 127.0.0.1:3000 (WATERHOLE_PORT=... in the shell
 # or in compose's own .env file to change it). Put a TLS-terminating reverse

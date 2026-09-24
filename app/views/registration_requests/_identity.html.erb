@@ -14,6 +14,26 @@
         <% if registration_request.email.present? %>
           <button type="button" class="<%= button_classes(:ghost, "rounded text-xs hover:text-stone-700 dark:hover:text-stone-300") %>"
                   data-action="clipboard#copy" data-clipboard-value="<%= registration_request.email %>">copy</button>
+          <% if email_templates.any? %>
+            <details class="relative">
+              <summary class="<%= button_classes(:ghost, "cursor-pointer list-none rounded text-xs whitespace-nowrap hover:text-stone-700 dark:hover:text-stone-300") %>">email ▾</summary>
+              <ul class="absolute right-0 z-10 mt-1 w-56 overflow-hidden rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 py-1 shadow-lg">
+                <% email_templates.each do |template| %>
+                  <li>
+                    <%= link_to template.name, template_mailto(template, registration_request),
+                          class: "block px-3 py-1.5 text-sm hover:bg-stone-100 dark:hover:bg-stone-800 #{focus_ring_classes}" %>
+                  </li>
+                <% end %>
+                <li class="border-t border-stone-200 dark:border-stone-800">
+                  <%= link_to "Manage templates", email_templates_path,
+                        class: "block px-3 py-1.5 text-xs text-stone-500 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 #{focus_ring_classes}" %>
+                </li>
+              </ul>
+            </details>
+          <% else %>
+            <%= link_to "templates", email_templates_path, title: "Set up email templates to write to applicants in one click",
+                  class: button_classes(:ghost, "rounded text-xs hover:text-stone-700 dark:hover:text-stone-300") %>
+          <% end %>
         <% end %>
       </dd>
       <% if registration_request.confirmed? %>

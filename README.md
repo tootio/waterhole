@@ -7,72 +7,127 @@ _Collaborative moderation for Mastodon registration requests._
 <img src="./doc/assets/hero-light.png" alt="Demo Waterhole registration queue" style="max-width: 826px">
 </picture>
 
-Herds that roam apart all come down to the same waterhole, and that is where they keep watch together.  
-Waterhole is that place for Mastodon instances that approve their signups by hand.
+Herds that roam apart all come down to the same waterhole to keep watch together. Waterhole is that place for
+Mastodon instances that approve their signups by hand: each instance is a herd.
 
-Each instance's moderation team gets its queue of pending registrations mirrored here, can claim requests so nobody 
-works the same one twice, discuss them in notes, and see advisory flags for the tracks spammers leave: 
-throwaway addresses, datacenter networks, templated reasons for joining, bursts of look-alike signups.
+## Features
 
-Instances that opt in also warn each other when the same newcomer is prowling around several herds, sharing only
-the tracks, never the applicants' details. Every herd still decides for itself who joins: approvals and rejections
-go back through each instance's own admin API, made by its own moderators.
+* **No new account needed**: sign in with your Mastodon account.
+* The registration queue gets mirrored in Waterhole, and a decision (approve/reject) gets **sent back to your Mastodon instance**.
+* **Real-time collaboration** on registration requests with other moderators of your Mastodon instance.
+* **No automatic decision-making**: Waterhole helps your moderators make decisions but never makes them for you.
+* Automatic **advisory flags** so your moderators quickly get a grasp of the request, each with its own help. Advisory flags include, among others:
+  * throwaway addresses
+  * datacenter networks
+  * templated reasons for joining
+  * bursts of look-alike signups
+  * reapplications (remembered for the retention period, 90 days by default)
+* **Network details** for the signup IP: country, network (ASN), iCloud Private Relay, and Tor relays.
+* **Claim a request**, so other moderators see that someone is working on it.
+* Add **notes** to a request or **vote** on it.
+* Power through big queues: **filters, search, sorting by risk**, **keyboard shortcuts** and **bulk actions** help you tackle the next spam wave.
+* Create **watchwords** (including regular expressions) that flag and highlight matching requests.
+* Create **email templates** for a quick follow-up question or a rejection email. They open, filled in for the applicant, in your own email client.
+* One Waterhole can serve **multiple Mastodon instances**. Each has its own registration queue, watchwords, and email templates. They can opt in to **share limited data** with each other to catch spam waves that hit several instances.
+* Mastodon instance administrators must allow Waterhole (with a DNS TXT record), so moderators cannot use it without their permission.
+* **Privacy first**, built with the GDPR in mind:
+  * decided requests are deleted automatically after the retention period (90 days by default), and any request can be purged by hand
+  * moderators consent before their data is processed
+  * a ready-made privacy notice for instance administrators to add to their own privacy policy
+  * shared data is limited: email addresses are only compared as keyed hashes, and only the instance's domain is revealed
+* **Host your own** Waterhole and set deployment-wide options like the admission policy (open to all, with a blocklist, or allowlist only) and an optional sync of the [IFTAS Do Not Interact list](https://about.iftas.org/library/iftas-dni-list/).
 
-## Tech Stack
+Interested? We host a Waterhole that is open to all: start at [waterhole.toot.io](https://waterhole.toot.io/about).
+
+## Host your own
+
+### Tech Stack
 
 * Ruby on Rails (with Solid Cable, Solid Queue, Solid Cache, and Turbo)
 * PostgreSQL
 
-## Configuration
+### Configuration
 
 Every setting is documented in [`.env.production.sample`](.env.production.sample).
 
 ```bash
 cp .env.production.sample .env.production
-bin/rails waterhole:secrets >> .env.production   # then remove the empty duplicates
 ```
 
-- **Outside a container**, Rails reads `.env.production` at boot.
-- **In a container**, the same variables are passed in (see Deployment below).
-- Variables already set in the environment always win over the file.
-
-**Back up the encryption keys with the database.** Without them, stored access
-tokens, OAuth client secrets, and applicant emails cannot be read.
-
-Operator-owned files live outside the code as well:
-
-| What | Variable | Default |
-|---|---|---|
-| Terms, privacy policy, imprint | `WATERHOLE_LEGAL_DIR` | `storage/legal` (templates ship in `config/legal`) |
-| IP data (geolocation databases, relay lists) | `WATERHOLE_IPDATA_DIR` | `storage/ipdata` |
-
-Start the legal documents from the templates with `bin/rails waterhole:legal:install`.
-
-## Deployment
-
-Waterhole is built and tested against Ruby 4.0.6 and PostgreSQL 18; those are the minimum versions we support.
-
-Waterhole must be served over HTTPS on a stable host: `WATERHOLE_HOST` is
-published in every connected instance's DNS record, and the OAuth redirect URI
-it registers with Mastodon is `https://WATERHOLE_HOST/…`.
-
-**Docker Compose** is the main path. It runs the web server,
-a separate job worker (syncing, DNS re-verification, IP database refresh), and PostgreSQL.
-The steps are at the top of [`docker-compose.yml`](docker-compose.yml). In short:
+Then fill in the secrets. This needs only `openssl`, so it works for Docker Compose, too.
+It fills the empty secret lines in `.env.production` and never overwrites a key that is already set:
 
 ```bash
-cp .env.production.sample .env.production   # DB_HOST=db, plus the secrets
-mkdir legal && cp config/legal/*.md legal/  # then make them yours
+alnum() { openssl rand -base64 48 | tr -dc 'A-Za-z0-9' | head -c 32; }
+sed -i.bak \
+  -e "s/^SECRET_KEY_BASE=\$/&$(openssl rand -hex 64)/" \
+  -e "s/^ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY=\$/&$(alnum)/" \
+  -e "s/^ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY=\$/&$(alnum)/" \
+  -e "s/^ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=\$/&$(alnum)/" \
+  -e "s/^WATERHOLE_SHARING_HMAC_KEY=\$/&$(openssl rand -hex 32)/" \
+  .env.production && rm .env.production.bak
+```
+
+With Ruby at hand, `bin/rails waterhole:secrets` prints the same keys to paste in instead.
+
+- **Outside a container**, Rails reads `.env.production` at boot.
+- **In a container**, the same variables are passed in (see [Deployment](#deployment-via-docker-compose) below).
+- Variables already set in the environment always win over the file.
+
+> [!warning]
+> **Back up the encryption keys with the database.** Without them, stored access
+> tokens, OAuth client secrets, and applicant emails cannot be read.
+
+When your Waterhole is open to the public, you need to provide it with some legalese.
+We have provided templates in [`config/legal`](config/legal) as a starting point.
+Waterhole reads the documents from `WATERHOLE_LEGAL_DIR` (default `storage/legal`).
+With Docker Compose, that is the `legal` folder next to `docker-compose.yml`, which the
+[Deployment](#deployment-via-docker-compose) steps set up. Without Docker, run:
+
+```bash
+bin/rails waterhole:legal:install
+```
+
+### System requirements
+
+Waterhole does not have any special requirements besides Docker Compose and being served over HTTPS on a stable host name.
+A VM with 2 CPU cores, 4 GB RAM, and 20+ GB SSD should be enough even for bigger deployments that serve dozens of instances.
+
+### Deployment via Docker Compose
+
+Release images are published to `ghcr.io/tootio/waterhole` for amd64 and arm64.
+
+You need [`docker-compose.yml`](docker-compose.yml), [`.env.production.sample`](.env.production.sample),
+and the legal templates in [`config/legal`](config/legal), so the simplest start is a clone of this repository.
+The steps are also at the top of `docker-compose.yml`. In short:
+
+```bash
+git clone https://github.com/tootio/waterhole.git && cd waterhole
+cp .env.production.sample .env.production
+# fill in the secrets (see Configuration above); set DB_HOST=db and leave DB_PASS empty
+mkdir legal && cp config/legal/*.md legal/   # then make them yours
 docker compose up -d
 ```
 
-Put a TLS-terminating reverse proxy (nginx, Caddy, …) in front of
-`127.0.0.1:3000`; [`config/nginx.conf.example`](config/nginx.conf.example) is a
-complete nginx setup, including the websocket for live updates.
+It runs three containers:
+* application server (Puma under Thruster)
+* job worker (Solid Queue)
+* PostgreSQL
 
-To upgrade, run `docker compose pull && docker compose up -d`.
+You need to bring your own TLS-terminating reverse proxy (nginx, Caddy, …).
+[`config/nginx.conf.example`](config/nginx.conf.example) has a complete nginx configuration,
+including the websocket for live updates.
 
-Release images are published to `ghcr.io/tootio/waterhole` for amd64 and arm64.
+### Updates
+
+To get a new release, run `docker compose pull && docker compose up -d`.
+Migrations are run automatically.
+
+### Without Docker
+
+If you know your way around Ruby on Rails, it should not be too hard to run Waterhole without Docker.
+It's a standard Rails app with Solid*, Turbo, and a PostgreSQL database.
+Waterhole is built and tested against Ruby 4.0.6 and PostgreSQL 18; those are the minimum versions we support.
 
 ## Development
 
@@ -90,9 +145,10 @@ keys that protect only seed data and fixtures. Put local overrides in
 
 Run the full check suite (RuboCop, Brakeman, audits, tests, seeds) with `bin/ci`.
 
-If you point your local Waterhole to your Mastodon instance, you probably do not want to publish a DNS record for it.
-Or you want to test what happens when you set a DNS record to a certain value. 
-Use `waterhole:dev:dns` to override DNS lookup in development:
+You need to run `bin/rails test:system` explicitly when you want the system tests to run, too.
+
+If you point your local Waterhole at your own Mastodon instance, you probably don't want to publish a DNS record for it,
+or you may want to see what happens with a particular record value. Use `waterhole:dev:dns` to override DNS lookup in development:
 
 ```bash
 bin/rails waterhole:dev:dns                                   # scenarios, and what is overridden
@@ -100,6 +156,16 @@ bin/rails 'waterhole:dev:dns[some.example,terms_outdated]'    # or: missing, amb
 bin/rails 'waterhole:dev:verify[some.example]'                # apply it now, not at the next hourly check
 bin/rails waterhole:dev:dns_clear                             # back to real DNS
 ```
+
+## Security
+
+Found a security issue? Please tell us privately rather than in a public issue:
+
+* report it through GitHub's [private vulnerability reporting](https://github.com/tootio/waterhole/security/advisories/new)
+  ([how it works](https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/report-privately)), or
+* email [hosting@toot.io](mailto:hosting@toot.io).
+
+See [SECURITY.md](SECURITY.md) for what to include and which versions are supported.
 
 ## Contributing
 

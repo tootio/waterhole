@@ -1,0 +1,49 @@
+<%= form_with model: email_template, class: "space-y-4 rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-5",
+      data: { controller: "placeholder-insert" } do |f| %>
+  <% if email_template.errors.any? %>
+    <div class="rounded bg-red-50 dark:bg-red-950 px-3 py-2 text-sm text-red-900 dark:text-red-200">
+      <%= email_template.errors.full_messages.to_sentence %>
+    </div>
+  <% end %>
+
+  <div>
+    <%= f.label :name, class: "block text-sm font-medium" %>
+    <%= f.text_field :name, required: true, maxlength: 100, placeholder: "e.g. Ask for more detail",
+          class: "mt-1 w-full rounded border border-stone-300 dark:border-stone-700 px-3 py-2" %>
+    <p class="mt-1 text-xs text-stone-500 dark:text-stone-400">Only moderators see this, in the list on the request page.</p>
+  </div>
+
+  <div>
+    <%= f.label :subject, class: "block text-sm font-medium" %>
+    <%= f.text_field :subject, maxlength: EmailTemplate::MAX_SUBJECT,
+          data: { placeholder_insert_target: "field", action: "focus->placeholder-insert#remember" },
+          class: "mt-1 w-full rounded border border-stone-300 dark:border-stone-700 px-3 py-2" %>
+  </div>
+
+  <div>
+    <%= f.label :body, class: "block text-sm font-medium" %>
+    <%= f.text_area :body, required: true, rows: 10, maxlength: EmailTemplate::MAX_BODY,
+          data: { placeholder_insert_target: "field", action: "focus->placeholder-insert#remember" },
+          class: "mt-1 w-full rounded border border-stone-300 dark:border-stone-700 px-3 py-2" %>
+  </div>
+
+  <div>
+    <p class="text-sm font-medium" id="placeholder-insert-label">Insert a placeholder</p>
+    <div class="mt-1 flex flex-wrap gap-2" role="group" aria-labelledby="placeholder-insert-label">
+      <% EmailTemplate::PLACEHOLDERS.each do |key, placeholder| %>
+        <button type="button" data-action="placeholder-insert#insert" data-placeholder-insert-token-param="{{<%= key %>}}"
+                title="Inserts {{<%= key %>}}"
+                class="<%= button_classes(:outline, "px-2 py-1 text-xs") %>"><%= placeholder.label %></button>
+      <% end %>
+    </div>
+  </div>
+
+  <label class="flex items-center gap-2 text-sm">
+    <%= f.check_box :enabled, class: "rounded border-stone-300 dark:border-stone-700" %> Enabled
+  </label>
+
+  <div class="flex gap-3">
+    <%= f.submit class: button_classes(:solid, "px-4 py-2 text-sm") %>
+    <%= link_to "Cancel", email_templates_path, class: button_classes(:outline, "px-4 py-2 text-sm") %>
+  </div>
+<% end %>

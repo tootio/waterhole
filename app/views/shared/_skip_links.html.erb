@@ -1,9 +1,11 @@
 <a href="#main-content"
+   data-controller="skip-link" data-action="skip-link#skip"
    class="fixed left-2 top-0 z-50 block -translate-y-full focus:translate-y-2 <%= button_classes(:solid, "px-4 py-2") %>">
   Skip to main content
 </a>
 <% if signed_in? && current_moderator.consent_current? %>
   <a href="#main-navigation"
+     data-controller="skip-link" data-action="skip-link#skip"
      class="fixed left-2 top-0 z-50 block -translate-y-full focus:translate-y-2 <%= button_classes(:solid, "px-4 py-2") %>">
     Skip to main navigation
   </a>

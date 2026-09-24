@@ -44,6 +44,11 @@ Rails.application.configure do
   # Set host to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = { host: "example.com" }
 
+  # Jobs run on the :test adapter, but the few tests that exercise Solid Queue
+  # itself (concurrency limits) need its models on the queue database, as in
+  # development and production.
+  config.solid_queue.connects_to = { database: { writing: :queue } }
+
   # Print deprecation notices to the stderr.
   config.active_support.deprecation = :stderr
 

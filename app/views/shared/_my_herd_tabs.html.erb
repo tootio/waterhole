@@ -1,0 +1,15 @@
+<%# The sub-navigation of "My herd": everything about your own instance that
+    its moderators set up or look after together. %>
+<div class="mb-6">
+  <p class="text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">My herd · <%= current_instance.domain %></p>
+  <nav aria-label="My herd" class="-mx-4 mt-2 flex items-center gap-1 overflow-x-auto border-b border-stone-200 dark:border-stone-800 px-4 pb-2 text-sm sm:mx-0 sm:gap-2 sm:px-0">
+    <% [
+         [ "Overview",        herd_path(current_instance), controller_name == "instances" ],
+         [ "Watchwords",      keyword_rules_path,          controller_name == "keyword_rules" ],
+         [ "Email templates", email_templates_path,        controller_name == "email_templates" ],
+         [ "Sync history",    sync_runs_path,              controller_name == "sync_runs" ]
+       ].each do |label, path, active| %>
+      <%= link_to label, path, class: "#{nav_class(active)} whitespace-nowrap", aria: { current: ("page" if active) } %>
+    <% end %>
+  </nav>
+</div>

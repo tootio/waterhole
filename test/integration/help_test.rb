@@ -95,4 +95,20 @@ class HelpTest < ActionDispatch::IntegrationTest
     get registration_request_path(request)
     assert_select "dialog[data-modal-target=?]", "dialog"
   end
+
+  test "the regexp help page explains the syntax and the case tips" do
+    get regexp_help_path
+
+    assert_response :success
+    assert_select "h1", "Regexp help"
+    assert_select "code", "(?i)"
+    assert_select "code", "(?-i)"
+  end
+
+  test "the watchword form links the regexp help, to be opened in the modal" do
+    [ new_keyword_rule_path, edit_keyword_rule_path(KeywordRule.create!(instance: instances(:alpha), pattern: "seo")) ].each do |path|
+      get path
+      assert_select "a[href=?][data-action=?]", regexp_help_path, "modal#open"
+    end
+  end
 end

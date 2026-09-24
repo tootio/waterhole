@@ -49,8 +49,36 @@ class LayoutTest < ActionDispatch::IntegrationTest
     get root_path
 
     assert_select "header nav a[href=?]", root_path
-    assert_select "header nav a", text: "Watchwords"
+    assert_select "header nav a[href=?]", herd_path(moderators(:avery).instance), text: "My herd"
+    assert_select "header nav a", { text: "Watchwords", count: 0 }, "Watchwords live under My herd"
+    assert_select "header nav a", { text: "Sync history", count: 0 }, "Sync history lives under My herd"
     assert_select "header", /#{moderators(:avery).username}/
+  end
+
+  test "My herd is the active nav item on its pages and shows their tabs" do
+    moderator = sign_in_as moderators(:avery)
+    own = herd_path(moderator.instance)
+
+    [ own, keyword_rules_path, new_keyword_rule_path, email_templates_path, new_email_template_path, sync_runs_path ].each do |path|
+      get path
+
+      assert_select "header nav a.bg-stone-900", { text: "My herd", count: 1 }, "My herd should be active on #{path}"
+      assert_select "header nav a.bg-stone-900", { text: "Herds", count: 0 }
+      assert_select "main nav[aria-label='My herd'] a", 4
+      assert_select "main nav[aria-label='My herd'] a[aria-current=page]", 1
+    end
+  end
+
+  test "Herds, not My herd, is active on the herds list and on another herd's page" do
+    sign_in_as moderators(:avery)
+
+    [ herds_path, herd_path(instances(:beta)) ].each do |path|
+      get path
+
+      assert_select "header nav a.bg-stone-900", { text: "Herds", count: 1 }, "Herds should be active on #{path}"
+      assert_select "header nav a.bg-stone-900", { text: "My herd", count: 0 }
+      assert_select "main nav[aria-label='My herd']", false
+    end
   end
 
   # On a phone the header becomes two rows -- identity and actions, then a nav
@@ -63,7 +91,7 @@ class LayoutTest < ActionDispatch::IntegrationTest
     assert_select "header nav.w-full.sm\\:w-auto"
     assert_select "header nav.order-3.sm\\:order-2"
     assert_select "header nav.overflow-x-auto", true,
-      "four tabs must scroll rather than wrap on a narrow phone"
+      "the tabs must scroll rather than wrap on a narrow phone"
   end
 
   test "nav labels do not break mid-phrase" do
@@ -71,8 +99,8 @@ class LayoutTest < ActionDispatch::IntegrationTest
     get root_path
 
     # "Sync history" wrapping onto two lines was what made the phone header
-    # three rows tall.
-    assert_select "header nav a.whitespace-nowrap", count: 4
+    # three rows tall; "My herd" could do the same.
+    assert_select "header nav a.whitespace-nowrap", count: 3
   end
 
   test "the long handle is hidden on the smallest screens" do

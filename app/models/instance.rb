@@ -11,6 +11,7 @@ class Instance < ApplicationRecord
   has_many :moderators, dependent: :destroy
   has_many :registration_requests, dependent: :destroy
   has_many :keyword_rules, dependent: :destroy
+  has_many :email_templates, dependent: :destroy
   has_many :sync_runs, dependent: :destroy
   has_many :purged_registrations, dependent: :delete_all
 

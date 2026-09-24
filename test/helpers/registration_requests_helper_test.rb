@@ -19,4 +19,19 @@ class RegistrationRequestsHelperTest < ActionView::TestCase
   test "no time is a dash, not an empty element" do
     assert_equal "<span>—</span>", relative_time(nil)
   end
+
+  test "a template mailto link is percent-encoded, with CRLF line breaks" do
+    define_singleton_method(:current_moderator) { moderators(:avery) }
+    template = EmailTemplate.new(name: "Ask", subject: "Q&A? {{username}}", body: "Line one\nLine + two")
+
+    assert_equal "mailto:rowan@fastmail.com?subject=Q%26A%3F%20rowan&body=Line%20one%0D%0ALine%20%2B%20two",
+      template_mailto(template, registration_requests(:pending_alpha))
+  end
+
+  test "a template without a subject leaves the subject out" do
+    define_singleton_method(:current_moderator) { moderators(:avery) }
+    template = EmailTemplate.new(name: "Ask", subject: "", body: "Hi")
+
+    assert_equal "mailto:rowan@fastmail.com?body=Hi", template_mailto(template, registration_requests(:pending_alpha))
+  end
 end

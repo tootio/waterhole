@@ -1,0 +1,38 @@
+<% content_for :page_title, "Email templates" %>
+<%= render "shared/my_herd_tabs" %>
+
+<div class="mb-4 flex items-center justify-between gap-3">
+  <div>
+    <h1 class="text-2xl font-semibold tracking-tight">Email templates</h1>
+    <p class="mt-1 text-sm text-stone-600 dark:text-stone-300">Canned emails to applicants. Pick one next to an applicant's address and it opens in your own mail client, filled in for them.</p>
+  </div>
+  <%= link_to "Add template", new_email_template_path, class: button_classes(:solid, "shrink-0 px-4 py-2 text-sm") %>
+</div>
+
+<% if @email_templates.any? %>
+  <ul class="divide-y divide-stone-200 dark:divide-stone-800 overflow-hidden rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900">
+    <% @email_templates.each do |template| %>
+      <li class="flex flex-wrap items-start gap-3 px-4 py-3">
+        <div class="min-w-0 flex-1">
+          <p class="font-medium">
+            <%= template.name %>
+            <% unless template.enabled? %><span class="ml-1 text-xs font-normal text-stone-500 dark:text-stone-400">disabled</span><% end %>
+          </p>
+          <% if template.subject.present? %>
+            <p class="text-sm text-stone-600 dark:text-stone-300"><%= template.subject %></p>
+          <% end %>
+          <p class="mt-1 truncate text-xs text-stone-500 dark:text-stone-400"><%= template.body.squish %></p>
+        </div>
+        <span class="flex gap-3 text-sm">
+          <%= link_to "Edit", edit_email_template_path(template), class: button_classes(:ghost, "rounded underline") %>
+          <%= button_to "Delete", email_template_path(template), method: :delete,
+                form: { data: { turbo_confirm: "Delete this template?" } }, class: button_classes(:ghost, "rounded underline hover:text-red-700 dark:hover:text-red-400") %>
+        </span>
+      </li>
+    <% end %>
+  </ul>
+<% else %>
+  <p class="rounded-lg border border-dashed border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-6 py-12 text-center text-stone-500 dark:text-stone-400">
+    No email templates yet.
+  </p>
+<% end %>

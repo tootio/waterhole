@@ -22,6 +22,19 @@ module RegistrationRequestsHelper
     registration_request_path(registration_request, params.permit(*FILTER_PARAMS))
   end
 
+  # A mailto: link that opens the template in the moderator's own mail client,
+  # addressed to the applicant and filled in for them. Percent-encoded rather
+  # than form-encoded: mail clients show a "+" as a plus, not a space.
+  def template_mailto(template, registration_request)
+    filled = template.render_for(registration_request, moderator: current_moderator)
+    query = { subject: filled[:subject], body: filled[:body].gsub(/\r?\n/, "\r\n") }
+      .compact_blank.map { |key, value| "#{key}=#{ERB::Util.url_encode(value)}" }.join("&")
+
+    # The "@" stays readable; everything around it is escaped.
+    to = registration_request.email.split("@", -1).map { ERB::Util.url_encode(it) }.join("@")
+    "mailto:#{to}#{"?#{query}" if query.present?}"
+  end
+
   def next_in_list_path(registration_request)
     next_registration_request_path(registration_request, params.permit(*FILTER_PARAMS))
   end

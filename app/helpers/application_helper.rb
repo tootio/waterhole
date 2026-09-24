@@ -41,6 +41,16 @@ module ApplicationHelper
       " #{ButtonHelper::FOCUS_RING}"
   end
 
+  # Watchwords, email templates, sync history and your own herd's page all sit
+  # under "My herd" in the header; every other herd's page is under "Herds".
+  MY_HERD_CONTROLLERS = %w[keyword_rules email_templates sync_runs].freeze
+
+  def my_herd_page?
+    return true if controller_name.in?(MY_HERD_CONTROLLERS)
+
+    controller_name == "instances" && action_name == "show" && @instance.present? && @instance == current_instance
+  end
+
   # The page each legal document is served at. config/routes.rb maps the
   # slugs to paths; generating from the slug keeps that mapping in one place.
   def legal_document_path(document)

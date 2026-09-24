@@ -1,0 +1,84 @@
+<% content_for :page_title, "Regexp help" %>
+
+<%
+  code_class = "rounded bg-stone-100 dark:bg-stone-800 px-1.5 py-0.5 font-mono text-xs"
+  sections = [
+    { title: "Building blocks", rows: [
+        [ ".", "Any single character" ],
+        [ "\\d  \\s", "A digit; whitespace (space, tab, line break)" ],
+        [ "[abc]  [a-z]", "One of these characters; one in this range" ],
+        [ "[^abc]", "Any character except these" ],
+        [ "\\p{L}", "Any letter, in any script — ü, é, ж and 字 included" ],
+        [ "\\.  \\?  \\(", "A literal dot, question mark, bracket: put \\ before . ? * + ( ) [ ] { } | ^ $ \\" ]
+      ] },
+    { title: "How often", rows: [
+        [ "?", "Optional: zero or one time — colou?r matches color and colour" ],
+        [ "*  +", "Zero or more; one or more times" ],
+        [ "{2,5}", "Between 2 and 5 times" ]
+      ] },
+    { title: "Where", rows: [
+        [ "\\b", "A word boundary — \\bseo\\b matches “seo” but not “seoul”" ],
+        [ "\\A  \\z", "The very start; the very end of the text" ],
+        [ "^  $", "The start; the end of a line (not only of the whole text)" ]
+      ] },
+    { title: "Alternatives and groups", rows: [
+        [ "a|b", "Either one — crypto|nft|airdrop" ],
+        [ "(…)", "Groups a part, so ? * + or | apply to all of it — (free|cheap)\\s+followers" ]
+      ] },
+    { title: "Upper and lower case", rows: [
+        [ "(?i)", "Case-insensitive. Watchwords already ignore case, so (?i) — familiar from other tools — is accepted but changes nothing" ],
+        [ "(?-i)", "Case-sensitive from here on — (?-i)SEO matches “SEO” but not “seo”" ],
+        [ "(?-i:…)", "Case-sensitive for just this group" ]
+      ] }
+  ]
+%>
+
+<h1 class="mb-4 text-2xl font-semibold tracking-tight">Regexp help</h1>
+
+<p class="mb-6 text-sm text-stone-600 dark:text-stone-300">
+  With the match set to <strong>Regex</strong>, the pattern is a Ruby regular
+  expression, checked against each applicant's reason, profile note, username
+  and display name. The “Word” and “Substring” matches need none of this: they
+  take the pattern literally.
+</p>
+
+<div class="space-y-6">
+  <% sections.each do |section| %>
+    <section class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-5">
+      <h2 class="mb-3 text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400"><%= section[:title] %></h2>
+      <dl class="divide-y divide-stone-200 dark:divide-stone-800 text-sm">
+        <% section[:rows].each do |syntax, description| %>
+          <div class="flex items-start gap-4 py-2">
+            <dt class="w-28 shrink-0"><code class="<%= code_class %> whitespace-pre"><%= syntax %></code></dt>
+            <dd class="text-stone-600 dark:text-stone-300"><%= description %></dd>
+          </div>
+        <% end %>
+      </dl>
+    </section>
+  <% end %>
+
+  <section class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-5">
+    <h2 class="mb-3 text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">Tips</h2>
+    <ul class="list-disc space-y-2 pl-5 text-sm text-stone-600 dark:text-stone-300">
+      <li>
+        <code class="<%= code_class %>">\w</code> only covers the letters a–z, digits and “_”, so
+        <code class="<%= code_class %>">\w+</code> stops at the “ü” in “müller”. Use
+        <code class="<%= code_class %>">\p{L}</code> for letters in any language.
+      </li>
+      <li>
+        Allow for spacing and spelling tricks: <code class="<%= code_class %>">free\s*money</code> also
+        catches “freemoney”, <code class="<%= code_class %>">cr[yi]pto</code> catches “cripto”.
+      </li>
+      <li>
+        Keep it simple. A pattern that takes longer than <%= (KeywordRule::REGEX_TIMEOUT * 1000).to_i %> ms on
+        a text simply doesn't match it; nested repeats such as <code class="<%= code_class %>">(a+)+</code>
+        are the usual cause.
+      </li>
+      <li>
+        A pattern that isn't valid is refused when you try to save it.
+        Matches are highlighted on the request page, which is the quickest way to
+        check a new watchword does what you meant.
+      </li>
+    </ul>
+  </section>
+</div>

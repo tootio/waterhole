@@ -7,6 +7,22 @@
 class SyncInstanceJob < ApplicationJob
   queue_as :default
 
+  # Solid Queue runs the lowest number first (jobs default to 0), so when every
+  # thread is busy, the broadcasts that tell moderators' browsers to refresh
+  # jump ahead of queued syncs instead of waiting behind them. It does not
+  # preempt a sync already running.
+  queue_with_priority 10
+
+  # One sync per instance at a time. A retry backing off, a slow run or a manual
+  # "sync now" could otherwise overlap the next scheduled run, and two runs
+  # walking one queue race on the same rows, the flag recomputes and the sync
+  # token. Discard rather than block: a queued-up copy would only redo the run
+  # that is already in progress, and the next tick comes soon enough.
+  #
+  # The duration is how long a lock survives a worker that died mid-run; a
+  # healthy run releases it as soon as it finishes.
+  limits_concurrency to: 1, key: ->(instance) { instance }, duration: 10.minutes, on_conflict: :discard
+
   # Individually verifying vanished rows costs one API call each; Mastodon allows
   # 300 requests per 5 minutes per account, so cap it and let the next run finish.
   VERIFICATION_CAP = 50
@@ -95,8 +111,22 @@ class SyncInstanceJob < ApplicationJob
       run.update!(error_message: "Walk failed after #{pages} page(s): #{e.message}")
       [ seen, false ]
     ensure
+      mark_seen(seen)
       run.update!(pages_fetched: pages, records_seen: seen.size)
     end
+  end
+
+  # Stamped in bulk, outside the per-record save. Set through the model it made
+  # every pending row "changed" on every run: an UPDATE, a flag recompute and a
+  # refresh broadcast per row, every five minutes, to say nothing had happened.
+  # update_all skips callbacks and updated_at on purpose. Runs for a partial
+  # walk too: what it did see is still in the queue.
+  def mark_seen(mastodon_ids)
+    return if mastodon_ids.empty?
+
+    instance.registration_requests
+      .where(mastodon_account_id: mastodon_ids)
+      .update_all(last_seen_in_queue_at: run.started_at)
   end
 
   def upsert(payload)
@@ -114,12 +144,13 @@ class SyncInstanceJob < ApplicationJob
     # Before the changed? check below, or an enrichment-only change would not
     # recompute the datacenter_asn flag.
     RegistrationRequests::Enrichment.apply(record)
-    record.last_seen_in_queue_at = run.started_at
     # A row that reappears in the pending list is pending again, whatever we
     # last believed.
     record.status = "pending" if record.resolved_elsewhere?
     changed = record.changed?
-    record.save!
+    # Skipped when nothing changed: a no-op save still runs the commit
+    # callbacks, i.e. a refresh broadcast per pending row on every run.
+    record.save! if changed
 
     # Deliberately find_or_initialize + save! rather than upsert_all: model
     # callbacks and flag recomputation depend on it, and at this volume the extra
@@ -130,7 +161,8 @@ class SyncInstanceJob < ApplicationJob
     # also happens for decisions and departures, not only here.
     record.recompute_flags! if created || changed
 
-    run.increment!(created ? :records_created : :records_updated)
+    run.increment!(:records_created) if created
+    run.increment!(:records_updated) if changed && !created
   rescue ActiveRecord::RecordNotUnique
     retry
   end

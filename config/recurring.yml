@@ -3,7 +3,7 @@
 defaults: &defaults
   sync_instances:
     class: ScheduleInstanceSyncsJob
-    schedule: every 5 minutes
+    schedule: every <%= ScheduleInstanceSyncsJob::INTERVAL.in_minutes.to_i %> minutes
   verify_instances:
     class: VerifyInstancesJob
     schedule: every hour at minute 7

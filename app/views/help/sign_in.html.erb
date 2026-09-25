@@ -33,6 +33,23 @@
     </div>
   </section>
 
+  <section id="declined" class="<%= section_class %>">
+    <h2 class="<%= heading_class %>">I declined Waterhole's request on Mastodon</h2>
+    <div class="<%= body_class %>">
+      <p>
+        Nothing happened: Waterhole got no access, and what it had before is
+        unchanged. To sign in, start again and approve the request.
+      </p>
+      <p>Being careful was right. A genuine request:</p>
+      <ul class="list-disc space-y-1 pl-5">
+        <li>starts on this Waterhole's sign-in page, at <strong><%= Waterhole::Deployment.host %></strong>;</li>
+        <li>is shown on your own server's address, where you are signed in to Mastodon;</li>
+        <li>names the app <strong>Waterhole</strong> and asks for your profile, search, and managing accounts as a moderator.</li>
+      </ul>
+      <p>If something about it still looks wrong, ask an administrator of your instance before approving it.</p>
+    </div>
+  </section>
+
   <section id="listed-twice" class="<%= section_class %>">
     <h2 class="<%= heading_class %>">Waterhole is listed twice among my authorized apps</h2>
     <div class="<%= body_class %>">

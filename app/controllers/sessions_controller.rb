@@ -62,12 +62,19 @@ class SessionsController < ApplicationController
   rescue Mastodon::InvalidResponse => e
     redirect_to new_session_path, alert: with_help("Could not reach #{domain}: #{e.message}.", "no-instance-actor")
   rescue Mastodon::Error => e
-    redirect_to new_session_path, alert: "Could not reach #{domain}: #{e.message}"
+    redirect_to new_session_path, alert: with_help("Could not reach #{domain}: #{e.message}.")
   end
 
   def callback
     instance = verified_state_instance
     return redirect_to(new_session_path, alert: "That sign-in link has expired. Try again.") unless instance
+
+    # Mastodon comes back with an error instead of a code when the moderator
+    # declines on its authorize screen, or when it refuses the request itself.
+    if params[:code].blank?
+      session.delete(:remember_instance)
+      return redirect_to new_session_path, alert: authorization_refused_alert(instance)
+    end
 
     # Re-check: the gap between redirect and return is small, but a domain can be
     # blocked or lose its record inside it.
@@ -104,7 +111,7 @@ class SessionsController < ApplicationController
     redirect_to new_session_path, alert: with_help("Sign-in failed: #{e.message}. Nothing you did caused this; " \
       "an administrator of #{instance.domain} or of this Waterhole needs to look into it.", "could-not-prove")
   rescue Mastodon::Error => e
-    redirect_to new_session_path, alert: "Sign-in failed: #{e.message}"
+    redirect_to new_session_path, alert: with_help("Sign-in failed: #{e.message}.")
   end
 
   def destroy
@@ -126,9 +133,25 @@ class SessionsController < ApplicationController
       "link_url" => moderator.instance.authorized_apps_url }
   end
 
+  # A moderator away for a while meets Mastodon asking again, for search, with
+  # no warning; declining because that looked wrong deserves an explanation.
+  def authorization_refused_alert(instance)
+    if params[:error] == "access_denied"
+      with_help("You declined Waterhole's request on #{instance.domain}, so you are not signed in. " \
+        "If it surprised you because you had approved Waterhole before: it asks once more because it now also " \
+        "needs search permission, to check it is talking to your own server.",
+        "declined", link_text: "Why it asks, and how to tell the request is genuine")
+    else
+      # Only an OAuth error code, never error_description: that is free text
+      # from the URL, and has no business on this page.
+      code = params[:error].to_s[/\A[a-z_]{1,64}\z/]
+      with_help("Sign-in failed: #{instance.domain} did not authorise the sign-in#{" (#{code})" if code}.")
+    end
+  end
+
   # A flash with a link to the sign-in help page (see ApplicationHelper#flash_message).
-  def with_help(text, anchor)
-    { "text" => text, "link_text" => "What can cause this", "link_url" => sign_in_help_path(anchor:) }
+  def with_help(text, anchor = nil, link_text: anchor ? "What can cause this" : "Sign-in help")
+    { "text" => text, "link_text" => link_text, "link_url" => sign_in_help_path(anchor:) }
   end
 
   def upsert_moderator(instance, account, token)

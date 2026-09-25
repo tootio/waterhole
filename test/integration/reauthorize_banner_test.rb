@@ -26,7 +26,7 @@ class ReauthorizeBannerTest < ActionDispatch::IntegrationTest
     get sign_in_help_path
 
     assert_response :success
-    %w[authorize-again listed-twice could-not-prove no-instance-actor].each { assert_select "section##{it}" }
+    %w[authorize-again declined listed-twice could-not-prove no-instance-actor].each { assert_select "section##{it}" }
     assert_select "#listed-twice a[href*='authorized_applications']", count: 0
   end
 

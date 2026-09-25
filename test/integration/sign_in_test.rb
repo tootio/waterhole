@@ -231,6 +231,40 @@ class SignInTest < ActionDispatch::IntegrationTest
     assert_equal sign_in_help_path(anchor: "no-instance-actor"), flash[:alert]["link_url"]
   end
 
+  # Mastodon sends the moderator back with an error instead of a code.
+  test "declining on Mastodon's authorize screen explains why Waterhole asked" do
+    return_from_mastodon(error: "access_denied", error_description: "The resource owner denied the request.")
+
+    assert_redirected_to new_session_path
+    assert_match(/You declined Waterhole's request on newcomer\.example/, flash[:alert]["text"])
+    assert_equal sign_in_help_path(anchor: "declined"), flash[:alert]["link_url"]
+    assert_not_requested :post, "https://newcomer.example/oauth/token"
+  end
+
+  test "another refusal names the OAuth error code, never the free-text description" do
+    return_from_mastodon(error: "invalid_scope", error_description: "Call +1 555 0100 to fix your account")
+
+    assert_match(/did not authorise the sign-in \(invalid_scope\)/, flash[:alert]["text"])
+    assert_no_match(/555/, flash[:alert]["text"])
+    assert_equal sign_in_help_path, flash[:alert]["link_url"]
+  end
+
+  test "any other sign-in failure links to the help page" do
+    stub_request(:get, "https://newcomer.example/actor").to_return(status: 500)
+
+    DnsAllowlist.stub_resolver(dns_ok) do
+      post session_path, params: { domain: "newcomer.example" }
+    end
+
+    assert_equal sign_in_help_path, flash[:alert]["link_url"]
+  end
+
+  test "the sign-in page links to the help page" do
+    get new_session_path
+
+    assert_select "a[href=?]", sign_in_help_path, text: "Sign-in help"
+  end
+
   test "a server whose instance actor cannot be read is not signed in to" do
     stub_request(:get, "https://newcomer.example/actor").to_return(status: 404)
 
@@ -239,10 +273,26 @@ class SignInTest < ActionDispatch::IntegrationTest
     end
 
     assert_redirected_to new_session_path
-    assert_match(/Could not reach newcomer\.example/, flash[:alert])
+    assert_match(/Could not reach newcomer\.example/, flash[:alert]["text"])
   end
 
   private
+
+  # Starts a sign-in and comes back from Mastodon with `params` instead of a code.
+  def return_from_mastodon(**params)
+    json = { "Content-Type" => "application/json" }
+    stub_instance_actor("newcomer.example")
+    stub_request(:get, "https://newcomer.example/.well-known/oauth-authorization-server")
+      .to_return(status: 404, body: "{}", headers: json)
+    stub_request(:post, "https://newcomer.example/api/v1/apps")
+      .to_return(status: 200, body: { "client_id" => "cid", "client_secret" => "csecret" }.to_json, headers: json)
+
+    DnsAllowlist.stub_resolver(dns_ok) do
+      post session_path, params: { domain: "newcomer.example" }
+      state = Rack::Utils.parse_query(URI(response.location).query)["state"]
+      get oauth_callback_path, params: { state:, **params }
+    end
+  end
 
   # `signer` is the key the server actually holds; `actor` the one it publishes.
   def complete_oauth(role:, remember: false, actor: actor_key, signer: actor)

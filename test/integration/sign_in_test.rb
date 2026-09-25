@@ -25,6 +25,7 @@ class SignInTest < ActionDispatch::IntegrationTest
   end
 
   test "a domain with the record is sent on to Mastodon to authorise" do
+    stub_instance_actor("newcomer.example")
     stub_request(:get, "https://newcomer.example/.well-known/oauth-authorization-server")
       .to_return(status: 404, body: "{}", headers: { "Content-Type" => "application/json" })
     stub_request(:post, "https://newcomer.example/api/v1/apps")
@@ -51,6 +52,18 @@ class SignInTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to new_session_path
     assert_match(/expired/, flash[:alert])
+  end
+
+  # The sign-in page makes Turbo reload it in full, so the Turbo visit that
+  # follows the redirect is thrown away; the flash must survive it.
+  test "a notice redirected to the sign-in page survives Turbo's reload of it" do
+    sign_in_as moderators(:avery)
+    delete session_path
+
+    get new_session_path, headers: { "X-Turbo-Request-Id" => "1" }
+    get new_session_path
+
+    assert_select "[role=status]", text: /Signed out/
   end
 
   test "signing out ends the session" do
@@ -129,16 +142,169 @@ class SignInTest < ActionDispatch::IntegrationTest
     refute Instance.find_by(domain: "newcomer.example").sync_moderator, "no token is lent before consent"
   end
 
+  # The old install lost the domain; a new one came up under it before the
+  # departed instance's data was forgotten.
+  test "a new install on a known domain signs in to an empty record, not the old team's" do
+    instance = instances(:unverified)
+    instance.update!(actor_public_key: actor_key.public_to_pem, client_id: "old-cid", client_secret: "old",
+      redirect_uri: Mastodon::OAuth.redirect_uri, scopes: Mastodon::OAuth::MODERN_SCOPES)
+    old_moderator = instance.moderators.create!(mastodon_account_id: "5", username: "oldmod")
+
+    complete_oauth(role: { "permissions" => "1" }, actor: actor_key(:replacement))
+
+    assert_redirected_to root_url
+    assert_equal "cid", instance.reload.client_id, "the old OAuth app does not exist on the new server"
+    assert_equal actor_key(:replacement).public_to_pem, instance.actor_public_key
+    refute Moderator.exists?(old_moderator.id)
+    assert_equal [ "77" ], instance.moderators.pluck(:mastodon_account_id)
+  end
+
+  # Someone took the domain on purpose and serves the old install's public key,
+  # which anyone can copy. They cannot sign with it.
+  test "a server publishing the old key without holding it is not signed in to" do
+    instance = instances(:unverified)
+    instance.update!(actor_public_key: actor_key.public_to_pem)
+    old_moderator = instance.moderators.create!(mastodon_account_id: "5", username: "oldmod")
+
+    assert_no_difference -> { Session.count } do
+      complete_oauth(role: { "permissions" => "1" }, actor: actor_key, signer: actor_key(:replacement))
+    end
+
+    assert_redirected_to new_session_path
+    assert_match(/could not prove/, flash[:alert]["text"])
+    assert_equal sign_in_help_path(anchor: "could-not-prove"), flash[:alert]["link_url"]
+    follow_redirect!
+    assert_select "[role=status] a[href=?]", sign_in_help_path(anchor: "could-not-prove"), text: "What can cause this"
+    assert Moderator.exists?(old_moderator.id), "nothing is wiped: the key did not change"
+    refute instance.moderators.exists?(mastodon_account_id: "77")
+    assert_nil instance.reload.actor_key_proven_at
+  end
+
+  test "one proof lets the whole team in for a while" do
+    complete_oauth(role: { "permissions" => "1" })
+    proven_at = Instance.find_by!(domain: "newcomer.example").actor_key_proven_at
+    assert proven_at
+
+    delete session_path
+    complete_oauth(role: { "permissions" => "1" })
+
+    assert_redirected_to root_url
+    assert_requested :get, "https://newcomer.example/api/v2/search", query: hash_including({}), times: 1
+    assert_equal proven_at, Instance.find_by!(domain: "newcomer.example").actor_key_proven_at
+  end
+
+  test "an OAuth app registered without the search scope is registered again" do
+    instances(:unverified).update!(client_id: "old-cid", client_secret: "old",
+      redirect_uri: Mastodon::OAuth.redirect_uri, scopes: "profile admin:read:accounts admin:write:accounts",
+      oauth_metadata: { "scopes_supported" => %w[profile] })
+
+    complete_oauth(role: { "permissions" => "1" })
+
+    assert_equal "cid", instances(:unverified).reload.client_id
+    assert_includes instances(:unverified).scopes.split, "read:search"
+  end
+
+  test "a moderator authorized before the search scope is pointed to the old authorization, once" do
+    instance = instances(:unverified)
+    instance.moderators.create!(mastodon_account_id: "77", username: "newmod",
+      token_scopes: "profile admin:read:accounts admin:write:accounts", consented_at: Time.current)
+
+    complete_oauth(role: { "permissions" => "1" })
+
+    assert_match(/lists Waterhole twice/, flash[:notice]["text"])
+    assert_equal "https://newcomer.example/oauth/authorized_applications", flash[:notice]["link_url"]
+
+    delete session_path
+    complete_oauth(role: { "permissions" => "1" })
+    assert_equal "Signed in as @newmod@newcomer.example.", flash[:notice]
+  end
+
+  test "an instance actor without a key sends the moderator to the help page" do
+    stub_instance_actor("newcomer.example", body: { "type" => "Application" })
+
+    DnsAllowlist.stub_resolver(dns_ok) do
+      post session_path, params: { domain: "newcomer.example" }
+    end
+
+    assert_redirected_to new_session_path
+    assert_match(/no public key/, flash[:alert]["text"])
+    assert_equal sign_in_help_path(anchor: "no-instance-actor"), flash[:alert]["link_url"]
+  end
+
+  # Mastodon sends the moderator back with an error instead of a code.
+  test "declining on Mastodon's authorize screen explains why Waterhole asked" do
+    return_from_mastodon(error: "access_denied", error_description: "The resource owner denied the request.")
+
+    assert_redirected_to new_session_path
+    assert_match(/You declined Waterhole's request on newcomer\.example/, flash[:alert]["text"])
+    assert_equal sign_in_help_path(anchor: "declined"), flash[:alert]["link_url"]
+    assert_not_requested :post, "https://newcomer.example/oauth/token"
+  end
+
+  test "another refusal names the OAuth error code, never the free-text description" do
+    return_from_mastodon(error: "invalid_scope", error_description: "Call +1 555 0100 to fix your account")
+
+    assert_match(/did not authorise the sign-in \(invalid_scope\)/, flash[:alert]["text"])
+    assert_no_match(/555/, flash[:alert]["text"])
+    assert_equal sign_in_help_path, flash[:alert]["link_url"]
+  end
+
+  test "any other sign-in failure links to the help page" do
+    stub_request(:get, "https://newcomer.example/actor").to_return(status: 500)
+
+    DnsAllowlist.stub_resolver(dns_ok) do
+      post session_path, params: { domain: "newcomer.example" }
+    end
+
+    assert_equal sign_in_help_path, flash[:alert]["link_url"]
+  end
+
+  test "the sign-in page links to the help page" do
+    get new_session_path
+
+    assert_select "a[href=?]", sign_in_help_path, text: "Sign-in help"
+  end
+
+  test "a server whose instance actor cannot be read is not signed in to" do
+    stub_request(:get, "https://newcomer.example/actor").to_return(status: 404)
+
+    DnsAllowlist.stub_resolver(dns_ok) do
+      post session_path, params: { domain: "newcomer.example" }
+    end
+
+    assert_redirected_to new_session_path
+    assert_match(/Could not reach newcomer\.example/, flash[:alert]["text"])
+  end
+
   private
 
-  def complete_oauth(role:, remember: false)
+  # Starts a sign-in and comes back from Mastodon with `params` instead of a code.
+  def return_from_mastodon(**params)
     json = { "Content-Type" => "application/json" }
+    stub_instance_actor("newcomer.example")
+    stub_request(:get, "https://newcomer.example/.well-known/oauth-authorization-server")
+      .to_return(status: 404, body: "{}", headers: json)
+    stub_request(:post, "https://newcomer.example/api/v1/apps")
+      .to_return(status: 200, body: { "client_id" => "cid", "client_secret" => "csecret" }.to_json, headers: json)
+
+    DnsAllowlist.stub_resolver(dns_ok) do
+      post session_path, params: { domain: "newcomer.example" }
+      state = Rack::Utils.parse_query(URI(response.location).query)["state"]
+      get oauth_callback_path, params: { state:, **params }
+    end
+  end
+
+  # `signer` is the key the server actually holds; `actor` the one it publishes.
+  def complete_oauth(role:, remember: false, actor: actor_key, signer: actor)
+    json = { "Content-Type" => "application/json" }
+    stub_instance_actor("newcomer.example", key: actor)
+    stub_mastodon_resolve("newcomer.example", key: signer)
     stub_request(:get, "https://newcomer.example/.well-known/oauth-authorization-server")
       .to_return(status: 404, body: "{}", headers: json)
     stub_request(:post, "https://newcomer.example/api/v1/apps")
       .to_return(status: 200, body: { "client_id" => "cid", "client_secret" => "csecret" }.to_json, headers: json)
     stub_request(:post, "https://newcomer.example/oauth/token")
-      .to_return(status: 200, body: { "access_token" => "tok", "scope" => "read:accounts" }.to_json, headers: json)
+      .to_return(status: 200, body: { "access_token" => "tok", "scope" => Mastodon::OAuth::LEGACY_SCOPES }.to_json, headers: json)
     stub_request(:get, "https://newcomer.example/api/v1/accounts/verify_credentials")
       .to_return(status: 200, body: { "id" => "77", "username" => "newmod", "role" => role }.compact.to_json, headers: json)
 

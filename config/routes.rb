@@ -6,6 +6,9 @@ Rails.application.routes.draw do
     resource :recent_instance, only: :destroy
   end
   get "/oauth/callback", to: "sessions#callback", as: :oauth_callback
+  # Public: fetched by an instance's Mastodon server, signed, while one of its
+  # moderators signs in (see Instances::ProveIdentity).
+  get "/identity_challenges/:token", to: "identity_challenges#show", as: :identity_challenge
   # Asked after signing in; decline signs out and deletes the moderator's data.
   resource :consent, only: %i[show create destroy]
 
@@ -50,6 +53,8 @@ Rails.application.routes.draw do
   get "/help/shortcuts", to: "help#shortcuts", as: :keyboard_shortcuts_help
   get "/help/flags/:id", to: "help#flag",       as: :flag_help
   get "/help/regexp",    to: "help#regexp",     as: :regexp_help
+  # Public: read by moderators whose sign-in just failed.
+  get "/help/sign_in",   to: "help#sign_in",    as: :sign_in_help
 
   # Reveal health status on /up
   get "up" => "rails/health#show", as: :rails_health_check

@@ -3,9 +3,11 @@ module Mastodon
   # authorization-code flow.
   module OAuth
     # `profile` only exists from Mastodon 4.3; older servers need read:accounts
-    # just to learn who signed in.
-    MODERN_SCOPES = "profile admin:read:accounts admin:write:accounts".freeze
-    LEGACY_SCOPES = "read:accounts admin:read:accounts admin:write:accounts".freeze
+    # just to learn who signed in. read:search lets sign-in ask the server to
+    # fetch a URL, which is how it proves who it is (Instances::ProveIdentity).
+    SEARCH_SCOPE  = "read:search".freeze
+    MODERN_SCOPES = "profile #{SEARCH_SCOPE} admin:read:accounts admin:write:accounts".freeze
+    LEGACY_SCOPES = "read:accounts #{SEARCH_SCOPE} admin:read:accounts admin:write:accounts".freeze
 
     module_function
 
@@ -69,6 +71,17 @@ module Mastodon
         redirect_uri: instance.redirect_uri,
         scope: instance.scopes,
         code: code)
+    end
+
+    # Ends a token's authorization, which takes Waterhole off the owner's list
+    # of authorized apps. Only the app that issued the token may revoke it, so
+    # one issued before the app was registered again cannot be (Mastodon
+    # answers 403). An unknown token counts as revoked, per RFC 7009.
+    def revoke(instance, token:)
+      client(instance).post_public("/oauth/revoke",
+        client_id: instance.client_id,
+        client_secret: instance.client_secret,
+        token: token)
     end
 
     def client(instance) = PublicClient.new(base_url: instance.base_url)

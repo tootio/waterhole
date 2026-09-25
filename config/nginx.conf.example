@@ -45,6 +45,12 @@ server {
   # Security headers come from the app: the Content-Security-Policy, and HSTS
   # via force_ssl. Setting them here as well would send them twice.
 
+  # Instances prove who they are by fetching a URL here signed with their key
+  # (see Instances::ProveIdentity), and the signature covers the path, Host,
+  # Date and -- up to Mastodon 4.5 -- Accept. So give proxy_pass no path of its
+  # own, keep Host as $host, and never set Date or Accept; neither may anything
+  # in front of nginx (a CDN or WAF). Otherwise every sign-in fails with
+  # "could not prove it is the server that signed up here".
   location / {
     proxy_pass http://127.0.0.1:3000;
     proxy_http_version 1.1;

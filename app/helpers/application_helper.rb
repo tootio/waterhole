@@ -97,6 +97,17 @@ module ApplicationHelper
     MARKDOWN
   end
 
+  # A flash is a string or, when it needs a way on, a hash with a link. Hashes
+  # survive the session cookie's JSON; an html_safe string would not stay safe.
+  def flash_message(message)
+    return message unless message.is_a?(Hash)
+
+    external = message["link_url"].to_s.start_with?("https://")
+    safe_join([ message["text"], " ",
+      link_to(message["link_text"], message["link_url"], class: "font-medium underline",
+        rel: ("noopener" if external), target: ("_blank" if external)) ])
+  end
+
   def flash_class(type)
     case type.to_s
     when "alert" then "border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950 text-red-900 dark:text-red-200"

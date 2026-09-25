@@ -24,6 +24,10 @@ module Mastodon
 
     def instance_info = get("/api/v2/instance")
 
+    # Has the server fetch a URL as it would to look up a remote post. Mastodon
+    # signs that fetch with its instance actor's key.
+    def resolve(url) = get("/api/v2/search", q: url, resolve: true, limit: 1)
+
     # One page of local accounts awaiting approval.
     def pending_accounts(max_id: nil, limit: PAGE_LIMIT)
       response = raw_get("/api/v2/admin/accounts",

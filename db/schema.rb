@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_24_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_25_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -72,6 +72,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_130000) do
   create_table "instances", force: :cascade do |t|
     t.string "accepted_terms_digest"
     t.datetime "access_ended_at"
+    t.datetime "actor_key_pinned_at"
+    t.datetime "actor_key_proven_at"
+    t.text "actor_public_key"
     t.string "client_id"
     t.text "client_secret"
     t.integer "consecutive_verification_failures", default: 0, null: false

@@ -120,7 +120,10 @@ including the websocket for live updates.
 
 ### Updates
 
-To get a new release, run `docker compose pull && docker compose up -d`.
+To get a new release, run 
+```shell
+docker compose pull && docker compose stop jobs web && docker compose up -d
+```
 Migrations are run automatically.
 
 ### Without Docker

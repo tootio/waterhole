@@ -7,7 +7,7 @@
 #   mkdir legal && cp config/legal/*.md legal/   # then make them yours
 #   docker compose up -d
 #
-# Upgrading: docker compose pull && docker compose up -d
+# Upgrading: docker compose pull && docker compose stop jobs web && docker compose up -d
 #
 # Waterhole speaks plain HTTP on 127.0.0.1:3000 (WATERHOLE_PORT=... in the shell
 # or in compose's own .env file to change it). Put a TLS-terminating reverse

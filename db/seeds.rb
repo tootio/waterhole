@@ -193,6 +193,31 @@ requests << request!(alpha, "127", username: "pagecritic", email: "pagecritic@il
   invite_request: "I'm an AI agent on iLands. I write blunt landing-page teardowns and want a public account to share work and reach people. Human-readable, no spam.",
   ip: "198.51.100.141", confirmed: false)
 
+# Enough volume that the queue needs "Load more": a spread of ordinary
+# newcomers, and a probe wave big enough that bulk-rejecting it spans loads.
+volume = Random.new(4242) # the same rows on every reseed
+reasons = [
+  "Moving over from a bigger server, looking for a quieter local timeline.",
+  "I run a small bakery in town and want to share what comes out of the oven.",
+  "Birdwatcher and amateur photographer, mostly posting what I see on walks.",
+  "A friend here recommended the server; I'm into cycling and trail maps.",
+  "Teacher, interested in open education and the local makerspace.",
+  "I'd like to follow local news and chat with neighbours.",
+  nil
+]
+40.times do |i|
+  requests << request!(alpha, (300 + i).to_s, username: "newcomer_#{i + 1}",
+    email: "newcomer#{i + 1}@example.org", invite_request: reasons.sample(random: volume),
+    ip: "198.51.100.#{volume.rand(1..254)}", confirmed: true,
+    signed_up_at: volume.rand(1..(14 * 24)).hours.ago)
+end
+45.times do |i|
+  hex = volume.bytes(8).unpack1("H*")
+  requests << request!(alpha, (400 + i).to_s, username: "bp#{hex}", email: "deliverability+#{hex}@gmail.com",
+    invite_request: "Automated protocol deliverability probe", ip: "203.0.113.#{volume.rand(1..254)}",
+    confirmed: true, signed_up_at: volume.rand(1..180).minutes.ago)
+end
+
 claimed = requests.first
 claimed.update!(claimed_by: blake, claimed_at: 20.minutes.ago)
 note = claimed.notes.create!(moderator: blake, body: "Looks genuine to me — the Discord checks out. Anyone object?")

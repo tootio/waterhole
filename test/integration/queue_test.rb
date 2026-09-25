@@ -108,23 +108,73 @@ class QueueTest < ActionDispatch::IntegrationTest
   # Regression: the pagination links were built by handing url_for the raw
   # query string, so ?host= and ?protocol= rewrote them into another origin or
   # a javascript: URL.
-  test "pagination links stay on this site and carry only the filters" do
+  test "load more links stay on this site and carry only the filters" do
     sign_in_as @moderator
-    30.times do |i|
-      @moderator.instance.registration_requests.create!(mastodon_account_id: "95#{i}",
-        username: "paged#{i}", signed_up_at: (i + 1).minutes.ago, confirmed: true)
-    end
+    create_pending_requests 30
 
     get root_path, params: { host: "evil.example", protocol: "javascript", sort: "oldest" }
 
     assert_response :success
-    assert_select "a", text: "Older →" do |links|
+    assert_select "a", text: "Load more" do |links|
       href = links.first["href"]
       assert href.start_with?("/"), "expected a path, got #{href.inspect}"
       refute_match(/evil|javascript/, href)
       assert_match(/sort=oldest/, href)
       assert_match(/page=2/, href)
     end
+  end
+
+  # The live queue morphs itself by re-requesting its URL, and "Load more"
+  # keeps ?page=N in it, so ?page=N must render everything loaded so far.
+  test "?page=N lists every row through page N" do
+    sign_in_as @moderator
+    create_pending_requests 60
+
+    get root_path, params: { page: 2 }
+
+    assert_select "#queue_rows > li", 50
+    assert_select "#queue_load_more", /Showing 50 of/
+    assert_select "#queue_load_more a[href*='page=3']", text: "Load more"
+  end
+
+  test "load more streams only the rows the page does not have yet" do
+    sign_in_as @moderator
+    create_pending_requests 60
+    ordered = RegistrationRequests::Query.new(@moderator.instance.registration_requests, {}, viewer: @moderator).call.to_a
+
+    get root_path, params: { page: 2, from: 2 }, headers: { "Accept" => Mime[:turbo_stream].to_s }
+
+    assert_response :success
+    assert_equal Mime[:turbo_stream], response.media_type
+    assert_select "turbo-stream[action=append][target=queue_rows] template > li", 25
+    assert_select "turbo-stream[action=append] li##{ActionView::RecordIdentifier.dom_id(ordered[25])}"
+    assert_select "turbo-stream[action=append] li##{ActionView::RecordIdentifier.dom_id(ordered[24])}", 0
+    assert_select "turbo-stream[action=replace][target=queue_load_more]"
+  end
+
+  # Regression: a Turbo form that redirects to the queue ("reject and next"
+  # off the end of the list) asks for turbo streams too, and got the rows
+  # appended to a list that page did not have instead of the queue.
+  test "a stream-accepting request without ?from gets the whole page" do
+    sign_in_as @moderator
+
+    get root_path, headers: { "Accept" => "#{Mime[:turbo_stream]}, text/html" }
+
+    assert_response :success
+    assert_equal "text/html", response.media_type
+    assert_select "ul#queue_rows"
+  end
+
+  test "load all streams every remaining row, and the last page offers no more" do
+    sign_in_as @moderator
+    create_pending_requests 60
+    total = RegistrationRequests::Query.new(@moderator.instance.registration_requests, {}, viewer: @moderator).call.count
+    pages = (total / 25.0).ceil
+
+    get root_path, params: { page: pages, from: 2 }, headers: { "Accept" => Mime[:turbo_stream].to_s }
+
+    assert_select "turbo-stream[action=append] template > li", total - 25
+    assert_select "turbo-stream[action=replace] a", { count: 0, text: /Load/ }
   end
 
   test "an empty default queue congratulates the moderator instead of showing a dull empty state" do
@@ -164,4 +214,13 @@ class QueueTest < ActionDispatch::IntegrationTest
     assert_select "p", /IP active elsewhere/
     assert_select "body", { count: 0, text: /Ip active elsewhere/ }
   end
+
+  private
+
+    def create_pending_requests(count)
+      count.times do |i|
+        @moderator.instance.registration_requests.create!(mastodon_account_id: "95#{i}",
+          username: "paged#{i}", signed_up_at: (i + 1).minutes.ago, confirmed: true)
+      end
+    end
 end

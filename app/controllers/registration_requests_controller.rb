@@ -8,7 +8,18 @@ class RegistrationRequestsController < ApplicationController
   def index
     @query = RegistrationRequests::Query.new(registration_requests_scope, filter_params, viewer: current_moderator)
     @pagination = Pagination.new(@query.call, page: params[:page])
-    @registration_requests = @pagination.records
+
+    # "Load more" asks for a stream of just the rows it lacks. Everything else,
+    # including the morph refresh every broadcast triggers, renders the whole
+    # list through ?page=N, which load_more_controller.js keeps in the URL.
+    # Keyed on ?from, not the Accept header alone: a Turbo form that redirects
+    # here ("reject and next" off the end of the list) asks for streams too.
+    if params[:from].present? && request.format.turbo_stream?
+      @registration_requests = @pagination.records_from(params[:from])
+      return render :more
+    end
+
+    @registration_requests = @pagination.through_records
     pending  = registration_requests_scope.pending
     awaiting = pending.email_confirmed
     @counts = {

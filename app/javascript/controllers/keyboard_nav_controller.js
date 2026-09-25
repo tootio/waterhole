@@ -6,6 +6,8 @@ import { isTyping } from "lib/typing"
 // this is the one thing server-rendered HTML genuinely cannot do.
 //
 //   j / k  move down / up      Enter  open        c  claim      x  select
+//
+// j on the last row loads more (load_more_controller.js) and moves into them.
 export default class extends Controller {
   static targets = ["item"]
 
@@ -43,8 +45,30 @@ export default class extends Controller {
     const items = this.itemTargets
     if (items.length === 0) return
 
+    if (delta > 0 && this.index >= items.length - 1 && this.loadMore?.available) {
+      this.advanceAfterLoad()
+      return
+    }
+
     this.index = Math.max(0, Math.min(items.length - 1, this.index + delta))
     items[this.index].focus()
+  }
+
+  // A "j" pressed again while loading waits on the same load, not a second one.
+  async advanceAfterLoad() {
+    const { index } = this
+    const count = this.itemTargets.length
+    if (!await this.loadMore.load()) return
+    // Moved on meanwhile (a "k", or a click)? Then leave focus alone. Nothing
+    // new? Then stop here rather than ask again.
+    if (this.index !== index || this.itemTargets.length <= count) return
+
+    this.move(1)
+  }
+
+  get loadMore() {
+    const element = this.element.closest("[data-controller~=load-more]")
+    return element && this.application.getControllerForElementAndIdentifier(element, "load-more")
   }
 
   // Clicks the row's bulk-select checkbox (a sibling of the link, see

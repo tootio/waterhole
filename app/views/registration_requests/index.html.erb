@@ -31,23 +31,25 @@
 
 <%= render "filters", query: @query %>
 
-<%# bulk-select sits OUTSIDE the frame so it outlives filtering and paging, and
+<%# bulk-select sits OUTSIDE the frame so it outlives filtering, and
     so its dialog does too: a run keeps going while the rows it acts on vanish
     from the list underneath it. %>
 <div data-controller="bulk-select"
      data-action="turbo:frame-load->bulk-select#reset turbo:morph@document->bulk-select#restore">
-<%# A frame, not a stream: filtering and paging are THIS viewer's navigation.
+<%# A frame, not a stream: filtering is THIS viewer's navigation. "Load more"
+    appends by stream instead, so it keeps the selection (_load_more.html.erb).
     turbo_action advance keeps the URL shareable and the back button working. %>
 <%= turbo_frame_tag "queue", data: { turbo_action: "advance" } do %>
   <% if @registration_requests.any? %>
     <%= render "bulk_toolbar" if @registration_requests.any?(&:pending?) %>
-    <ul data-controller="keyboard-nav"
-        class="divide-y divide-stone-200 dark:divide-stone-800 rounded-lg [&>li:first-child]:rounded-t-lg [&>li:last-child]:rounded-b-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900">
-      <%= render partial: "registration_request", collection: @registration_requests %>
-    </ul>
+    <div data-controller="load-more">
+      <ul id="queue_rows" data-controller="keyboard-nav"
+          class="divide-y divide-stone-200 dark:divide-stone-800 rounded-lg [&>li:first-child]:rounded-t-lg [&>li:last-child]:rounded-b-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900">
+        <%= render partial: "registration_request", collection: @registration_requests %>
+      </ul>
 
-    <%= render "shared/pagination", pagination: @pagination, noun: "request",
-          path: ->(page) { queue_page_path(page) } %>
+      <%= render "load_more" %>
+    </div>
   <% elsif @query.unfiltered? %>
     <div class="rounded-lg border border-dashed border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-6 py-12 text-center">
       <p class="text-3xl" aria-hidden="true">🎉</p>

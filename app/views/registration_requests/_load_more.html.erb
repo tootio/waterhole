@@ -1,0 +1,23 @@
+<%# Replaced by more.turbo_stream.erb after every "Load more". The links are
+    real ?page=N links: without JavaScript they navigate the "queue" frame, and
+    ?page=N renders everything through page N either way. data-from tells
+    load_more_controller.js which rows it already has. %>
+<div id="queue_load_more">
+  <% if @pagination.many? %>
+    <nav class="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm">
+      <span class="text-stone-500 dark:text-stone-400">Showing <%= @pagination.shown %> of <%= pluralize(@pagination.total, "request") %></span>
+      <% if @pagination.next %>
+        <span class="flex gap-2">
+          <%= link_to "Load more", queue_page_path(@pagination.next),
+                class: button_classes(:outline, "px-3 py-1"),
+                data: { load_more_target: "link", action: "load-more#load", from: @pagination.next } %>
+          <% if @pagination.next < @pagination.pages %>
+            <%= link_to "Load all #{@pagination.total}", queue_page_path(@pagination.pages),
+                  class: button_classes(:outline, "px-3 py-1 text-stone-600 dark:text-stone-300"),
+                  data: { action: "load-more#load", from: @pagination.next } %>
+          <% end %>
+        </span>
+      <% end %>
+    </nav>
+  <% end %>
+</div>

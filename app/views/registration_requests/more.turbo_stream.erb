@@ -1,0 +1,2 @@
+<%= turbo_stream.append "queue_rows", partial: "registration_request", collection: @registration_requests %>
+<%= turbo_stream.replace "queue_load_more", partial: "load_more" %>

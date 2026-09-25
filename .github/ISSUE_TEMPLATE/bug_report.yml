@@ -1,0 +1,67 @@
+# Linked from the footer's "Report a problem"; Waterhole::Deployment.issues_url
+# pre-fills the `version` field, so keep its id.
+name: Bug report
+description: Something in Waterhole does not work as it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this. Please do **not** include
+        applicants' personal data (emails, IP addresses, usernames) or anything
+        from your instance's moderation queue that is not already public.
+
+        Found a security issue? Report it [privately](https://github.com/tootio/waterhole/security/advisories/new) instead.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the queue
+        2. Click …
+        3. See …
+  - type: input
+    id: version
+    attributes:
+      label: Waterhole version
+      description: Shown at the left of the footer.
+      placeholder: v0.9.0
+    validations:
+      required: true
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: Which Waterhole?
+      options:
+        - waterhole.toot.io
+        - One I run myself
+        - Someone else's deployment
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and operating system
+      placeholder: Firefox 142 on macOS
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or error messages
+      description: If you run the deployment, relevant lines from the Rails log. Remove secrets and personal data first.
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched the existing issues and this is not a duplicate.
+          required: true
+        - label: This report contains no applicants' personal data and no secrets.
+          required: true

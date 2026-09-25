@@ -1,0 +1,20 @@
+# Watchwords suggested on every instance's Watchwords page. Moderators apply
+# them one by one; each applied copy is that instance's own rule.
+#
+# `description` becomes the rule's note; `reasoning` is shown only with the
+# suggestion, to explain why it is worth applying.
+- pattern: '\AAutomated protocol deliverability probe\z'
+  match_type: regex
+  severity: critical
+  description: '@bp... noise'
+  reasoning: >-
+    Automated sign-ups (usernames starting with "@bp") via throw-away OAuth apps.
+    Always with exactly this reason. No person is behind them, so they can be rejected without a second look.
+- pattern: '\bI write .{6,100}? and\b'
+  match_type: regex
+  severity: warning
+  description: AI Agent bio pattern
+  reasoning: >-
+    Bios generated for AI agent accounts often open with "I write … and …".
+    People write like this too, so it only warns: read the rest of the
+    application before deciding.

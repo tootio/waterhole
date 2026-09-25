@@ -31,3 +31,32 @@
     No watchwords yet.
   </p>
 <% end %>
+
+<% if @suggestions.any? %>
+  <section class="mt-8">
+    <h2 class="text-lg font-semibold tracking-tight">Suggested watchwords</h2>
+    <p class="mt-1 mb-3 text-sm text-stone-600 dark:text-stone-300">Patterns most instances will want. Applying one opens the form pre-filled, so you can adjust it before saving.</p>
+    <ul class="divide-y divide-stone-200 dark:divide-stone-800 overflow-hidden rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900">
+      <% @suggestions.each do |suggestion| %>
+        <li class="flex flex-wrap items-center gap-3 px-4 py-3">
+          <code class="rounded bg-stone-100 dark:bg-stone-800 px-2 py-0.5 text-sm"><%= suggestion.pattern %></code>
+          <span class="text-xs text-stone-500 dark:text-stone-400"><%= suggestion.match_type %></span>
+          <span class="rounded px-1.5 py-0.5 text-xs <%= severity_style(suggestion.severity) %>"><%= suggestion.severity %></span>
+          <span class="ml-auto text-sm">
+            <% if suggestion.applied?(@keyword_rules) %>
+              <span class="text-xs text-stone-500 dark:text-stone-400">Applied</span>
+            <% else %>
+              <%= link_to "Apply", new_keyword_rule_path(keyword_rule: suggestion.to_params), class: button_classes(:ghost, "rounded underline") %>
+            <% end %>
+          </span>
+          <p class="basis-full text-sm text-stone-600 dark:text-stone-300"><%= suggestion.reasoning %></p>
+        </li>
+      <% end %>
+    </ul>
+    <% if (issues_url = Waterhole::Deployment.issues_url(template: "watchword_suggestion")) %>
+      <p class="mt-3 text-sm text-stone-600 dark:text-stone-300">
+        Know a watchword every instance should have? <%= link_to "Propose it as a suggestion", issues_url, rel: "noopener", class: "underline" %>.
+      </p>
+    <% end %>
+  </section>
+<% end %>

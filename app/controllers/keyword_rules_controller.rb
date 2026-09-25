@@ -7,10 +7,13 @@ class KeywordRulesController < ApplicationController
 
   def index
     @keyword_rules = current_instance.keyword_rules.order(:pattern)
+    @suggestions = SuggestedWatchword.all
   end
 
   def new
     @keyword_rule = current_instance.keyword_rules.new(severity: "warning", match_type: "word")
+    # Applying a suggested watchword pre-fills the form.
+    @keyword_rule.assign_attributes(keyword_rule_params) if params.key?(:keyword_rule)
   end
 
   def create

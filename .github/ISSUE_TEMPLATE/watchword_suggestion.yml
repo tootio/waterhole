@@ -1,0 +1,77 @@
+# Linked from the Watchwords page's "Propose it as a suggestion". Accepted
+# proposals go into config/watchwords.yml, whose fields these mirror.
+name: Watchword suggestion
+description: Propose a watchword that Waterhole should suggest to every instance.
+title: "Watchword suggestion: "
+labels: [watchword]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Suggested watchwords are shown to the moderators of every instance, so
+        they should catch something most instances see, with few false positives.
+        Test your pattern on the Watchwords page of your own instance first.
+  - type: input
+    id: pattern
+    attributes:
+      label: Pattern
+      placeholder: '\bI write .{6,100}? and\b'
+    validations:
+      required: true
+  - type: dropdown
+    id: match-type
+    attributes:
+      label: Match
+      options:
+        - substring
+        - word
+        - regex
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - info
+        - warning
+        - critical
+    validations:
+      required: true
+  - type: input
+    id: note
+    attributes:
+      label: Note
+      description: The short note the rule gets when a moderator applies it.
+      placeholder: AI agent bio pattern
+    validations:
+      required: true
+  - type: textarea
+    id: reasoning
+    attributes:
+      label: Reasoning
+      description: Why should every instance watch for this? Shown next to the suggestion, so write it for moderators.
+    validations:
+      required: true
+  - type: textarea
+    id: examples
+    attributes:
+      label: What it catches
+      description: |
+        Example text the pattern should match, and roughly how often you see it.
+        Paraphrase or redact: no usernames, emails or other personal data.
+    validations:
+      required: true
+  - type: textarea
+    id: false-positives
+    attributes:
+      label: False positives
+      description: Genuine applications it could flag by mistake, and why the severity is still right.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I tested the pattern as a watchword on my instance.
+        - label: The examples contain no applicants' personal data.
+          required: true

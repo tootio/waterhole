@@ -67,14 +67,14 @@ class EmailTemplatesTest < ActionDispatch::IntegrationTest
     assert_select "li", /Ask for more.*disabled/m
 
     get registration_request_path(registration_requests(:pending_alpha))
-    assert_select "details", false
+    assert_select "main details", false
   end
 
   test "without templates the request page points to setting them up" do
     EmailTemplate.delete_all
     get registration_request_path(registration_requests(:pending_alpha))
 
-    assert_select "details", false
+    assert_select "main details", false
     assert_select "a[href=?]", email_templates_path
   end
 
@@ -83,6 +83,6 @@ class EmailTemplatesTest < ActionDispatch::IntegrationTest
     request.update_columns(email: nil)
     get registration_request_path(request)
 
-    assert_select "details", false
+    assert_select "main details", false
   end
 end

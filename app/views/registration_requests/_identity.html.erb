@@ -15,9 +15,9 @@
           <button type="button" class="<%= button_classes(:ghost, "rounded text-xs hover:text-stone-700 dark:hover:text-stone-300") %>"
                   data-action="clipboard#copy" data-clipboard-value="<%= registration_request.email %>">copy</button>
           <% if email_templates.any? %>
-            <details class="relative">
-              <summary class="<%= button_classes(:ghost, "cursor-pointer list-none rounded text-xs whitespace-nowrap hover:text-stone-700 dark:hover:text-stone-300") %>">email ▾</summary>
-              <ul class="absolute right-0 z-10 mt-1 w-56 overflow-hidden rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 py-1 shadow-lg">
+            <details data-controller="dropdown" class="relative">
+              <summary aria-controls="email-template-menu" aria-expanded="false" class="<%= button_classes(:ghost, "cursor-pointer list-none rounded text-xs whitespace-nowrap hover:text-stone-700 dark:hover:text-stone-300") %>">email ▾</summary>
+              <ul id="email-template-menu" class="absolute right-0 z-10 mt-1 w-56 overflow-hidden rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 py-1 shadow-lg">
                 <% email_templates.each do |template| %>
                   <li>
                     <%= link_to template.name, template_mailto(template, registration_request),

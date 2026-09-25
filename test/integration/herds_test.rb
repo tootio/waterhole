@@ -56,9 +56,9 @@ class HerdsTest < ActionDispatch::IntegrationTest
   test "your own herd is marked, and every row leads to its own page" do
     get herds_path
 
-    assert_select "li a[href=?]", herd_path(moderators(:avery).instance), { count: 1 }
-    assert_select "li a[href=?]", herd_path(instances(:beta)), { count: 1 }
-    assert_select "li", /Yours/
+    assert_select "main li a[href=?]", herd_path(moderators(:avery).instance), { count: 1 }
+    assert_select "main li a[href=?]", herd_path(instances(:beta)), { count: 1 }
+    assert_select "main li", /Yours/
   end
 
   test "the domain blocklist is listed, with its source" do

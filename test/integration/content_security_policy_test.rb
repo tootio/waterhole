@@ -11,6 +11,8 @@ class ContentSecurityPolicyTest < ActionDispatch::IntegrationTest
     assert_match(/script-src 'self' 'nonce-[^']+'/, policy)
     assert_match(/form-action 'self'(;|\z)/, policy)
     assert_match(/frame-ancestors 'none'/, policy)
+    # Avatars are served from here (see AvatarsController), so no image host is needed.
+    assert_match(/img-src 'self' data:(;|\z)/, policy)
     refute_match(/unsafe-inline|unsafe-eval/, policy)
 
     nonce = policy[/'nonce-([^']+)'/, 1]

@@ -17,9 +17,10 @@
       <% end %>
     </p>
   </div>
-  <p class="text-xs text-stone-500 dark:text-stone-400">
-    Last synced <%= current_instance.last_synced_at ? relative_time(current_instance.last_synced_at) : "never" %>
-  </p>
+  <div class="flex items-center gap-2 text-xs text-stone-500 dark:text-stone-400">
+    <p>Last synced <%= current_instance.last_synced_at ? relative_time(current_instance.last_synced_at) : "never" %></p>
+    <%= button_to "Sync now", sync_path, class: button_classes(:outline, "px-2 py-1 whitespace-nowrap text-stone-700 dark:text-stone-300") %>
+  </div>
 </div>
 
 <% if current_instance.last_sync_error.present? %>

@@ -122,7 +122,7 @@ module Mastodon
         f.headers["User-Agent"] = "Waterhole (+#{Waterhole::Deployment.base_url})"
         f.options.open_timeout = OPEN_TIMEOUT
         f.options.timeout = @read_timeout
-        f.adapter SecureAdapter.adapter
+        SecureAdapter.use(f)
       end
     end
   end

@@ -31,9 +31,11 @@ class LayoutTest < ActionDispatch::IntegrationTest
   test "signed out, the header offers a way in rather than moderator navigation" do
     get terms_path
 
-    assert_select "header a[href=?]", new_session_path
-    assert_select "header a[href=?]", verification_path
-    assert_select "header nav", false, "moderator navigation has no meaning signed out"
+    assert_select "header nav a[href=?]", verification_path, text: "About"
+    assert_select "header nav a[href=?]", new_session_path, text: "Sign in"
+    assert_select "header nav a[href=?]", root_path, { count: 0 },
+      "moderator navigation has no meaning signed out"
+    assert_select "header details", false
   end
 
   test "the sign-in page does not offer a sign-in button" do
@@ -52,7 +54,58 @@ class LayoutTest < ActionDispatch::IntegrationTest
     assert_select "header nav a[href=?]", herd_path(moderators(:avery).instance), text: "My herd"
     assert_select "header nav a", { text: "Watchwords", count: 0 }, "Watchwords live under My herd"
     assert_select "header nav a", { text: "Sync history", count: 0 }, "Sync history lives under My herd"
-    assert_select "header", /#{moderators(:avery).username}/
+    assert_select "header button", { text: "Sync now", count: 0 }, "Sync now lives on the queue, by Last synced"
+  end
+
+  # One navigation, in reading order, so Tab walks the header the way it reads:
+  # the account menu used to come first in the DOM and sit last on screen.
+  test "the header holds one navigation, with the account menu at its end" do
+    moderator = sign_in_as moderators(:avery)
+    get root_path
+
+    assert_select "header nav", 1
+    assert_select "header nav > :last-child details[data-controller=dropdown]", 1
+    order_classes = css_select("header [class]").flat_map { it["class"].split }.grep(/\A([\w-]+:)*order-/)
+    assert_empty order_classes, "visual order must not be rearranged away from DOM order"
+    assert_select "header details summary", text: /#{Regexp.escape(moderator.handle)}/
+    assert_select "header details #account-menu" do
+      assert_select "*", text: /#{Regexp.escape(moderator.handle)}/
+      assert_select "form[action=?] button", session_path, text: "Sign out"
+    end
+  end
+
+  test "without an avatar the menu shows the moderator's initial" do
+    sign_in_as moderators(:avery)
+    get root_path
+
+    assert_select "header summary img", false
+    assert_select "header summary span[aria-hidden=true]", text: "A"
+  end
+
+  test "with an avatar the menu shows our own copy of it" do
+    moderator = sign_in_as moderators(:avery)
+    moderator.create_avatar!(image: "\x89PNG\r\n\x1A\n".b, content_type: "image/png", source_url: "https://files.example/a.png")
+    get root_path
+
+    assert_select "header summary img[alt=''][src^=?]", "#{avatar_path}?v="
+  end
+
+  # Signing out has to stay reachable from the consent page, where nothing
+  # else in the header is.
+  test "before consent the header has the account menu and nothing else" do
+    moderator = sign_in_as moderators(:avery)
+    moderator.update!(consented_at: nil)
+    get consent_path
+
+    assert_select "header nav a", false
+    assert_select "header details form[action=?]", session_path
+  end
+
+  test "the queue offers Sync now beside when it last synced" do
+    sign_in_as moderators(:avery)
+    get root_path
+
+    assert_select "main form[action=?] button", sync_path, text: "Sync now"
   end
 
   test "My herd is the active nav item on its pages and shows their tabs" do
@@ -81,17 +134,15 @@ class LayoutTest < ActionDispatch::IntegrationTest
     end
   end
 
-  # On a phone the header becomes two rows -- identity and actions, then a nav
-  # strip -- and returns to a single row from sm: up. These pin that contract,
-  # because a utility-class tidy-up could undo it without breaking anything else.
-  test "the nav forms its own full-width strip on mobile and rejoins the row at sm" do
+  # One row at every width. These pin that contract, because a utility-class
+  # tidy-up could undo it without breaking anything else.
+  test "the nav fits one row on a phone" do
     sign_in_as moderators(:avery)
     get root_path
 
-    assert_select "header nav.w-full.sm\\:w-auto"
-    assert_select "header nav.order-3.sm\\:order-2"
-    assert_select "header nav.overflow-x-auto", true,
-      "the tabs must scroll rather than wrap on a narrow phone"
+    assert_select "header nav ul.overflow-x-auto", true,
+      "the links must scroll rather than wrap on a narrow phone"
+    assert_select "header a[href=?] span.sr-only.sm\\:not-sr-only", root_path, text: "Waterhole"
   end
 
   test "nav labels do not break mid-phrase" do
@@ -101,14 +152,6 @@ class LayoutTest < ActionDispatch::IntegrationTest
     # "Sync history" wrapping onto two lines was what made the phone header
     # three rows tall; "My herd" could do the same.
     assert_select "header nav a.whitespace-nowrap", count: 3
-  end
-
-  test "the long handle is hidden on the smallest screens" do
-    sign_in_as moderators(:avery)
-    get root_path
-
-    assert_select "header span.hidden.sm\\:inline", text: /#{moderators(:avery).username}/,
-      count: 1
   end
 
   # Sticky footer: body is a flex column and <main> grows, so a short page pins

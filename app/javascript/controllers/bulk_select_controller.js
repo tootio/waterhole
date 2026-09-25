@@ -68,7 +68,8 @@ export default class extends Controller {
     this.sync()
   }
 
-  // Filtering or paging replaced the frame: a fresh page, a fresh selection.
+  // Filtering replaced the frame: a fresh list, a fresh selection. "Load more"
+  // appends by stream and never gets here.
   reset() {
     this.selected.clear()
     this.sync()

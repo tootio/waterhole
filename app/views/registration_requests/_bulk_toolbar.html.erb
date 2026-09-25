@@ -1,10 +1,10 @@
-<%# Selection is per page: filtering or paging replaces this frame and starts
-    over, so nothing can be acted on that is not on screen. Sticky, because
-    a probe wave is picked by scrolling down a long page. %>
+<%# Selection covers the loaded rows: "Load more" keeps it, filtering replaces
+    this frame and starts over, so nothing can be acted on that is not on
+    screen. Sticky, because a probe wave is picked by scrolling down a long page. %>
 <div class="sticky top-0 z-10 mb-2 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-stone-200 dark:border-stone-800 bg-white/95 dark:bg-stone-900/95 px-4 py-2 backdrop-blur">
   <label class="flex cursor-pointer items-center gap-2 text-sm text-stone-600 dark:text-stone-300">
     <input type="checkbox"
-           aria-label="Select all pending requests on this page"
+           aria-label="Select all loaded pending requests"
            class="size-4 rounded accent-stone-900 dark:accent-stone-100 <%= focus_ring_classes %>"
            data-bulk-select-target="all"
            data-action="bulk-select#toggleAll">

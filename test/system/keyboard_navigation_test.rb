@@ -43,6 +43,32 @@ class KeyboardNavigationTest < ApplicationSystemTestCase
       "releasing with \"c\" reloaded the page instead of updating the row in place"
   end
 
+  test "j past the last loaded row loads more and moves into them, without reloading the page" do
+    30.times do |i|
+      @moderator.instance.registration_requests.create!(mastodon_account_id: "96#{i}",
+        username: "paged#{i}", signed_up_at: (i + 1).minutes.ago, confirmed: true)
+    end
+    ordered = RegistrationRequests::Query.new(@moderator.instance.registration_requests, {}, viewer: @moderator).call.to_a
+
+    visit registration_requests_path
+    assert_text "Load more"
+    page.execute_script("window.__systemTestLoaded = true")
+
+    25.times { press "j" }
+    assert_focused ordered[24]
+
+    press "j"
+
+    assert_no_text "Showing 25 of"
+    assert_focused ordered[25]
+    assert_match(/page=2/, page.current_url)
+    assert page.evaluate_script("window.__systemTestLoaded"),
+      "loading more with \"j\" reloaded the page instead of appending rows"
+
+    press "j"
+    assert_focused ordered[26]
+  end
+
   test "claiming and releasing a request with the keyboard on the detail page updates it in place, without reloading the page" do
     assert_nil @pending.claimed_by
     visit registration_request_path(@pending)
@@ -155,6 +181,11 @@ class KeyboardNavigationTest < ApplicationSystemTestCase
     # action a real keystroke would produce, aimed at whatever already has
     # focus.
     def press(*keys) = page.driver.browser.action.send_keys(*keys).perform
+
+    def assert_focused(request)
+      link_id = ActionView::RecordIdentifier.dom_id(request, :link)
+      assert_selector "##{link_id}:focus"
+    end
 
     def press_and_wait(*keys, wait: 0.3)
       press *keys

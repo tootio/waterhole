@@ -35,6 +35,27 @@ class BulkActionsTest < ApplicationSystemTestCase
     assert_equal "rejected", @jules.reload.status
   end
 
+  test "load more keeps the selection, and select all then covers the new rows" do
+    30.times do |i|
+      @instance.registration_requests.create!(mastodon_account_id: "97#{i}",
+        username: "paged#{i}", signed_up_at: (i + 1).minutes.ago, confirmed: true)
+    end
+    first = RegistrationRequests::Query.new(@instance.registration_requests, {}, viewer: @moderator).call.first
+
+    visit registration_requests_path
+    select_rows first
+    assert_text "1 selected"
+
+    click_on "Load more"
+    assert_no_text "Load more"
+
+    assert checkbox_for(first).checked?
+    assert_text "1 selected"
+    find("input[aria-label='Select all loaded pending requests']").click
+    assert_equal all("#queue_rows input[type=checkbox]").size, all("#queue_rows input[type=checkbox]:checked").size
+    assert_operator all("#queue_rows input[type=checkbox]:checked").size, :>, 25
+  end
+
   test "the confirmation warns about requests claimed by someone else" do
     visit registration_requests_path
     select_rows @rowan, @claimed

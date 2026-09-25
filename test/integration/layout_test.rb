@@ -158,6 +158,24 @@ class LayoutTest < ActionDispatch::IntegrationTest
   ensure
     ENV.delete("WATERHOLE_SOURCE_URL")
   end
+  test "the footer links the issues page to report a problem, when there is one" do
+    get new_session_path
+    assert_select "footer a[href=?]",
+      "#{Waterhole::Deployment::DEFAULT_SOURCE_URL}/issues/new?template=bug_report.yml&version=#{CGI.escape(Waterhole::Deployment.version)}",
+      text: "Report a problem"
+
+    # A fork may not have our issue forms.
+    ENV["WATERHOLE_SOURCE_URL"] = "https://github.com/someone/waterhole"
+    get new_session_path
+    assert_select "footer a[href=?]", "https://github.com/someone/waterhole/issues", text: "Report a problem"
+
+    ENV["WATERHOLE_SOURCE_URL"] = "https://example.org/waterhole"
+    get new_session_path
+    assert_select "footer a", { count: 0, text: "Report a problem" }
+  ensure
+    ENV.delete("WATERHOLE_SOURCE_URL")
+  end
+
   # On every page but the queue itself, this badge is the only sign that work
   # has arrived -- so it has to be right, and it has to be live.
   test "the Queue nav item badges how many requests await review" do

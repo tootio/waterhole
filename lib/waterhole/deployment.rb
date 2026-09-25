@@ -190,6 +190,30 @@ module Waterhole
       url.match?(%r{\Ahttps?://\S+\z}i) ? url : DEFAULT_SOURCE_URL
     end
 
+    # Issue forms in .github/ISSUE_TEMPLATE that issues_url can open directly.
+    ISSUE_TEMPLATES = %w[bug_report watchword_suggestion].freeze
+
+    # Where moderators can report problems or propose ideas, such as a new
+    # suggested watchword. Derived from source_url when that is a GitHub
+    # repository; a fork hosted elsewhere sets WATERHOLE_ISSUES_URL. Nil when
+    # neither applies, and the links are left out rather than guessed.
+    #
+    # Only upstream is known to have our issue forms, so only there does
+    # `template` open that form, with `fields` pre-filled by their ids.
+    def issues_url(template: nil, **fields)
+      raise ArgumentError, "unknown issue template #{template.inspect}" if template && !ISSUE_TEMPLATES.include?(template)
+
+      url = ENV["WATERHOLE_ISSUES_URL"].to_s.strip
+      return url if url.match?(%r{\Ahttps?://\S+\z}i)
+
+      if template && source_url == DEFAULT_SOURCE_URL
+        return "#{DEFAULT_SOURCE_URL}/issues/new?#{{ template: "#{template}.yml", **fields }.to_query}"
+      end
+
+      repo = source_url.match(%r{\A(https://github\.com/[^/?#]+/[^/?#]+?)(?:\.git)?/?\z}i)
+      "#{repo[1]}/issues" if repo
+    end
+
     def missing_settings
       REQUIRED_IN_PRODUCTION.select { ENV[it].blank? }
     end

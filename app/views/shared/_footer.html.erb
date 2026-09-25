@@ -8,6 +8,9 @@
       <%= link_to "Privacy", privacy_path, class: button_classes(:ghost, "rounded hover:text-stone-900 dark:hover:text-stone-100 hover:underline") %>
       <%= link_to "Imprint", imprint_path, class: button_classes(:ghost, "rounded hover:text-stone-900 dark:hover:text-stone-100 hover:underline") %>
       <%= link_to "Source code", Waterhole::Deployment.source_url, rel: "noopener", class: button_classes(:ghost, "rounded hover:text-stone-900 dark:hover:text-stone-100 hover:underline") %>
+      <% if (issues_url = Waterhole::Deployment.issues_url(template: "bug_report", version: Waterhole::Deployment.version)) %>
+        <%= link_to "Report a problem", issues_url, rel: "noopener", class: button_classes(:ghost, "rounded hover:text-stone-900 dark:hover:text-stone-100 hover:underline") %>
+      <% end %>
     </nav>
 
     <% unless LegalDocuments.published? %>

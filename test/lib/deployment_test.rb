@@ -129,4 +129,61 @@ class DeploymentTest < ActiveSupport::TestCase
   ensure
     ENV.delete("WATERHOLE_IFTAS_DNI_URL")
   end
+
+  test "issues_url is the issues page of a GitHub source repository" do
+    %w[https://github.com/someone/waterhole https://github.com/someone/waterhole/ https://github.com/someone/waterhole.git].each do |source|
+      ENV["WATERHOLE_SOURCE_URL"] = source
+      assert_equal "https://github.com/someone/waterhole/issues", Waterhole::Deployment.issues_url, source
+    end
+  ensure
+    ENV.delete("WATERHOLE_SOURCE_URL")
+  end
+
+  test "issues_url is nil for a source elsewhere, or deeper in a repository" do
+    %w[https://codeberg.org/someone/waterhole https://github.com/someone/waterhole/tree/fork].each do |source|
+      ENV["WATERHOLE_SOURCE_URL"] = source
+      assert_nil Waterhole::Deployment.issues_url, source
+    end
+  ensure
+    ENV.delete("WATERHOLE_SOURCE_URL")
+  end
+
+  test "WATERHOLE_ISSUES_URL overrides issues_url, but only as an http(s) URL" do
+    ENV["WATERHOLE_SOURCE_URL"] = "https://codeberg.org/someone/waterhole"
+    ENV["WATERHOLE_ISSUES_URL"] = "https://codeberg.org/someone/waterhole/issues"
+    assert_equal "https://codeberg.org/someone/waterhole/issues", Waterhole::Deployment.issues_url
+
+    ENV["WATERHOLE_ISSUES_URL"] = "javascript:alert(1)"
+    assert_nil Waterhole::Deployment.issues_url
+  ensure
+    ENV.delete("WATERHOLE_SOURCE_URL")
+    ENV.delete("WATERHOLE_ISSUES_URL")
+  end
+
+  test "issues_url opens an issue form, pre-filled, only on the upstream repository" do
+    assert_equal "#{Waterhole::Deployment::DEFAULT_SOURCE_URL}/issues/new?template=bug_report.yml&version=v1.2.3",
+      Waterhole::Deployment.issues_url(template: "bug_report", version: "v1.2.3")
+
+    ENV["WATERHOLE_SOURCE_URL"] = "https://github.com/someone/waterhole"
+    assert_equal "https://github.com/someone/waterhole/issues",
+      Waterhole::Deployment.issues_url(template: "bug_report", version: "v1.2.3")
+  ensure
+    ENV.delete("WATERHOLE_SOURCE_URL")
+  end
+
+  test "issues_url refuses an issue template that does not exist" do
+    assert_raises(ArgumentError) { Waterhole::Deployment.issues_url(template: "question") }
+  end
+
+  # The links would open GitHub's template chooser, or drop the pre-filled
+  # value, if a form were renamed or its field ids changed.
+  test "every issue template issues_url links to exists, with the fields it pre-fills" do
+    Waterhole::Deployment::ISSUE_TEMPLATES.each do |template|
+      path = Rails.root.join(".github/ISSUE_TEMPLATE/#{template}.yml")
+      assert path.exist?, "#{path} is missing"
+    end
+
+    bug_report = YAML.load_file(Rails.root.join(".github/ISSUE_TEMPLATE/bug_report.yml"))
+    assert_includes bug_report["body"].pluck("id"), "version"
+  end
 end

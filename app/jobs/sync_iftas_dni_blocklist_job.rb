@@ -64,7 +64,7 @@ class SyncIftasDniBlocklistJob < ApplicationJob
       f.response :follow_redirects, limit: 5
       f.options.open_timeout = 10
       f.options.timeout = 30
-      f.adapter SecureAdapter.adapter
+      SecureAdapter.use(f)
     end
   end
 end

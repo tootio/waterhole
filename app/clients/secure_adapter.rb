@@ -1,12 +1,12 @@
-require "resolv"
-require "ipaddr"
-require "socket"
-
+# Sets a Faraday connection's adapter to Net::HTTP with SsrfGuard pinning
+# every connection it opens. Call it in place of `f.adapter`:
+#
+#   Faraday.new { |f| SecureAdapter.use(f) }
+#
 module SecureAdapter
   module_function
-  def adapter
-    Faraday.default_adapter do |http|
-      SsrfGuard.pin!(http)
-    end
+
+  def use(faraday)
+    faraday.adapter(:net_http) { |http| SsrfGuard.pin!(http) }
   end
 end

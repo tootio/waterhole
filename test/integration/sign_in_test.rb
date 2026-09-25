@@ -25,6 +25,7 @@ class SignInTest < ActionDispatch::IntegrationTest
   end
 
   test "a domain with the record is sent on to Mastodon to authorise" do
+    stub_instance_actor("newcomer.example")
     stub_request(:get, "https://newcomer.example/.well-known/oauth-authorization-server")
       .to_return(status: 404, body: "{}", headers: { "Content-Type" => "application/json" })
     stub_request(:post, "https://newcomer.example/api/v1/apps")
@@ -129,10 +130,83 @@ class SignInTest < ActionDispatch::IntegrationTest
     refute Instance.find_by(domain: "newcomer.example").sync_moderator, "no token is lent before consent"
   end
 
+  # The old install lost the domain; a new one came up under it before the
+  # departed instance's data was forgotten.
+  test "a new install on a known domain signs in to an empty record, not the old team's" do
+    instance = instances(:unverified)
+    instance.update!(actor_public_key: actor_key.public_to_pem, client_id: "old-cid", client_secret: "old",
+      redirect_uri: Mastodon::OAuth.redirect_uri, scopes: Mastodon::OAuth::MODERN_SCOPES)
+    old_moderator = instance.moderators.create!(mastodon_account_id: "5", username: "oldmod")
+
+    complete_oauth(role: { "permissions" => "1" }, actor: actor_key(:replacement))
+
+    assert_redirected_to root_url
+    assert_equal "cid", instance.reload.client_id, "the old OAuth app does not exist on the new server"
+    assert_equal actor_key(:replacement).public_to_pem, instance.actor_public_key
+    refute Moderator.exists?(old_moderator.id)
+    assert_equal [ "77" ], instance.moderators.pluck(:mastodon_account_id)
+  end
+
+  # Someone took the domain on purpose and serves the old install's public key,
+  # which anyone can copy. They cannot sign with it.
+  test "a server publishing the old key without holding it is not signed in to" do
+    instance = instances(:unverified)
+    instance.update!(actor_public_key: actor_key.public_to_pem)
+    old_moderator = instance.moderators.create!(mastodon_account_id: "5", username: "oldmod")
+
+    assert_no_difference -> { Session.count } do
+      complete_oauth(role: { "permissions" => "1" }, actor: actor_key, signer: actor_key(:replacement))
+    end
+
+    assert_redirected_to new_session_path
+    assert_match(/could not prove/, flash[:alert])
+    assert Moderator.exists?(old_moderator.id), "nothing is wiped: the key did not change"
+    refute instance.moderators.exists?(mastodon_account_id: "77")
+    assert_nil instance.reload.actor_key_proven_at
+  end
+
+  test "one proof lets the whole team in for a while" do
+    complete_oauth(role: { "permissions" => "1" })
+    proven_at = Instance.find_by!(domain: "newcomer.example").actor_key_proven_at
+    assert proven_at
+
+    delete session_path
+    complete_oauth(role: { "permissions" => "1" })
+
+    assert_redirected_to root_url
+    assert_requested :get, "https://newcomer.example/api/v2/search", query: hash_including({}), times: 1
+    assert_equal proven_at, Instance.find_by!(domain: "newcomer.example").actor_key_proven_at
+  end
+
+  test "an OAuth app registered without the search scope is registered again" do
+    instances(:unverified).update!(client_id: "old-cid", client_secret: "old",
+      redirect_uri: Mastodon::OAuth.redirect_uri, scopes: "profile admin:read:accounts admin:write:accounts",
+      oauth_metadata: { "scopes_supported" => %w[profile] })
+
+    complete_oauth(role: { "permissions" => "1" })
+
+    assert_equal "cid", instances(:unverified).reload.client_id
+    assert_includes instances(:unverified).scopes.split, "read:search"
+  end
+
+  test "a server whose instance actor cannot be read is not signed in to" do
+    stub_request(:get, "https://newcomer.example/actor").to_return(status: 404)
+
+    DnsAllowlist.stub_resolver(dns_ok) do
+      post session_path, params: { domain: "newcomer.example" }
+    end
+
+    assert_redirected_to new_session_path
+    assert_match(/Could not reach newcomer\.example/, flash[:alert])
+  end
+
   private
 
-  def complete_oauth(role:, remember: false)
+  # `signer` is the key the server actually holds; `actor` the one it publishes.
+  def complete_oauth(role:, remember: false, actor: actor_key, signer: actor)
     json = { "Content-Type" => "application/json" }
+    stub_instance_actor("newcomer.example", key: actor)
+    stub_mastodon_resolve("newcomer.example", key: signer)
     stub_request(:get, "https://newcomer.example/.well-known/oauth-authorization-server")
       .to_return(status: 404, body: "{}", headers: json)
     stub_request(:post, "https://newcomer.example/api/v1/apps")

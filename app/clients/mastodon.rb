@@ -10,6 +10,7 @@ module Mastodon
   NotFound        = Class.new(Error)   # 404: account deleted (rejection deletes users)
   Unprocessable   = Class.new(Error)   # 422
   ServerError     = Class.new(Error)   # 5xx
+  InvalidResponse = Class.new(Error)   # 2xx, but not the document we asked for
 
   # 403 from Mastodon is AMBIGUOUS: the same status and body come back when the
   # account is no longer pending AND when the moderator's role lacks "Manage

@@ -69,6 +69,48 @@ module MastodonStubs
                    "X-RateLimit-Remaining" => "0", "X-RateLimit-Reset" => reset_at.iso8601 })
   end
 
+  # Two installs' worth of instance actor keys, generated once per process:
+  # RSA generation is slow enough to notice across the suite.
+  ACTOR_KEYS = Hash.new { |h, name| h[name] = OpenSSL::PKey::RSA.generate(2048) }
+
+  def actor_key(name = :original) = ACTOR_KEYS[name]
+
+  def stub_instance_actor(domain, key: actor_key, status: 200, body: nil)
+    body ||= { "id" => "https://#{domain}/actor", "type" => "Application",
+               "publicKey" => { "id" => "https://#{domain}/actor#main-key",
+                                "owner" => "https://#{domain}/actor",
+                                "publicKeyPem" => key.public_to_pem } }
+    stub_request(:get, "https://#{domain}/actor")
+      .with(headers: { "Accept" => "application/activity+json" })
+      .to_return(status:, body: body.to_json, headers: { "Content-Type" => "application/activity+json; charset=utf-8" })
+  end
+
+  # What Mastodon's FetchResourceService sends as Accept, and the headers each
+  # release line signs, in order. Up to 4.5 Accept is signed too; 4.4 moved the
+  # request target to the end; 4.6 stopped signing Accept.
+  MASTODON_FETCH_ACCEPT = 'application/activity+json, application/ld+json; profile="https://www.w3.org/ns/activitystreams", text/html;q=0.1'.freeze
+  MASTODON_SIGNED_HEADERS = {
+    "3.5-4.3" => %w[(request-target) host date accept],
+    "4.4-4.5" => %w[host date accept (request-target)],
+    "4.6+"    => %w[host date (request-target)]
+  }.freeze
+
+  # Headers for a GET signed as the given Mastodon release line signs its fetches.
+  def mastodon_signed_headers(url, key: actor_key, key_id: "https://newcomer.example/actor#main-key",
+    date: Time.current, mastodon: "4.6+")
+    uri = URI(url)
+    target = uri.query ? "#{uri.path}?#{uri.query}" : uri.path
+    sent = { "Host" => uri.host + (uri.port == uri.default_port ? "" : ":#{uri.port}"), "Date" => date.httpdate,
+             "Accept" => MASTODON_FETCH_ACCEPT }
+    values = sent.transform_keys(&:downcase).merge("(request-target)" => "get #{target}")
+    names = MASTODON_SIGNED_HEADERS.fetch(mastodon)
+    string = names.map { |name| "#{name}: #{values.fetch(name)}" }.join("\n")
+    signature = Base64.strict_encode64(key.sign(OpenSSL::Digest.new("SHA256"), string))
+
+    sent.merge("Signature" =>
+      %(keyId="#{key_id}",algorithm="rsa-sha256",headers="#{names.join(" ")}",signature="#{signature}"))
+  end
+
   # Resolver doubles for DnsAllowlist.
   def dns_ok(host = Waterhole::Deployment.host)
     Class.new { def initialize(h) = @h = h

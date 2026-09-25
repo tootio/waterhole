@@ -43,6 +43,9 @@ class SessionsController < ApplicationController
     session[:remember_instance] = params[:remember] == "1"
 
     instance = Instance.find_or_create_by!(domain: domain)
+    # Before anything else is recorded: if a new install now holds the domain,
+    # this wipes the old one's record, and the DNS result below belongs to it.
+    Instances::ConfirmIdentity.call(instance)
     # Record what the record actually said, including which terms it accepted.
     # Going through the same transition logic as the hourly job keeps sign-in
     # from inventing a second, subtly different notion of "verified".
@@ -78,6 +81,10 @@ class SessionsController < ApplicationController
       return redirect_to new_session_path,
         alert: "Your account on #{instance.domain} does not have the Manage Users permission, so it cannot moderate here."
     end
+
+    # The key checked in #create is public; this checks the server holds the
+    # private half before anyone is let in to what the instance has here.
+    Instances::ProveIdentity.call(instance, client)
 
     moderator = upsert_moderator(instance, account, token)
 

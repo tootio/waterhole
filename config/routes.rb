@@ -6,6 +6,9 @@ Rails.application.routes.draw do
     resource :recent_instance, only: :destroy
   end
   get "/oauth/callback", to: "sessions#callback", as: :oauth_callback
+  # Public: fetched by an instance's Mastodon server, signed, while one of its
+  # moderators signs in (see Instances::ProveIdentity).
+  get "/identity_challenges/:token", to: "identity_challenges#show", as: :identity_challenge
   # Asked after signing in; decline signs out and deletes the moderator's data.
   resource :consent, only: %i[show create destroy]
 

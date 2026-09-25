@@ -96,10 +96,12 @@ class Instance < ApplicationRecord
   # and the operator has not blocked.
   # Re-registering when the redirect_uri still matches would orphan an app on the
   # instance and clutter its admin list; NOT re-registering when it has changed
-  # breaks token exchange for everyone at once.
+  # breaks token exchange for everyone at once. The same goes for the scopes: a
+  # token can only be granted what its app was registered for.
   def oauth_app_current?
     client_id.present? && client_secret.present? &&
-      redirect_uri == Mastodon::OAuth.redirect_uri
+      redirect_uri == Mastodon::OAuth.redirect_uri &&
+      scopes == Mastodon::OAuth.scopes_for(oauth_metadata)
   end
 
   # Waterhole only talks to a server whose admin has vouched for it by DNS and
@@ -156,6 +158,43 @@ class Instance < ApplicationRecord
     holder = moderators.lending_token.order(last_authenticated_at: :desc).first
     update!(sync_moderator: holder)
     holder
+  end
+
+  # Deletes what the instance's team built up here, in this order:
+  #
+  #   1. its applications are purged, with their notes, votes, flags and decisions,
+  #   2. its tombstones go (should it return, sync simply starts afresh),
+  #   3. its moderators are forgotten -- deleted outright, since step 1 removed
+  #      the notes, decisions and votes that would otherwise keep them anonymised.
+  def forget_contents!
+    registration_requests.find_each(&:purge!)
+    purged_registrations.delete_all
+    moderators.remembered.find_each(&:forget!)
+  end
+
+  # A different Mastodon install now answers for this domain: the old one lost
+  # it, and whoever holds it now must not inherit that team's applicants, notes
+  # or settings. Everything goes, including what the operator and the old admin
+  # agreed to (DNS verification, terms, signals approval), and the record starts
+  # over as if the domain were new, pinned to the new install's key.
+  def start_over!(actor_public_key:)
+    transaction do
+      forget_contents!
+      keyword_rules.destroy_all
+      email_templates.destroy_all
+      sync_runs.destroy_all
+
+      update!(
+        actor_public_key:, actor_key_pinned_at: Time.current, actor_key_proven_at: nil,
+        status: "unverified", verified_at: nil, verification_detail: nil,
+        verification_checked_at: nil, consecutive_verification_failures: 0,
+        accepted_terms_digest: nil, terms_stale_since: nil, terms_grace_until: nil,
+        access_ended_at: nil, signals_opted_in: false, signals_approved: false,
+        client_id: nil, client_secret: nil, redirect_uri: nil, scopes: nil, oauth_metadata: {},
+        sync_moderator: nil, title: nil, mastodon_version: nil,
+        last_synced_at: nil, last_sync_error: nil, last_sync_error_at: nil
+      )
+    end
   end
 
   def revoke!(reason:, status: :revoked)

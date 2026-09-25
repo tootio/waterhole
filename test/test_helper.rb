@@ -45,6 +45,19 @@ module ActiveSupport
 end
 
 class ActionDispatch::IntegrationTest
+  # Stubs the search Instances::ProveIdentity asks for, answering it as Mastodon
+  # does: by fetching the challenge URL, signed with `key`, before it replies.
+  # The fetch comes from a separate session, as it would from the server.
+  def stub_mastodon_resolve(domain, key: actor_key)
+    stub_request(:get, "https://#{domain}/api/v2/search").with(query: hash_including("resolve" => "true"))
+      .to_return do |request|
+        url = Rack::Utils.parse_query(URI(request.uri.to_s).query)["q"]
+        open_session { it.get URI(url).path, headers: mastodon_signed_headers(url, key:, key_id: "https://#{domain}/actor#main-key") }
+        { status: 200, body: { "accounts" => [], "statuses" => [], "hashtags" => [] }.to_json,
+          headers: { "Content-Type" => "application/json" } }
+      end
+  end
+
   # Signs in through the real endpoint rather than forging a cookie, so these
   # tests exercise the same session machinery the app uses. (Rails.env.local? is
   # true in test, so the development sign-in route is available here.)

@@ -3,9 +3,10 @@ module Mastodon
   # authorization-code flow.
   module OAuth
     # `profile` only exists from Mastodon 4.3; older servers need read:accounts
-    # just to learn who signed in.
-    MODERN_SCOPES = "profile admin:read:accounts admin:write:accounts".freeze
-    LEGACY_SCOPES = "read:accounts admin:read:accounts admin:write:accounts".freeze
+    # just to learn who signed in. read:search lets sign-in ask the server to
+    # fetch a URL, which is how it proves who it is (Instances::ProveIdentity).
+    MODERN_SCOPES = "profile read:search admin:read:accounts admin:write:accounts".freeze
+    LEGACY_SCOPES = "read:accounts read:search admin:read:accounts admin:write:accounts".freeze
 
     module_function
 

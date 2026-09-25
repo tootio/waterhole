@@ -37,7 +37,8 @@ class SecureAdapterTest < ActiveSupport::TestCase
     connections = {
       "Mastodon::Client" => Mastodon::Client.new(base_url: "https://mastodon.example", access_token: nil).send(:connection),
       "SyncIftasDniBlocklistJob" => SyncIftasDniBlocklistJob.new.send(:http),
-      "RefreshIpDatabasesJob" => RefreshIpDatabasesJob.new.send(:http)
+      "RefreshIpDatabasesJob" => RefreshIpDatabasesJob.new.send(:http),
+      "AvatarFetcher" => AvatarFetcher.connection
     }
 
     connections.each do |name, connection|

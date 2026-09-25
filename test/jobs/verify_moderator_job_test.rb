@@ -22,6 +22,17 @@ class VerifyModeratorJobTest < ActiveJob::TestCase
     assert @moderator.sessions.exists?
   end
 
+  test "a new avatar is picked up between sign-ins" do
+    stub_request(:get, @url).to_return(status: 200,
+      body: { "id" => @moderator.mastodon_account_id, "username" => "avery",
+              "avatar" => "https://files.example/a.gif", "avatar_static" => "https://files.example/a.png",
+              "role" => { "name" => "Moderator", "permissions" => (1 << 10).to_s } }.to_json,
+      headers: { "Content-Type" => "application/json" })
+
+    assert_enqueued_with(job: FetchModeratorAvatarJob) { VerifyModeratorJob.perform_now(@moderator) }
+    assert_equal "https://files.example/a.png", @moderator.reload.avatar_url
+  end
+
   test "a demoted moderator loses their sessions and their token" do
     stub_credentials(role: { "name" => "", "permissions" => (1 << 16).to_s })
 

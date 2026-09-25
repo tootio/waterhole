@@ -11,6 +11,7 @@ class Moderator < ApplicationRecord
   has_many :notes, dependent: :restrict_with_exception
   has_many :decisions, dependent: :restrict_with_exception
   has_many :votes, dependent: :restrict_with_exception
+  has_one :avatar, dependent: :delete
 
   validates :mastodon_account_id, presence: true,
     uniqueness: { scope: :instance_id }
@@ -22,6 +23,9 @@ class Moderator < ApplicationRecord
   scope :lending_token, -> { token_usable.where.not(consented_at: nil) }
   # Not yet anonymised by forget!.
   scope :remembered, -> { where.not("mastodon_account_id LIKE 'forgotten-%'") }
+
+  # The still image: never animated, and the one Waterhole copies (see AvatarFetcher).
+  def self.avatar_url_from(account) = account["avatar_static"].presence || account["avatar"].presence
 
   def token_usable? = token_invalidated_at.nil? && access_token.present?
 
@@ -43,7 +47,20 @@ class Moderator < ApplicationRecord
   def consent!
     update!(consented_at: Time.current, consented_privacy_digest: LegalDocuments.privacy_digest)
     instance.update!(sync_moderator: self) if instance.sync_moderator_id.blank?
+    refresh_avatar_later
   end
+
+  # Copies the avatar again whenever Mastodon reports a different one (or none).
+  def refresh_avatar_later
+    FetchModeratorAvatarJob.perform_later(self) if consent_current? && stored_avatar_url != avatar_url
+  end
+
+  # Without loading the image itself.
+  def stored_avatar_url = Avatar.where(moderator_id: id).pick(:source_url)
+
+  # Changes whenever the stored image does, so the browser may cache each one
+  # for good; nil when there is none to show.
+  def avatar_version = Avatar.where(moderator_id: id).pick(:updated_at)&.strftime("%s%6N")
 
   # A moderator who declines consent: sign them out and keep nothing about
   # them. The record goes -- or, where notes, decisions and votes still point
@@ -58,6 +75,7 @@ class Moderator < ApplicationRecord
       # Before anything that removes the row: instances.sync_moderator_id
       # points at it. With the token gone, rotation cannot pick this one again.
       update!(access_token: nil, token_invalidated_at: Time.current)
+      Avatar.where(moderator_id: id).delete_all
       instance.rotate_sync_moderator! if instance.sync_moderator_id == id
 
       if notes.exists? || decisions.exists? || votes.exists?

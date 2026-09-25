@@ -11,6 +11,9 @@ Rails.application.routes.draw do
   get "/identity_challenges/:token", to: "identity_challenges#show", as: :identity_challenge
   # Asked after signing in; decline signs out and deletes the moderator's data.
   resource :consent, only: %i[show create destroy]
+  # The signed-in moderator's own avatar, served from here rather than their
+  # media host; see AvatarsController.
+  resource :avatar, only: :show
 
   # Public: an instance admin must be able to read the DNS instructions before
   # anyone on their server can sign in.

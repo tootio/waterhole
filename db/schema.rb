@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_25_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_25_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -116,6 +116,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_25_120000) do
     t.index ["enabled"], name: "index_keyword_rules_on_enabled"
     t.index ["instance_id"], name: "index_keyword_rules_on_instance_id"
     t.check_constraint "match_type::text = ANY (ARRAY['substring'::text, 'word'::text, 'regex'::text])", name: "keyword_rules_match_type_check"
+  end
+
+  create_table "moderator_avatars", force: :cascade do |t|
+    t.string "content_type", null: false
+    t.datetime "created_at", null: false
+    t.binary "image", null: false
+    t.bigint "moderator_id", null: false
+    t.string "source_url", null: false
+    t.datetime "updated_at", null: false
+    t.index ["moderator_id"], name: "index_moderator_avatars_on_moderator_id", unique: true
   end
 
   create_table "moderators", force: :cascade do |t|
@@ -255,6 +265,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_25_120000) do
   add_foreign_key "flags", "registration_requests"
   add_foreign_key "instances", "moderators", column: "sync_moderator_id"
   add_foreign_key "keyword_rules", "instances"
+  add_foreign_key "moderator_avatars", "moderators"
   add_foreign_key "moderators", "instances"
   add_foreign_key "notes", "moderators"
   add_foreign_key "notes", "notes", column: "parent_id"

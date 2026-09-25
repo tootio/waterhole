@@ -159,7 +159,7 @@ class SessionsController < ApplicationController
     moderator.assign_attributes(
       username: account["username"],
       display_name: account["display_name"].presence,
-      avatar_url: account["avatar"].presence,
+      avatar_url: Moderator.avatar_url_from(account),
       profile_url: account["url"].presence,
       role_name: account.dig("role", "name"),
       access_token: token["access_token"],
@@ -168,6 +168,7 @@ class SessionsController < ApplicationController
       last_authenticated_at: Time.current
     )
     moderator.save!
+    moderator.refresh_avatar_later
     # Sync borrows a token only once its owner has consented; see Moderator#consent!.
     moderator
   end

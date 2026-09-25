@@ -9,7 +9,9 @@ class VerifyModeratorJob < ApplicationJob
     account = client.verify_credentials
 
     if Mastodon::Role.can_manage_users?(account, client)
-      moderator.update!(role_name: account.dig("role", "name"))
+      moderator.update!(role_name: account.dig("role", "name"),
+        avatar_url: Moderator.avatar_url_from(account))
+      moderator.refresh_avatar_later
     else
       moderator.invalidate_token!
     end

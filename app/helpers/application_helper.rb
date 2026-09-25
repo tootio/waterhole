@@ -41,6 +41,19 @@ module ApplicationHelper
       " #{ButtonHelper::FOCUS_RING}"
   end
 
+  # From our own copy (see AvatarsController), or their initial where there is
+  # none. Decorative: whatever it sits in carries the moderator's name.
+  def moderator_avatar(moderator)
+    shape = "size-8 shrink-0 rounded-full bg-stone-200 dark:bg-stone-700"
+
+    if (version = moderator.avatar_version)
+      image_tag avatar_path(v: version), alt: "", class: "#{shape} object-cover"
+    else
+      tag.span moderator.name.first.upcase, aria: { hidden: true },
+        class: "#{shape} inline-flex items-center justify-center text-sm font-semibold text-stone-700 dark:text-stone-200"
+    end
+  end
+
   # Watchwords, email templates, sync history and your own herd's page all sit
   # under "My herd" in the header; every other herd's page is under "Herds".
   MY_HERD_CONTROLLERS = %w[keyword_rules email_templates sync_runs].freeze

@@ -53,6 +53,8 @@ Rails.application.routes.draw do
   get "/help/shortcuts", to: "help#shortcuts", as: :keyboard_shortcuts_help
   get "/help/flags/:id", to: "help#flag",       as: :flag_help
   get "/help/regexp",    to: "help#regexp",     as: :regexp_help
+  # Public: read by moderators whose sign-in just failed.
+  get "/help/sign_in",   to: "help#sign_in",    as: :sign_in_help
 
   # Reveal health status on /up
   get "up" => "rails/health#show", as: :rails_health_check

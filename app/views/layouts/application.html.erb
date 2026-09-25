@@ -73,6 +73,9 @@
     <% if signed_in? && current_instance&.terms_outdated? %>
       <%= render "shared/terms_banner" %>
     <% end %>
+    <% if signed_in? && current_moderator.reauthorization_pending? %>
+      <%= render "shared/reauthorize_banner" %>
+    <% end %>
 
     <%= render "shared/flash" %>
 

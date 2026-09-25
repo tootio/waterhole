@@ -54,6 +54,18 @@ class SignInTest < ActionDispatch::IntegrationTest
     assert_match(/expired/, flash[:alert])
   end
 
+  # The sign-in page makes Turbo reload it in full, so the Turbo visit that
+  # follows the redirect is thrown away; the flash must survive it.
+  test "a notice redirected to the sign-in page survives Turbo's reload of it" do
+    sign_in_as moderators(:avery)
+    delete session_path
+
+    get new_session_path, headers: { "X-Turbo-Request-Id" => "1" }
+    get new_session_path
+
+    assert_select "[role=status]", text: /Signed out/
+  end
+
   test "signing out ends the session" do
     sign_in_as moderators(:avery)
     assert_difference -> { Session.count }, -1 do
@@ -159,7 +171,10 @@ class SignInTest < ActionDispatch::IntegrationTest
     end
 
     assert_redirected_to new_session_path
-    assert_match(/could not prove/, flash[:alert])
+    assert_match(/could not prove/, flash[:alert]["text"])
+    assert_equal sign_in_help_path(anchor: "could-not-prove"), flash[:alert]["link_url"]
+    follow_redirect!
+    assert_select "[role=status] a[href=?]", sign_in_help_path(anchor: "could-not-prove"), text: "What can cause this"
     assert Moderator.exists?(old_moderator.id), "nothing is wiped: the key did not change"
     refute instance.moderators.exists?(mastodon_account_id: "77")
     assert_nil instance.reload.actor_key_proven_at
@@ -189,6 +204,33 @@ class SignInTest < ActionDispatch::IntegrationTest
     assert_includes instances(:unverified).scopes.split, "read:search"
   end
 
+  test "a moderator authorized before the search scope is pointed to the old authorization, once" do
+    instance = instances(:unverified)
+    instance.moderators.create!(mastodon_account_id: "77", username: "newmod",
+      token_scopes: "profile admin:read:accounts admin:write:accounts", consented_at: Time.current)
+
+    complete_oauth(role: { "permissions" => "1" })
+
+    assert_match(/lists Waterhole twice/, flash[:notice]["text"])
+    assert_equal "https://newcomer.example/oauth/authorized_applications", flash[:notice]["link_url"]
+
+    delete session_path
+    complete_oauth(role: { "permissions" => "1" })
+    assert_equal "Signed in as @newmod@newcomer.example.", flash[:notice]
+  end
+
+  test "an instance actor without a key sends the moderator to the help page" do
+    stub_instance_actor("newcomer.example", body: { "type" => "Application" })
+
+    DnsAllowlist.stub_resolver(dns_ok) do
+      post session_path, params: { domain: "newcomer.example" }
+    end
+
+    assert_redirected_to new_session_path
+    assert_match(/no public key/, flash[:alert]["text"])
+    assert_equal sign_in_help_path(anchor: "no-instance-actor"), flash[:alert]["link_url"]
+  end
+
   test "a server whose instance actor cannot be read is not signed in to" do
     stub_request(:get, "https://newcomer.example/actor").to_return(status: 404)
 
@@ -212,7 +254,7 @@ class SignInTest < ActionDispatch::IntegrationTest
     stub_request(:post, "https://newcomer.example/api/v1/apps")
       .to_return(status: 200, body: { "client_id" => "cid", "client_secret" => "csecret" }.to_json, headers: json)
     stub_request(:post, "https://newcomer.example/oauth/token")
-      .to_return(status: 200, body: { "access_token" => "tok", "scope" => "read:accounts" }.to_json, headers: json)
+      .to_return(status: 200, body: { "access_token" => "tok", "scope" => Mastodon::OAuth::LEGACY_SCOPES }.to_json, headers: json)
     stub_request(:get, "https://newcomer.example/api/v1/accounts/verify_credentials")
       .to_return(status: 200, body: { "id" => "77", "username" => "newmod", "role" => role }.compact.to_json, headers: json)
 

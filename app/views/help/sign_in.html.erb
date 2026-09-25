@@ -1,0 +1,88 @@
+<% content_for :page_title, "Sign-in help" %>
+<% content_for :description, "Why Mastodon asks you to authorize Waterhole again, and what can stop a sign-in." %>
+
+<%
+  section_class = "scroll-mt-6 rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-5"
+  heading_class = "mb-3 font-semibold"
+  body_class = "space-y-2 text-sm text-stone-600 dark:text-stone-300"
+  link_class = "font-medium underline"
+%>
+
+<h1 class="mb-4 text-2xl font-semibold tracking-tight">Sign-in help</h1>
+
+<p class="mb-6 text-sm text-stone-600 dark:text-stone-300">
+  Every time a moderator signs in, Waterhole checks that the Mastodon server
+  answering for your instance's domain is still the one that signed up here.
+  A domain can change hands, and whoever runs it next must not see your
+  team's applicants and notes. That check is behind everything on this page.
+</p>
+
+<div class="space-y-6">
+  <section id="authorize-again" class="<%= section_class %>">
+    <h2 class="<%= heading_class %>">Mastodon asks me to authorize Waterhole again</h2>
+    <div class="<%= body_class %>">
+      <p>
+        That is expected, once. Waterhole now also asks for permission to
+        <strong>search</strong>: it uses it to have your server fetch a page
+        from Waterhole, which your server signs with a key only it holds. That
+        signature is how Waterhole tells your server apart from anyone else
+        who might later get your domain. Waterhole does not search anything
+        else with it.
+      </p>
+      <p>Approve it as before; after that, signing in works as it always did.</p>
+    </div>
+  </section>
+
+  <section id="listed-twice" class="<%= section_class %>">
+    <h2 class="<%= heading_class %>">Waterhole is listed twice among my authorized apps</h2>
+    <div class="<%= body_class %>">
+      <p>
+        Asking for the new permission meant registering Waterhole with your
+        server again, and Mastodon keeps the old authorization until you
+        revoke it. Waterhole no longer uses the older entry, so revoking it
+        changes nothing here. In Mastodon it is under
+        <% authorized_apps = tag.strong("Preferences → Account → Authorized apps") %>
+        <% if signed_in? %>
+          <%= link_to authorized_apps, current_instance.authorized_apps_url,
+                class: link_class, rel: "noopener", target: "_blank" %>.
+        <% else %>
+          <%= authorized_apps %>.
+        <% end %>
+      </p>
+    </div>
+  </section>
+
+  <section id="could-not-prove" class="<%= section_class %>">
+    <h2 class="<%= heading_class %>">“… could not prove it is the server that signed up here”</h2>
+    <div class="<%= body_class %>">
+      <p>
+        Your server was asked to fetch a page from Waterhole and sign it, and
+        no correctly signed fetch arrived. Nothing you did causes this, and
+        trying again rarely helps. The usual causes:
+      </p>
+      <ul class="list-disc space-y-1 pl-5">
+        <li>Your server cannot reach this Waterhole: a firewall on its outgoing traffic, or this Waterhole's domain blocked on your server.</li>
+        <li>Something in front of this Waterhole changes the request on the way, so the signature no longer matches.</li>
+        <li>Your domain now points to a different Mastodon server than the one that signed up. Then this is the check doing its job.</li>
+      </ul>
+      <p>
+        An administrator of your instance can check the first and the last;
+        the operator of this Waterhole the second
+        (<%= link_to "contact details", imprint_path, class: link_class %>).
+      </p>
+    </div>
+  </section>
+
+  <section id="no-instance-actor" class="<%= section_class %>">
+    <h2 class="<%= heading_class %>">“Could not reach … /actor …”</h2>
+    <div class="<%= body_class %>">
+      <p>
+        Waterhole reads your server's public key from its instance actor, at
+        <code>/actor</code> on your domain, before sending you to sign in.
+        Every Mastodon server publishes one. If it could not be read, the
+        server was unreachable or something other than Mastodon answered;
+        an administrator of your instance can check what the address shows.
+      </p>
+    </div>
+  </section>
+</div>

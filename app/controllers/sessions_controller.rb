@@ -24,6 +24,10 @@ class SessionsController < ApplicationController
 
   def new
     @domain = params[:domain]
+    # This page makes Turbo reload it in full (see the view), so a Turbo visit
+    # -- following the redirect after signing out or declining consent -- is
+    # thrown away, and would take the flash with it.
+    flash.keep if request.headers["X-Turbo-Request-Id"].present?
   end
 
   def create
@@ -55,6 +59,8 @@ class SessionsController < ApplicationController
 
     redirect_to Mastodon::OAuth.authorize_url(instance, state: issue_state(instance)),
       allow_other_host: true
+  rescue Mastodon::InvalidResponse => e
+    redirect_to new_session_path, alert: with_help("Could not reach #{domain}: #{e.message}.", "no-instance-actor")
   rescue Mastodon::Error => e
     redirect_to new_session_path, alert: "Could not reach #{domain}: #{e.message}"
   end
@@ -86,10 +92,17 @@ class SessionsController < ApplicationController
     # private half before anyone is let in to what the instance has here.
     Instances::ProveIdentity.call(instance, client)
 
+    # Read before the upsert overwrites the scopes it is decided by.
+    reauthorized = instance.moderators.find_by(mastodon_account_id: account["id"].to_s)&.reauthorization_pending?
     moderator = upsert_moderator(instance, account, token)
 
     start_new_session_for(moderator, remember: session.delete(:remember_instance))
-    redirect_to after_authentication_url, notice: "Signed in as #{moderator.handle}."
+    redirect_to after_authentication_url, notice: signed_in_notice(moderator, reauthorized:)
+  rescue Instances::ProveIdentity::Unproven => e
+    # Nothing the moderator can fix, and the same words an impostor would get,
+    # so the way on is the help page rather than trying again.
+    redirect_to new_session_path, alert: with_help("Sign-in failed: #{e.message}. Nothing you did caused this; " \
+      "an administrator of #{instance.domain} or of this Waterhole needs to look into it.", "could-not-prove")
   rescue Mastodon::Error => e
     redirect_to new_session_path, alert: "Sign-in failed: #{e.message}"
   end
@@ -100,6 +113,23 @@ class SessionsController < ApplicationController
   end
 
   private
+
+  # The first sign-in after the app was registered again leaves the old
+  # authorization behind in Mastodon, holding a token Waterhole no longer uses.
+  def signed_in_notice(moderator, reauthorized:)
+    text = "Signed in as #{moderator.handle}."
+    return text unless reauthorized
+
+    { "text" => "#{text} Mastodon now lists Waterhole twice among your authorized apps; " \
+                "Waterhole no longer uses the older entry, so you can revoke it.",
+      "link_text" => "Open your authorized apps",
+      "link_url" => moderator.instance.authorized_apps_url }
+  end
+
+  # A flash with a link to the sign-in help page (see ApplicationHelper#flash_message).
+  def with_help(text, anchor)
+    { "text" => text, "link_text" => "What can cause this", "link_url" => sign_in_help_path(anchor:) }
+  end
 
   def upsert_moderator(instance, account, token)
     moderator = instance.moderators.find_or_initialize_by(mastodon_account_id: account["id"].to_s)

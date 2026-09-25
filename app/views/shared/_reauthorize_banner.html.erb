@@ -1,0 +1,8 @@
+<div class="border-b border-sky-200 dark:border-sky-900 bg-sky-50 dark:bg-sky-950">
+  <p class="mx-auto max-w-6xl px-4 py-3 text-sm text-sky-950 dark:text-sky-200">
+    <strong>Next time you sign in, Mastodon will ask you to authorize Waterhole again.</strong>
+    That's expected: Waterhole now also asks for search permission, to confirm
+    your server is the one that signed up here.
+    <%= link_to "Why?", sign_in_help_path(anchor: "authorize-again"), class: "font-medium underline" %>
+  </p>
+</div>

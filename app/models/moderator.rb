@@ -25,6 +25,13 @@ class Moderator < ApplicationRecord
 
   def token_usable? = token_invalidated_at.nil? && access_token.present?
 
+  # Last signed in before sign-in asked for read:search (see
+  # Instances::ProveIdentity), so Mastodon will show its authorize screen once
+  # more, and afterwards list Waterhole twice among their authorized apps.
+  def reauthorization_pending?
+    token_scopes.present? && !token_scopes.split.include?(Mastodon::OAuth::SEARCH_SCOPE)
+  end
+
   def lends_token? = token_usable? && consented_at.present?
 
   # Consent is to the privacy policy as it stands, so a change to it asks again.

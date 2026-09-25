@@ -60,6 +60,10 @@ class Instance < ApplicationRecord
 
   def base_url = "https://#{domain}"
 
+  # Where a moderator revokes what they authorized: Mastodon's Preferences →
+  # Account → Authorized apps.
+  def authorized_apps_url = "#{base_url}/oauth/authorized_applications"
+
   # URLs address a herd by its domain -- /herds/alpha.example -- which is
   # unique, is what a moderator would type, and says nothing about how many
   # instances this deployment has or in what order they arrived.

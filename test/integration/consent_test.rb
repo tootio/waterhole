@@ -4,6 +4,9 @@ class ConsentTest < ActionDispatch::IntegrationTest
   setup do
     @moderator = moderators(:avery)
     @moderator.update!(consented_at: nil, consented_privacy_digest: nil)
+    # Declining revokes the token in Mastodon; tests about that override this.
+    @revoke = stub_request(:post, "https://alpha.example/oauth/revoke")
+      .to_return(status: 200, body: "{}", headers: { "Content-Type" => "application/json" })
   end
 
   test "until they consent, a moderator reaches only the consent page and the legal pages" do
@@ -49,8 +52,40 @@ class ConsentTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_path
     refute Moderator.exists?(@moderator.id)
     assert_nil claimed.reload.claimed_by_id
+    assert_requested :post, "https://alpha.example/oauth/revoke",
+      body: hash_including("client_id" => "alpha-client", "client_secret" => "alpha-secret", "token" => "token-avery")
+    assert_match(/access to your account on alpha\.example is revoked/, flash[:notice]["text"])
+    follow_redirect!
+    assert_select "[role=status] a[href=?]", "https://alpha.example/oauth/authorized_applications",
+      text: "Open your authorized apps"
     get root_path
     assert_redirected_to new_session_path
+  end
+
+  # A token issued before the app was registered again belongs to the old app,
+  # which Mastodon will not let the new one revoke.
+  test "declining still deletes everything when Mastodon refuses the revoke" do
+    stub_request(:post, "https://alpha.example/oauth/revoke").to_return(status: 403,
+      body: { "error" => "unauthorized_client" }.to_json, headers: { "Content-Type" => "application/json" })
+    sign_in_as @moderator
+    @moderator.notes.delete_all
+    @moderator.decisions.delete_all
+
+    delete consent_path
+
+    refute Moderator.exists?(@moderator.id)
+    assert_match(/until you revoke it there/, flash[:notice]["text"])
+    assert_equal "https://alpha.example/oauth/authorized_applications", flash[:notice]["link_url"]
+  end
+
+  test "declining with no usable token does not ask Mastodon at all" do
+    @moderator.update!(token_invalidated_at: Time.current)
+    sign_in_as @moderator
+
+    delete consent_path
+
+    assert_not_requested :post, "https://alpha.example/oauth/revoke"
+    assert_match(/until you revoke it there/, flash[:notice]["text"])
   end
 
   # notes and decisions keep pointing at the row, and both columns are NOT NULL.

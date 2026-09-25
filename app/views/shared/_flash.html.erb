@@ -3,7 +3,7 @@
     <% flash.each do |type, message| %>
       <% next if message.blank? %>
       <div class="mb-2 flex items-start gap-3 rounded border px-4 py-3 text-sm <%= flash_class(type) %>" role="status">
-        <span class="flex-1"><%= message %></span>
+        <span class="flex-1"><%= flash_message(message) %></span>
         <%# Not the :ghost variant: this inherits the flash's own color (via
             flash_class), dimmed by opacity, rather than a fixed neutral tone. %>
         <button type="button" data-action="dismiss#close" class="rounded opacity-60 hover:opacity-100 <%= focus_ring_classes %>" aria-label="Dismiss">&times;</button>

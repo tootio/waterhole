@@ -4,22 +4,22 @@
   kbd_class = "rounded border border-stone-300 dark:border-stone-600 bg-stone-100 dark:bg-stone-800 px-1.5 py-0.5 font-mono text-xs"
   sections = [
     { title: "Queue", shortcuts: [
-        [ "j", "Move to the next row" ],
-        [ "k", "Move to the previous row" ],
-        [ "c", "Claim or release the focused row" ],
-        [ "x", "Toggles selection of the focused row" ],
-        [ "Enter", "Open the focused row detail page" ]
+        [ %w[j], "Move to the next row" ],
+        [ %w[k], "Move to the previous row" ],
+        [ %w[c], "Claim or release the focused row" ],
+        [ %w[x], "Toggles selection of the focused row" ],
+        [ %w[Enter], "Open the focused row detail page" ]
       ] },
     { title: "Request detail", shortcuts: [
-        [ "j", "Go to the next request in the list" ],
-        [ "k", "Go to the previous request in the list" ],
-        [ "c", "Claim or release this request" ],
-        [ "a", "Approve and move to the next request" ],
-        [ "r", "Reject and move to the next request" ],
-        [ "n", "Jump to the note composer" ]
+        [ %w[j], "Go to the next request in the list" ],
+        [ %w[k], "Go to the previous request in the list" ],
+        [ %w[c], "Claim or release this request" ],
+        [ %w[a], "Approve and move to the next request" ],
+        [ %w[r Tab Enter], "Reject and move to the next request" ],
+        [ %w[n], "Jump to the note composer" ]
       ] },
     { title: "Note & reply composer", shortcuts: [
-        [ "⌘ / Ctrl + Return", "Submit the note or reply" ]
+        [ ["⌘ / Ctrl + Enter"], "Submit the note or reply" ]
       ] }
   ]
 %>
@@ -36,9 +36,9 @@
     <section class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-5">
       <h2 class="mb-3 text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400"><%= section[:title] %></h2>
       <dl class="divide-y divide-stone-200 dark:divide-stone-800 text-sm">
-        <% section[:shortcuts].each do |key, description| %>
+        <% section[:shortcuts].each do |keys, description| %>
           <div class="flex items-center gap-4 py-2">
-            <dt class="w-40 shrink-0"><kbd class="<%= kbd_class %>"><%= key %></kbd></dt>
+            <dt class="w-40 shrink-0"><% keys.each do |key| %><kbd class="<%= kbd_class %>"><%= key %></kbd> <% end %></dt>
             <dd class="text-stone-600 dark:text-stone-300"><%= description %></dd>
           </div>
         <% end %>

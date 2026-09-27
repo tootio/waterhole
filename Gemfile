@@ -53,8 +53,9 @@ group :development do
   gem "web-console"
 end
 
-group :test do
+group :development, :test do
   # Use system testing [https://guides.rubyonrails.org/testing.html#system-testing]
+  # Also in development, where script/readme_hero drives the dev app with it.
   gem "capybara"
   gem "selenium-webdriver"
 end

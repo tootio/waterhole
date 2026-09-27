@@ -2,9 +2,10 @@
 
 _Collaborative moderation for Mastodon registration requests._
 
+<!-- Regenerate with: bundle exec script/readme_hero -->
 <picture>
-<source media="(prefers-color-scheme: dark)" srcset="./doc/assets/hero-dark.png">
-<img src="./doc/assets/hero-light.png" alt="Demo Waterhole registration queue" style="max-width: 826px">
+<source media="(prefers-color-scheme: dark)" srcset="./doc/assets/hero-dark.webp">
+<img src="./doc/assets/hero-light.webp" alt="Demo Waterhole registration queue" style="max-width: 826px">
 </picture>
 
 Herds that roam apart all come down to the same waterhole to keep watch together. Waterhole is that place for
@@ -35,6 +36,7 @@ Mastodon instances that approve their signups by hand: each instance is a herd.
   * moderators consent before their data is processed
   * a ready-made privacy notice for instance administrators to add to their own privacy policy
   * shared data is limited: email addresses are only compared as keyed hashes, and only the instance's domain is revealed
+* Progressive Enhancement: A basic version of Waterhole is accessible **without JavaScript**, and advanced features are progressively enhanced.
 * **Host your own** Waterhole and set deployment-wide options like the admission policy (open to all, with a blocklist, or allowlist only) and an optional sync of the [IFTAS Do Not Interact list](https://about.iftas.org/library/iftas-dni-list/).
 
 Interested? We host a Waterhole that is open to all: start at [waterhole.toot.io](https://waterhole.toot.io/about).

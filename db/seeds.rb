@@ -83,6 +83,9 @@ KeywordRule.create!(instance: alpha, pattern: "airdrop", match_type: "word",
   severity: "critical", description: "Crypto spam")
 KeywordRule.create!(instance: alpha, pattern: "seo", match_type: "word",
   severity: "warning", description: "Marketing accounts")
+# Every suggested watchword applied as suggested, as an instance that has been
+# through config/watchwords.yml would have them.
+SuggestedWatchword.all.each { KeywordRule.create!(instance: alpha, **it.to_params) }
 
 def request!(instance, id, **attrs)
   instance.registration_requests.create!(

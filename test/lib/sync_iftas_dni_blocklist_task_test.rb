@@ -2,7 +2,7 @@ require "test_helper"
 require "rake"
 
 class SyncIftasDniBlocklistTaskTest < ActiveSupport::TestCase
-  CSV_URL = Blocklists::IftasDni::DEFAULT_CSV_URL
+  CSV_URL = DomainLists::IftasDni::DEFAULT_CSV_URL
 
   setup do
     Rails.application.load_tasks if Rake::Task.tasks.none?

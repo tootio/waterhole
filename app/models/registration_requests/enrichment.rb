@@ -6,6 +6,11 @@ module RegistrationRequests
   # daily would silently rewrite flags on rows nobody touched, and sync calls
   # Recompute on every pass.
   #
+  # The one deliberate exception is the disposable email list: a domain listed
+  # today should flag the requests already waiting, so the rule reads the list
+  # and RefreshDisposableEmailDomainsJob reconciles the pending queue with it
+  # daily. Decided requests are not re-evaluated by it at all (Flags::Recompute).
+  #
   # Kept out of Mapper deliberately: that is a pure payload-to-attributes
   # function with no I/O, and it should stay that way.
   module Enrichment

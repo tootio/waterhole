@@ -120,7 +120,7 @@ class DeploymentTest < ActiveSupport::TestCase
 
   test "iftas_dni_url defaults to the published sheet" do
     ENV.delete("WATERHOLE_IFTAS_DNI_URL")
-    assert_equal Blocklists::IftasDni::DEFAULT_CSV_URL, Waterhole::Deployment.iftas_dni_url
+    assert_equal DomainLists::IftasDni::DEFAULT_CSV_URL, Waterhole::Deployment.iftas_dni_url
   end
 
   test "iftas_dni_url can be overridden" do

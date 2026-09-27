@@ -1,6 +1,6 @@
 require "test_helper"
 
-class Blocklists::IftasDniTest < ActiveSupport::TestCase
+class DomainLists::IftasDniTest < ActiveSupport::TestCase
   HEADER = "#domain,#severity,#reject_media,#reject_reports,#public_comment,#obfuscate"
   CANARY_ROW = %("dni.invalid","suspend","FALSE","FALSE","iftas:canary","TRUE")
 
@@ -11,19 +11,19 @@ class Blocklists::IftasDniTest < ActiveSupport::TestCase
   def csv_without_canary(*rows) = ([ HEADER ] + rows).join("\n")
 
   test "parses domain and public comment, lowercasing the domain" do
-    entries = Blocklists::IftasDni.parse(csv(%("Spam.Example","suspend","FALSE","FALSE","iftas:csam","TRUE")))
+    entries = DomainLists::IftasDni.parse(csv(%("Spam.Example","suspend","FALSE","FALSE","iftas:csam","TRUE")))
 
     assert_equal [ { domain: "spam.example", reason: "iftas:csam" } ], entries
   end
 
   test "skips a row whose severity is not suspend" do
-    entries = Blocklists::IftasDni.parse(csv(%("silenced.example","silence","FALSE","FALSE","iftas:spam","TRUE")))
+    entries = DomainLists::IftasDni.parse(csv(%("silenced.example","silence","FALSE","FALSE","iftas:spam","TRUE")))
 
     assert_empty entries
   end
 
   test "the canary row itself never appears in the parsed entries" do
-    entries = Blocklists::IftasDni.parse(csv)
+    entries = DomainLists::IftasDni.parse(csv)
 
     assert_empty entries
   end
@@ -34,19 +34,19 @@ class Blocklists::IftasDniTest < ActiveSupport::TestCase
       %("dni.invalid","suspend","FALSE","FALSE","iftas:canary;other","TRUE")
     )
 
-    entries = Blocklists::IftasDni.parse(body)
+    entries = DomainLists::IftasDni.parse(body)
 
     assert_equal [ { domain: "other.example", reason: "iftas:spam" } ], entries
   end
 
   test "an empty public comment becomes a nil reason" do
-    entries = Blocklists::IftasDni.parse(csv(%("bare.example","suspend","FALSE","FALSE","","TRUE")))
+    entries = DomainLists::IftasDni.parse(csv(%("bare.example","suspend","FALSE","FALSE","","TRUE")))
 
     assert_equal [ { domain: "bare.example", reason: nil } ], entries
   end
 
   test "skips a blank domain" do
-    entries = Blocklists::IftasDni.parse(csv(%("","suspend","FALSE","FALSE","iftas:spam","TRUE")))
+    entries = DomainLists::IftasDni.parse(csv(%("","suspend","FALSE","FALSE","iftas:spam","TRUE")))
 
     assert_empty entries
   end
@@ -57,11 +57,11 @@ class Blocklists::IftasDniTest < ActiveSupport::TestCase
   test "raises when the canary row is missing" do
     body = csv_without_canary(%("spam.example","suspend","FALSE","FALSE","iftas:csam","TRUE"))
 
-    error = assert_raises(RuntimeError) { Blocklists::IftasDni.parse(body) }
+    error = assert_raises(RuntimeError) { DomainLists::IftasDni.parse(body) }
     assert_match(/canary/, error.message)
   end
 
   test "raises when there are no rows at all" do
-    assert_raises(RuntimeError) { Blocklists::IftasDni.parse(HEADER) }
+    assert_raises(RuntimeError) { DomainLists::IftasDni.parse(HEADER) }
   end
 end

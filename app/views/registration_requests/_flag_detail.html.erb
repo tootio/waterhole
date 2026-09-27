@@ -1,13 +1,13 @@
 <%- d = flag.details -%>
 <%- case flag.rule -%>
 <%- when "disposable_email" -%>
-  <%= d["domain"] %> is a throwaway provider
+  <%= d["domain"] %> is a throwaway provider<%= " (subdomain of #{d["listed"]})" if d["listed"].present? %>
 <%- when "short_invite_request" -%>
   only <%= pluralize(d["word_count"].to_i, "word") %>
 <%- when "shared_ip" -%>
   same IP as <%= d["usernames"].to_a.map { "@#{it}" }.to_sentence %>
 <%- when "reapplication" -%>
-  matches <%= pluralize(d["count"].to_i, "earlier rejected request") %> by <%= d["matched_on"] %>
+  matches <%= pluralize(d["count"].to_i, "earlier rejected request") %> by <%= d["matched_on"] == "ip" ? "network" : "email" %>
 <%- when "keyword_hit" -%>
   matched <%= d["patterns"].to_a.map { "“#{it}”" }.to_sentence %>
 <%- when "datacenter_asn" -%>

@@ -93,3 +93,7 @@ gem "sentry-rails", "~> 7.0"
 # Punycode for internationalised email domains (EmailCanonicalizer), the same
 # UTS #46 lookup mapping browsers and Go's idna package use.
 gem "simpleidn", "~> 0.3"
+
+# The public suffix list, so DomainLists::DisposableEmailDomains walks from an address's
+# domain up to its registrable domain and never past it (co.uk, github.io).
+gem "public_suffix", "~> 7.0"

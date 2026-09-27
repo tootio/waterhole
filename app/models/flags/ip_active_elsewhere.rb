@@ -17,7 +17,6 @@ module Flags
 
     def call
       return nil unless request.instance.participating?
-      return nil if request.ip_group.blank?
 
       matches = self.class.counterparts(request)
       return nil if matches.empty?
@@ -34,11 +33,9 @@ module Flags
     def ipv6? = request.ip&.ipv6?
 
     def self.counterparts(request)
-      return RegistrationRequest.none if request.ip_group.blank?
-
       RegistrationRequest
         .active
-        .where(ip_group: request.ip_group)
+        .same_network_as(request)
         .where.not(instance_id: request.instance_id)
         .joins(:instance)
         .merge(Instance.participating)

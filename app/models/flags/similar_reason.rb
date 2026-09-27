@@ -4,7 +4,9 @@ module Flags
   # fingerprint (ReasonFingerprint), never by text.
   #
   # One match is `info`: two people can write the same thing. Several is the
-  # pattern of a farm.
+  # pattern of a farm, and so is one on another instance: a person applying
+  # twice uses the same words, but a template travelling between queues is
+  # a batch spread out to stay small in each.
   class SimilarReason < Rule
     CAP = 25
 
@@ -14,7 +16,7 @@ module Flags
 
       own, elsewhere = matches.partition { it.instance_id == request.instance_id }
       # Usernames only from this instance's own queue; elsewhere, the domain.
-      detect(matches.size >= 2 ? :warning : :info,
+      detect(matches.size >= 2 || elsewhere.any? ? :warning : :info,
         count: matches.size, capped: matches.size >= CAP,
         usernames: own.map(&:username).first(6),
         instances: elsewhere.map { it.instance.domain }.uniq)

@@ -214,4 +214,8 @@ upstream repository by default; set `WATERHOLE_SOURCE_URL` to your fork.
   Apple's [iCloud Private Relay egress ranges](https://developer.apple.com/support/prepare-your-network-for-icloud-private-relay/)
   (daily) and running Tor relays from the Tor Project's
   [Onionoo](https://metrics.torproject.org/onionoo.html) service (hourly).
+- The disposable email domain list comes from
+  [disposable-email-domains](https://github.com/disposable-email-domains/disposable-email-domains)
+  (CC0 1.0). A snapshot ships in `lib/data` as a fallback; the current list is
+  downloaded daily.
 - Operators can opt in to sync the [IFTAS Do Not Interact list](https://about.iftas.org/library/iftas-dni-list/).

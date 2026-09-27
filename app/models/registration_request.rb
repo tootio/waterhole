@@ -83,6 +83,11 @@ class RegistrationRequest < ApplicationRecord
   scope :claimed, -> { where.not(claimed_by_id: nil) }
   scope :claimed_by_moderator, ->(m) { where(claimed_by: m) }
   scope :with_flag, ->(rule) { where(id: Flag.where(rule: rule).select(:registration_request_id)) }
+  # Requests from the same network as `request`, for the rules that compare
+  # networks: see #network_key.
+  scope :same_network_as, ->(request) {
+    request.network_key ? where(ip_group: request.network_key, ip_relay: nil) : none
+  }
 
   # What the queue is actually waiting on, and so what the navigation badge
   # counts: unconfirmed sign-ups are hidden by default and mostly never confirm,
@@ -158,6 +163,11 @@ class RegistrationRequest < ApplicationRecord
 
   def invite_request_words = invite_request.to_s.split.size
 
+  # The signup network, for comparing with other requests: ip_group, grouped
+  # because IPv6 hosts rotate their low bits. Nil behind iCloud Private Relay
+  # or Tor, whose addresses carry strangers: a match there is no evidence.
+  def network_key = (ip_group.presence unless ip_relay)
+
   def recompute_flags! = Flags::Recompute.call(self)
 
   def active? = ACTIVE_STATUSES.include?(status)
@@ -169,7 +179,7 @@ class RegistrationRequest < ApplicationRecord
   end
 
   def cross_instance_match_changed?
-    saved_change_to_canonical_email_hash? || saved_change_to_ip? ||
+    saved_change_to_canonical_email_hash? || saved_change_to_ip? || saved_change_to_ip_relay? ||
       saved_change_to_invite_fingerprint? || saved_change_to_signup_shape? ||
       (saved_change_to_status? && ACTIVE_STATUSES.include?(status_before_last_save) != active?)
   end
@@ -186,12 +196,15 @@ class RegistrationRequest < ApplicationRecord
   def cross_instance_counterparts
     probes = [ self ]
     old_hash  = canonical_email_hash_before_last_save if saved_change_to_canonical_email_hash?
+    # The network key is the group AND the relay status (network_key): a
+    # relay classification changing alone moves it too.
     old_group = @previous_ip_group if saved_change_to_ip?
+    old_group ||= ip_group if saved_change_to_ip_relay?
     old_fingerprint = invite_fingerprint_before_last_save if saved_change_to_invite_fingerprint?
     old_shape = signup_shape_before_last_save if saved_change_to_signup_shape?
     if [ old_hash, old_group, old_fingerprint, old_shape ].any?(&:present?)
       probes << self.class.new(instance_id:, signed_up_at:, canonical_email_hash: old_hash, ip_group: old_group,
-        invite_fingerprint: old_fingerprint, signup_shape: old_shape)
+        ip_relay: ip_relay_before_last_save, invite_fingerprint: old_fingerprint, signup_shape: old_shape)
     end
 
     Flags.cross_instance_rules

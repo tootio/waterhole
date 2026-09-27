@@ -178,6 +178,12 @@ module Waterhole
       Pathname(ENV["WATERHOLE_LEGAL_DIR"].presence || Rails.root.join("storage/legal"))
     end
 
+    # Where downloaded domain lists live (DomainLists::DisposableEmailDomains), on the storage
+    # volume by default like the legal documents.
+    def domain_lists_directory
+      Pathname(ENV["WATERHOLE_DOMAIN_LISTS_DIR"].presence || Rails.root.join("storage/domain_lists"))
+    end
+
     DEFAULT_SOURCE_URL = "https://github.com/tootio/waterhole"
 
     # Where this deployment's source code can be downloaded, linked from the
@@ -228,7 +234,7 @@ module Waterhole
     end
 
     def iftas_dni_url
-      ENV["WATERHOLE_IFTAS_DNI_URL"].presence || Blocklists::IftasDni::DEFAULT_CSV_URL
+      ENV["WATERHOLE_IFTAS_DNI_URL"].presence || DomainLists::IftasDni::DEFAULT_CSV_URL
     end
   end
 end

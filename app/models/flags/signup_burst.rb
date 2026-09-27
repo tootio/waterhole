@@ -6,31 +6,39 @@ module Flags
   #
   # `info`: a wave of genuine newcomers -- a platform exodus, a viral post --
   # can look like this too, so it is context for a decision, not a verdict.
+  # `warning` when the burst spans other instances: an exodus picks one new
+  # home per person, a farm spreads its batch to avoid any one queue noticing.
   class SignupBurst < Rule
     WINDOW = 1.hour
     MINIMUM = 5
+    CAP = 100
 
+    # Counted over the whole window, never a sample: in a burst of hundreds,
+    # which rows a LIMIT happened to return would decide the severity.
     def call
-      group = self.class.counterparts(request) + [ request ]
-      return nil if group.size < MINIMUM
+      others = self.class.scope(request)
+      count = others.count + 1
+      return nil if count < MINIMUM
 
-      networks = group.filter_map(&:ip_group).uniq.size
+      networks = (others.distinct.pluck(:ip_group) + [ request.ip_group ]).compact.uniq.size
       return nil if networks < MINIMUM
 
-      detect(:info, count: group.size, networks:, shape: request.signup_shape,
-        window_minutes: (WINDOW / 1.minute).to_i,
-        instances: group.map(&:instance).reject { it.id == request.instance_id }.map(&:domain).uniq)
+      instances = others.where.not(instance_id: request.instance_id).joins(:instance).distinct.pluck("instances.domain")
+      detect(instances.any? ? :warning : :info, count:, networks:, shape: request.signup_shape,
+        window_minutes: (WINDOW / 1.minute).to_i, instances:)
     end
 
+    # Capped: this drives the reverse fan-out, one job per row.
+    def self.counterparts(request) = scope(request).limit(CAP).to_a
+
     # Within an hour either side of this signup.
-    def self.counterparts(request)
+    def self.scope(request)
       return RegistrationRequest.none if request.signup_shape.blank? || request.signed_up_at.nil?
 
       Flags.comparable_requests(request.instance)
         .where.not(id: request.id)
         .where(signup_shape: request.signup_shape,
           signed_up_at: (request.signed_up_at - WINDOW)..(request.signed_up_at + WINDOW))
-        .includes(:instance).limit(100).to_a
     end
   end
 end

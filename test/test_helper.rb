@@ -31,6 +31,9 @@ module ActiveSupport
       # `with_ip_databases` and the committed fixture files.
       Ip::Databases.directory = Rails.root.join("test/fixtures/files/ipdata_empty")
 
+      # And for the disposable email list: the vendored copy, never a download.
+      DomainLists::DisposableEmailDomains.directory = Rails.root.join("test/fixtures/files/domain_lists_empty")
+
       # Rate-limit counters are per process; start every test with none spent.
       # NOT Rails.cache: that is the null store, and the limiter counts in
       # config.action_controller.cache_store (see config/environments/test.rb).
@@ -40,6 +43,7 @@ module ActiveSupport
     teardown do
       LegalDocuments.directory = nil
       Ip::Databases.directory = nil
+      DomainLists::DisposableEmailDomains.directory = nil
     end
   end
 end

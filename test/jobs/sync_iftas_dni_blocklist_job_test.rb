@@ -1,10 +1,10 @@
 require "test_helper"
 
 class SyncIftasDniBlocklistJobTest < ActiveSupport::TestCase
-  CSV_URL = Blocklists::IftasDni::DEFAULT_CSV_URL
+  CSV_URL = DomainLists::IftasDni::DEFAULT_CSV_URL
 
   # Every real response carries the canary row (see
-  # Blocklists::IftasDni::CANARY_TAG), so it's added by default; pass
+  # DomainLists::IftasDni::CANARY_TAG), so it's added by default; pass
   # canary: false to test what happens when a response doesn't have one.
   def stub_csv(rows, canary: true)
     header = "#domain,#severity,#reject_media,#reject_reports,#public_comment,#obfuscate"
@@ -19,7 +19,7 @@ class SyncIftasDniBlocklistJobTest < ActiveSupport::TestCase
 
   # Faraday follows a redirect on its own, so nothing about the sync depends
   # on the sheet returning more than 20 well-formed rows -- pad with distinct
-  # domains to clear Blocklists::IftasDni::MINIMUM_ROWS.
+  # domains to clear DomainLists::IftasDni::MINIMUM_ROWS.
   def padding_rows(count, prefix: "pad")
     Array.new(count) { |i| csv_row("#{prefix}#{i}.example") }
   end

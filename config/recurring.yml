@@ -19,6 +19,10 @@ defaults: &defaults
   refresh_ip_databases:
     class: RefreshIpDatabasesJob
     schedule: every day at 3:20am
+  # Upstream changes the list most days.
+  refresh_disposable_email_domains:
+    class: RefreshDisposableEmailDomainsJob
+    schedule: every day at 3:50am
   refresh_tor_relays:
     class: RefreshTorRelaysJob
     schedule: every hour at minute 42

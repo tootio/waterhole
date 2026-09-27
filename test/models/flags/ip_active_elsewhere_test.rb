@@ -1,6 +1,8 @@
 require "test_helper"
 
 class Flags::IpActiveElsewhereTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
+
   def request_on(instance, id, ip)
     instance.registration_requests.create!(mastodon_account_id: id, username: "u#{id}",
       signed_up_at: 1.hour.ago, ip:, invite_request: "A sufficiently long reason to join.")
@@ -41,6 +43,28 @@ class Flags::IpActiveElsewhereTest < ActiveSupport::TestCase
     a = request_on(instances(:alpha), "9007", "2001:db8:aa:bb::1")
     request_on(instances(:beta), "9008", "2001:db8:aa:cc::1")
     a.recompute_flags!
+
+    refute flag_for(a)
+  end
+
+  test "a relay address is shared by strangers, so it discloses nothing" do
+    a = request_on(instances(:alpha), "9013", "192.0.2.92")
+    b = request_on(instances(:beta), "9014", "192.0.2.92")
+    [ a, b ].each { it.update!(ip_relay: "tor") }
+    [ a, b ].each(&:recompute_flags!)
+
+    refute flag_for(a)
+    refute flag_for(b)
+  end
+
+  test "a request becoming a known relay withdraws the other side's flag" do
+    a = request_on(instances(:alpha), "9015", "192.0.2.93")
+    b = request_on(instances(:beta), "9016", "192.0.2.93")
+    [ a, b ].each(&:recompute_flags!)
+    assert flag_for(a)
+
+    # Enriched late, same address: only ip_relay changes.
+    perform_enqueued_jobs { b.update!(ip_relay: "tor") }
 
     refute flag_for(a)
   end

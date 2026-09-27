@@ -73,6 +73,15 @@ class Flags::SignupPatternsTest < ActiveSupport::TestCase
     assert_equal "info", flag(here, "similar_reason").severity
   end
 
+  test "a single match on another instance is a warning" do
+    here = signup(@alpha, 1, reason: format(TEMPLATE, "Anna"))
+    signup(@beta, 2, reason: format(TEMPLATE, "Marco"))
+
+    found = flag(here, "similar_reason")
+    assert_equal "warning", found.severity
+    assert_equal [ "beta.example" ], found.details["instances"]
+  end
+
   test "a non-participating instance is compared with its own queue only, and not seen" do
     here = signup(@gamma, 1, reason: format(TEMPLATE, "Anna"))
     signup(@alpha, 2, reason: format(TEMPLATE, "Marco"))
@@ -99,11 +108,20 @@ class Flags::SignupPatternsTest < ActiveSupport::TestCase
     end
 
     found = flag(requests.first, "signup_burst")
-    assert_equal "info", found.severity
+    assert_equal "warning", found.severity
     assert_equal 5, found.details["count"]
     assert_equal 5, found.details["networks"]
     assert_equal "gmail.com a9 en", found.details["shape"]
     assert_equal [ "beta.example" ], found.details["instances"]
+  end
+
+  test "a burst on this instance alone is only info" do
+    now = Time.current
+    requests = 5.times.map { |i| signup(@alpha, 40 + i, username: "name#{i}", email: "w#{i}@gmail.com", ip: "203.0.113.#{70 + i}", at: now + i.minutes) }
+
+    found = flag(requests.first, "signup_burst")
+    assert_equal "info", found.severity
+    assert_empty found.details["instances"]
   end
 
   test "the same network repeated is not the proxy pattern" do

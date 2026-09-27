@@ -1,0 +1,230 @@
+#!/usr/bin/env ruby
+# Rebuilds the README hero (doc/assets/hero-{light,dark}.webp) from screenshots of
+# the running development app: a few screens, each as a desktop window with a
+# phone beside it, stepped through as an animated WebP per color scheme.
+#
+#   bin/dev                    # in another terminal
+#   bundle exec script/readme_hero [--scheme light|dark] [--only N] [--keep] [--no-reseed]
+#
+# It reseeds the development database first (db/seeds.rb), so the timestamps are
+# fresh and nothing you clicked around in shows up. It refuses to run if the
+# database holds anything but seed instances.
+#
+# Needs Chrome, ImageMagick (magick) and libwebp (img2webp).
+
+require "optparse"
+require "fileutils"
+require "base64"
+require "open3"
+
+options = { schemes: %w[light dark], only: nil, keep: false, reseed: true }
+OptionParser.new do |o|
+  o.banner = "Usage: bundle exec script/readme_hero [options]"
+  o.on("--scheme SCHEME", %w[light dark], "Only this color scheme") { |s| options[:schemes] = [ s ] }
+  o.on("--only N", Integer, "Only scene N (1-based), for iterating on one") { |n| options[:only] = n }
+  o.on("--keep", "Keep the intermediate PNGs in tmp/readme_hero") { options[:keep] = true }
+  o.on("--no-reseed", "Use the database as it is") { options[:reseed] = false }
+end.parse!
+
+require_relative "../config/environment"
+require "selenium-webdriver"
+
+abort "Refusing outside development." unless Rails.env.development?
+
+%w[magick img2webp].each do |tool|
+  system("command -v #{tool} > /dev/null") or abort "#{tool} not found (brew install imagemagick webp)."
+end
+
+# Whatever is in the database ends up in the README, so it had better be seed data.
+unless Instance.pluck(:domain).to_set <= %w[alpha.example beta.example].to_set && Instance.exists?
+  abort "The database holds more than seed data (instances other than alpha.example and beta.example)."
+end
+
+BASE_URL = Waterhole::Deployment.base_url
+begin
+  Net::HTTP.get_response(URI("#{BASE_URL}/about"))
+rescue SystemCallError
+  abort "Nothing is listening at #{BASE_URL}. Start the app with bin/dev first."
+end
+
+if options[:reseed]
+  puts "Reseeding the development database…"
+  $stdout = File.open(File::NULL, "w")
+  Rails.application.load_seed
+  $stdout = STDOUT
+end
+
+avery = Moderator.find_by!(username: "avery")
+requests = avery.instance.registration_requests
+claimed = requests.where.not(claimed_by: nil).joins(:notes).first!
+datacenter = requests.find_by!(username: "rustbelt_ghosts")
+
+token = Rails.application.message_verifier(:dev_sign_in)
+  .generate({ moderator_id: avery.id }, expires_in: 1.hour)
+SIGN_IN_PATH = "/dev/sign_in?token=#{token}"
+
+# Each scene is one frame: what the desktop window shows and what the phone
+# shows. A view is a path, or a path and JavaScript to run once it has loaded.
+SELECT_ALL = "document.querySelector('[data-bulk-select-target=all]').click()"
+SCROLL_TO_QUEUE = "scrollTo(0, document.querySelector('[data-bulk-select-target=all]').closest('div').offsetTop - 12)"
+SCENES = [
+  { desktop: "/requests", mobile: [ "/requests", SCROLL_TO_QUEUE ] },
+  { desktop: "/requests/#{claimed.id}", mobile: "/requests/#{claimed.id}" },
+  { desktop: "/requests/#{datacenter.id}", mobile: "/requests/#{datacenter.id}" },
+  { desktop: [ "/requests?search=deliverability&sort=risk", SELECT_ALL ],
+    mobile: [ "/requests?search=deliverability&sort=risk", "#{SELECT_ALL}; #{SCROLL_TO_QUEUE}" ] },
+  { desktop: [ "/requests", "document.querySelector('a[href=\"/help/shortcuts\"]').click()" ], mobile: "/keyword_rules" }
+].freeze
+
+DESKTOP = { width: 1100, height: 720, deviceScaleFactor: 2, mobile: false }.freeze
+MOBILE = { width: 390, height: 844, deviceScaleFactor: 2, mobile: true }.freeze
+MOBILE_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 " \
+            "(KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1"
+
+# Screenshots should not catch a blinking caret or a transition halfway.
+STILL_CSS = <<~CSS.squish
+  *, *::before, *::after { caret-color: transparent !important; transition: none !important; animation: none !important; }
+  ::-webkit-scrollbar { display: none; }
+CSS
+
+OUT_DIR = Rails.root.join("tmp/readme_hero")
+FileUtils.rm_rf(OUT_DIR)
+FileUtils.mkdir_p(OUT_DIR)
+
+def browser
+  opts = Selenium::WebDriver::Chrome::Options.new
+  opts.add_argument("--headless=new")
+  opts.add_argument("--window-size=1280,800")
+  opts.add_argument("--hide-scrollbars")
+  Selenium::WebDriver.for(:chrome, options: opts)
+end
+
+def capture(driver, view, scheme:, device:, user_agent:)
+  path, setup = Array(view)
+  driver.execute_cdp("Emulation.setEmulatedMedia", features: [ { name: "prefers-color-scheme", value: scheme } ])
+  driver.execute_cdp("Emulation.setDeviceMetricsOverride", **device)
+  driver.execute_cdp("Emulation.setTouchEmulationEnabled", enabled: device[:mobile], maxTouchPoints: device[:mobile] ? 5 : 1)
+  driver.execute_cdp("Emulation.setUserAgentOverride", userAgent: device[:mobile] ? MOBILE_UA : user_agent)
+
+  driver.navigate.to("#{BASE_URL}#{path}")
+  Selenium::WebDriver::Wait.new(timeout: 10).until { driver.execute_script("return document.readyState") == "complete" }
+  driver.execute_script(<<~JS, STILL_CSS)
+    const style = document.createElement("style")
+    style.textContent = arguments[0]
+    document.head.append(style)
+  JS
+  driver.execute_async_script("document.fonts.ready.then(arguments[arguments.length - 1])")
+  driver.execute_script("document.activeElement?.blur?.()")
+  driver.execute_script(setup) if setup
+  sleep 0.6 # Turbo morphs and the cable subscription settle
+
+  Base64.decode64(driver.execute_cdp("Page.captureScreenshot", format: "png")["data"])
+end
+
+def magick(*args)
+  out, status = Open3.capture2e("magick", *args.map(&:to_s))
+  abort "magick failed:\n#{out}" unless status.success?
+end
+
+# The canvas matches the README's 826px at 2x.
+CANVAS = [ 1652, 1126 ].freeze
+WINDOW_WIDTH = 1240
+PHONE_WIDTH = 330
+BEZEL = 12
+PHONE_RADIUS = 46
+# How far "-shadow 60x18+0+14" grows an image to the left and top.
+SHADOW = "60x18+0+14"
+SHADOW_PAD = [ 36, 22 ].freeze
+PALETTE = {
+  "light" => { backdrop: %w[#f6b48f #a78bda], bar: "#e7e5e4", border: "#d6d3d1", bezel: "#1c1917" },
+  "dark" => { backdrop: %w[#6b3fa0 #1e1b4b], bar: "#292524", border: "#44403c", bezel: "#0c0a09" }
+}.freeze
+
+# Rounds the corners of an image in place.
+def round_corners(file, radius)
+  magick file, "(", "+clone", "-alpha", "extract", "-fill", "black", "-colorize", "100",
+         "-fill", "white", "-draw", "roundrectangle 0,0 %[fx:w-1],%[fx:h-1] #{radius},#{radius}", ")",
+         "-alpha", "off", "-compose", "CopyOpacity", "-composite", file
+end
+
+def compose(desktop_png, mobile_png, scheme, out)
+  colors = PALETTE.fetch(scheme)
+  dir = File.dirname(out)
+  base = File.basename(out, ".png")
+
+  # Desktop window: a title bar with the three dots, then the page.
+  shot_h = (WINDOW_WIDTH * DESKTOP[:height] / DESKTOP[:width].to_f).round
+  bar_h = 40
+  window = "#{dir}/#{base}-window.png"
+  magick desktop_png, "-resize", "#{WINDOW_WIDTH}x#{shot_h}!",
+         "-background", colors[:bar], "-gravity", "north", "-splice", "0x#{bar_h}",
+         "-fill", "#ff5f57", "-draw", "circle 26,20 32,20",
+         "-fill", "#febc2e", "-draw", "circle 48,20 54,20",
+         "-fill", "#28c840", "-draw", "circle 70,20 76,20",
+         "-bordercolor", colors[:border], "-border", "1", window
+  round_corners(window, 14)
+
+  # Phone: the page inside a dark bezel.
+  phone_h = (PHONE_WIDTH * MOBILE[:height] / MOBILE[:width].to_f).round
+  phone = "#{dir}/#{base}-phone.png"
+  # The screen's corners follow the bezel's, inset by its width, so the bezel
+  # is equally thick all the way round.
+  screen = "#{dir}/#{base}-screen.png"
+  magick mobile_png, "-resize", "#{PHONE_WIDTH}x#{phone_h}!", screen
+  round_corners(screen, PHONE_RADIUS - BEZEL)
+  magick "-size", "#{PHONE_WIDTH + 2 * BEZEL}x#{phone_h + 2 * BEZEL}", "xc:none",
+         "-fill", colors[:bezel],
+         "-draw", "roundrectangle 0,0 %[fx:w-1],%[fx:h-1] #{PHONE_RADIUS},#{PHONE_RADIUS}",
+         screen, "-geometry", "+#{BEZEL}+#{BEZEL}", "-composite", phone
+
+  # The window centred on the left, the phone just overlapping its right edge
+  # and hanging a little below it.
+  window_h = shot_h + bar_h + 2
+  window_at = [ 48, (CANVAS[1] - window_h) / 2 ]
+  phone_at = [ CANVAS[0] - 40 - (PHONE_WIDTH + 2 * BEZEL), CANVAS[1] - 64 - (phone_h + 2 * BEZEL) ]
+  place = lambda do |file, (x, y)|
+    [ "(", file, "(", "+clone", "-background", "#0008", "-shadow", SHADOW, ")", "+swap",
+      "-background", "none", "-layers", "merge", "+repage", ")",
+      "-geometry", "+#{x - SHADOW_PAD[0]}+#{y - SHADOW_PAD[1]}", "-composite" ]
+  end
+
+  magick "-size", "#{CANVAS[0]}x#{CANVAS[1]}", "-define", "gradient:angle=135",
+         "gradient:#{colors[:backdrop].join("-")}",
+         *place.(window, window_at), *place.(phone, phone_at),
+         "-alpha", "off", out
+end
+
+scenes = SCENES.each_with_index.to_a
+scenes = [ scenes.fetch(options[:only] - 1) ] if options[:only]
+
+driver = browser
+begin
+  driver.navigate.to("#{BASE_URL}#{SIGN_IN_PATH}")
+  user_agent = driver.execute_script("return navigator.userAgent")
+
+  options[:schemes].each do |scheme|
+    frames = scenes.map do |scene, i|
+      puts "#{scheme}: scene #{i + 1} (#{Array(scene[:desktop]).first}, #{Array(scene[:mobile]).first})"
+      desktop = OUT_DIR.join("#{scheme}-#{i + 1}-desktop.png")
+      mobile = OUT_DIR.join("#{scheme}-#{i + 1}-mobile.png")
+      File.binwrite(desktop, capture(driver, scene[:desktop], scheme:, device: DESKTOP, user_agent:))
+      File.binwrite(mobile, capture(driver, scene[:mobile], scheme:, device: MOBILE, user_agent:))
+
+      frame = OUT_DIR.join("#{scheme}-#{i + 1}.png")
+      compose(desktop, mobile, scheme, frame.to_s)
+      frame
+    end
+
+    target = Rails.root.join("doc/assets/hero-#{scheme}.webp")
+    target = OUT_DIR.join("hero-#{scheme}.webp") if options[:only]
+    system("img2webp", "-loop", "0", "-lossy", "-q", "80", "-m", "6", "-d", "3500",
+           *frames.map(&:to_s), "-o", target.to_s, out: File::NULL, exception: true)
+    size = File.size(target)
+    puts "  wrote #{target.relative_path_from(Rails.root)} (#{(size / 1024.0).round} KB)"
+    warn "  that is heavy for a README image; consider fewer scenes or a lower -q" if size > 5 * 1024 * 1024
+  end
+ensure
+  driver.quit
+end
+
+FileUtils.rm_rf(OUT_DIR) unless options[:keep] || options[:only]

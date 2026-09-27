@@ -14,7 +14,8 @@
     { title: "How often", rows: [
         [ "?", "Optional: zero or one time — colou?r matches color and colour" ],
         [ "*  +", "Zero or more; one or more times" ],
-        [ "{2,5}", "Between 2 and 5 times" ]
+        [ "{2,5}", "Between 2 and 5 times" ],
+        [ "*?  +?  {2,5}?", "The same, but as few times as possible. Without the ?, a repeat is greedy and takes as much as it can — see the tip below" ]
       ] },
     { title: "Where", rows: [
         [ "\\b", "A word boundary — \\bseo\\b matches “seo” but not “seoul”" ],
@@ -68,6 +69,13 @@
       <li>
         Allow for spacing and spelling tricks: <code class="<%= code_class %>">free\s*money</code> also
         catches “freemoney”, <code class="<%= code_class %>">cr[yi]pto</code> catches “cripto”.
+      </li>
+      <li>
+        Greedy or not rarely changes <em>whether</em> a text matches, only how much of it the match covers, and
+        so what is highlighted. In “I write poems and stories and songs”,
+        <code class="<%= code_class %>">I write .* and</code> runs on to the last “and”, while
+        <code class="<%= code_class %>">I write .*? and</code> stops at the first. Bound the repeat too, as in
+        <code class="<%= code_class %>">.{6,100}?</code>, so the pattern can't reach across a whole essay.
       </li>
       <li>
         Keep it simple. A pattern that takes longer than <%= (KeywordRule::REGEX_TIMEOUT * 1000).to_i %> ms on

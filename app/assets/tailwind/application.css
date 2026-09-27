@@ -150,6 +150,11 @@
   .text-marker-joined-start { margin-left: 0; padding-left: 0; }
   .text-marker-joined-end   { margin-right: 0; padding-right: 0; }
 
+  /* For a box that clips its text (overflow: hidden, line-clamp): widens the
+     clip by the stroke's overshoot without moving the text. Inline only: room
+     below a line-clamp would show the top of the first hidden line. */
+  .text-marker-room { padding-inline: 4px; margin-inline: -4px; }
+
   .text-marker-info     { --text-marker-color: color-mix(in oklab, var(--color-sky-200) 85%, transparent); }
   .text-marker-warning  { --text-marker-color: rgba(255, 241, 118, 0.85); }
   .text-marker-critical { --text-marker-color: color-mix(in oklab, var(--color-red-300) 85%, transparent); }

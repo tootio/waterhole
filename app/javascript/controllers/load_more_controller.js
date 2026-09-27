@@ -48,8 +48,12 @@ export default class extends Controller {
     // caller moving focus into the new rows is not undone.
     await nextFrame()
     await nextFrame()
-    // history.state keeps Turbo's restoration identifier.
-    history.replaceState(history.state, "", url)
+    // history.state keeps Turbo's restoration identifier. Only the query
+    // The queue might be opened at / or at /requests.
+    // We need to keep the current path to prevent the next Turbo morph from replacing the page.
+    const location = new URL(window.location.href)
+    location.search = url.search
+    history.replaceState(history.state, "", location)
     return true
   }
 }

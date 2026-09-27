@@ -56,6 +56,29 @@ class BulkActionsTest < ApplicationSystemTestCase
     assert_operator all("#queue_rows input[type=checkbox]:checked").size, :>, 25
   end
 
+  # Turbo morphs a refresh only when the path matches the one it last rendered.
+  # A full replace takes the permanent dialog out of the top layer mid-run and
+  # leaves the run updating a detached copy of its progress and buttons.
+  test "load more on / keeps the path, so the next refresh still morphs" do
+    30.times do |i|
+      @instance.registration_requests.create!(mastodon_account_id: "95#{i}",
+        username: "paged#{i}", signed_up_at: (i + 1).minutes.ago, confirmed: true)
+    end
+
+    visit root_path
+    click_on "Load more"
+    assert_no_text "Load more"
+    assert_equal "/", URI(page.current_url).path
+    assert_match(/page=2/, page.current_url)
+
+    page.execute_script("window.__systemTestBody = document.body")
+    page.execute_script("document.addEventListener('turbo:render', e => { document.documentElement.dataset.renderMethod = e.detail.renderMethod })")
+    page.execute_script("Turbo.session.refresh(location.href)")
+    assert_selector "html[data-render-method]", visible: :all
+    assert_equal "morph", page.evaluate_script("document.documentElement.dataset.renderMethod")
+    assert page.evaluate_script("window.__systemTestBody === document.body"), "the refresh replaced <body> instead of morphing it"
+  end
+
   test "the confirmation warns about requests claimed by someone else" do
     visit registration_requests_path
     select_rows @rowan, @claimed

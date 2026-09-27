@@ -51,7 +51,7 @@
       </span>
     </div>
 
-    <p class="mt-1 line-clamp-2 text-sm text-stone-600 dark:text-stone-300">
+    <p class="text-marker-room mt-1 line-clamp-2 text-sm text-stone-600 dark:text-stone-300">
       <%= registration_request.invite_request.present? ?
             highlight_keywords(registration_request.invite_request) :
             tag.em("No reason given", class: "text-stone-500 dark:text-stone-400") %>

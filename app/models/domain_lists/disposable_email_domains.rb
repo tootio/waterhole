@@ -52,7 +52,8 @@ module DomainLists
     # The downloaded list once there is one, the vendored copy until then.
     def source_path = installed? ? path : VENDORED_PATH
 
-    def include?(domain) = domains.include?(domain)
+    # Exactly this domain on the list; listed_domain also finds subdomains.
+    def listed?(domain) = domains.include?(domain)
 
     # The listed domain an address's domain falls under, or nil: the domain
     # itself, then each parent down to the registrable domain. Throwaway services

@@ -13,8 +13,8 @@ class RefreshDisposableEmailDomainsJobTest < ActiveSupport::TestCase
         RefreshDisposableEmailDomainsJob.perform_now
 
         assert DomainLists::DisposableEmailDomains.installed?
-        assert DomainLists::DisposableEmailDomains.include?("throwaway7.example")
-        refute DomainLists::DisposableEmailDomains.include?("mailinator.com")
+        assert DomainLists::DisposableEmailDomains.listed?("throwaway7.example")
+        refute DomainLists::DisposableEmailDomains.listed?("mailinator.com")
         refute DomainLists::DisposableEmailDomains.stale?
         assert_equal DomainLists::DisposableEmailDomains::MINIMUM_DOMAINS, DomainLists::DisposableEmailDomains.metadata["domain_count"]
         assert_empty Dir.glob(File.join(dir, "*download*"))
@@ -121,7 +121,7 @@ class RefreshDisposableEmailDomainsJobTest < ActiveSupport::TestCase
         RefreshDisposableEmailDomainsJob.perform_now
 
         refute DomainLists::DisposableEmailDomains.installed?
-        assert DomainLists::DisposableEmailDomains.include?("mailinator.com")
+        assert DomainLists::DisposableEmailDomains.listed?("mailinator.com")
         assert_match(/malformed/, DomainLists::DisposableEmailDomains.metadata["error"])
       end
     end

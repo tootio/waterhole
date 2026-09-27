@@ -4,7 +4,7 @@ class DomainLists::DisposableEmailDomainsTest < ActiveSupport::TestCase
   test "the vendored copy stands in until a list is downloaded" do
     refute DomainLists::DisposableEmailDomains.installed?
     assert_equal DomainLists::DisposableEmailDomains::VENDORED_PATH, DomainLists::DisposableEmailDomains.source_path
-    assert DomainLists::DisposableEmailDomains.include?("mailinator.com")
+    assert DomainLists::DisposableEmailDomains.listed?("mailinator.com")
   end
 
   test "a listed domain and its subdomains match, down to the registrable domain" do
@@ -70,12 +70,12 @@ class DomainLists::DisposableEmailDomainsTest < ActiveSupport::TestCase
     Dir.mktmpdir do |dir|
       DomainLists::DisposableEmailDomains.stub_directory(dir) do
         DomainLists::DisposableEmailDomains.path.write("fresh-throwaway.example\n")
-        assert DomainLists::DisposableEmailDomains.include?("fresh-throwaway.example")
-        refute DomainLists::DisposableEmailDomains.include?("mailinator.com")
+        assert DomainLists::DisposableEmailDomains.listed?("fresh-throwaway.example")
+        refute DomainLists::DisposableEmailDomains.listed?("mailinator.com")
 
         DomainLists::DisposableEmailDomains.path.write("newer-throwaway.example\n")
         FileUtils.touch(DomainLists::DisposableEmailDomains.path, mtime: 1.minute.from_now.to_time)
-        assert DomainLists::DisposableEmailDomains.include?("newer-throwaway.example")
+        assert DomainLists::DisposableEmailDomains.listed?("newer-throwaway.example")
       end
     end
   end

@@ -5,7 +5,8 @@
 class Flag < ApplicationRecord
   SEVERITIES = { info: 0, warning: 1, critical: 2 }.freeze
 
-  belongs_to :registration_request, counter_cache: :flags_count
+  # No counter cache: Flags::Recompute writes flags_count with the flags.
+  belongs_to :registration_request
 
   enum :severity, SEVERITIES, validate: true
 

@@ -10,6 +10,8 @@ module Flags
   # SEES this if it also CONTRIBUTES, so the opt-in is checked on the subject's
   # instance and joined onto the candidates.
   class IpActiveElsewhere < Rule
+    include Flags::CrossInstanceFlag
+
     # A shared /64 behind carrier-grade NAT could match hundreds of rows, and
     # counterparts also drives the reverse fan-out. The email rule needs no cap
     # because an address matches a handful.
@@ -17,7 +19,6 @@ module Flags
 
     def call
       return nil unless request.instance.participating?
-      return nil if request.ip_group.blank?
 
       matches = self.class.counterparts(request)
       return nil if matches.empty?
@@ -34,11 +35,9 @@ module Flags
     def ipv6? = request.ip&.ipv6?
 
     def self.counterparts(request)
-      return RegistrationRequest.none if request.ip_group.blank?
-
       RegistrationRequest
         .active
-        .where(ip_group: request.ip_group)
+        .same_network_as(request)
         .where.not(instance_id: request.instance_id)
         .joins(:instance)
         .merge(Instance.participating)

@@ -1,6 +1,6 @@
 require "csv"
 
-module Blocklists
+module DomainLists
   # IFTAS's shared "Do Not Interact" list: domains associated with abuse
   # (CSAM, hate speech, harassment, etc.), published as a Mastodon-shaped
   # domain-block CSV export

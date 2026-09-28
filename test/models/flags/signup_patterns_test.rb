@@ -73,6 +73,26 @@ class Flags::SignupPatternsTest < ActiveSupport::TestCase
     assert_equal "info", flag(here, "similar_reason").severity
   end
 
+  test "a single match on another instance is a warning" do
+    here = signup(@alpha, 1, reason: format(TEMPLATE, "Anna"))
+    signup(@beta, 2, reason: format(TEMPLATE, "Marco"))
+
+    found = flag(here, "similar_reason")
+    assert_equal "warning", found.severity
+    assert_equal [ "beta.example" ], found.details["instances"]
+  end
+
+  # participating? reads the loaded record, the scope the table: while an
+  # approval is revoked mid-sync they disagree, and the own queue must not drop out.
+  test "the own queue is compared even when the loaded instance is out of date" do
+    here = signup(@alpha, 1, reason: format(TEMPLATE, "Anna"))
+    signup(@alpha, 2, reason: format(TEMPLATE, "Marco"))
+    Instance.where(id: @alpha.id).update_all(signals_approved: false)
+
+    assert here.instance.participating?, "the record in memory still says participating"
+    assert flag(here, "similar_reason")
+  end
+
   test "a non-participating instance is compared with its own queue only, and not seen" do
     here = signup(@gamma, 1, reason: format(TEMPLATE, "Anna"))
     signup(@alpha, 2, reason: format(TEMPLATE, "Marco"))
@@ -99,11 +119,20 @@ class Flags::SignupPatternsTest < ActiveSupport::TestCase
     end
 
     found = flag(requests.first, "signup_burst")
-    assert_equal "info", found.severity
+    assert_equal "warning", found.severity
     assert_equal 5, found.details["count"]
     assert_equal 5, found.details["networks"]
     assert_equal "gmail.com a9 en", found.details["shape"]
     assert_equal [ "beta.example" ], found.details["instances"]
+  end
+
+  test "a burst on this instance alone is only info" do
+    now = Time.current
+    requests = 5.times.map { |i| signup(@alpha, 40 + i, username: "name#{i}", email: "w#{i}@gmail.com", ip: "203.0.113.#{70 + i}", at: now + i.minutes) }
+
+    found = flag(requests.first, "signup_burst")
+    assert_equal "info", found.severity
+    assert_empty found.details["instances"]
   end
 
   test "the same network repeated is not the proxy pattern" do
@@ -121,13 +150,17 @@ class Flags::SignupPatternsTest < ActiveSupport::TestCase
   end
 
   test "the shape keeps separators and collapses runs" do
-    assert_equal "a.a9", SignupShape.pattern("John.Smith84")
     assert_equal "a_a9", SignupShape.pattern("anna_berg2")
     assert_equal "ax", SignupShape.pattern("bpac455adb6e244c47")
     assert_equal "x", SignupShape.pattern("ac455adb6e244c47")
-    assert_equal "x", SignupShape.pattern("455ADb6E244C47")
+    assert_equal "xa9", SignupShape.pattern("455ADb6E244C47x123923")
     assert_equal "a_x", SignupShape.pattern("user_455adb6e244c47")
     assert_equal SignupShape.pattern("bpac455adb6e244c47"), SignupShape.pattern("bp621291304a0fbf9a")
+    # invalid usernames work, too
+    assert_equal "a.a9", SignupShape.pattern("John.Smith84")
+    assert_equal "a(a)🕹", SignupShape.pattern("CRÄZY(ا)🕹")
+    # but we refuse null-bytes
+    assert_raises(ArgumentError) { SignupShape.pattern("John.\x00Smith84") }
     assert_equal "gmail.com a9 -", SignupShape.call(email_domain: "gmail.com", username: "bob7", locale: nil)
   end
 

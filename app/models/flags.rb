@@ -25,20 +25,11 @@ module Flags
     ]
   end
 
-  # Rules that compare against OTHER instances, and so need the other side
-  # recomputed when a new signup arrives here. Derived rather than listed twice,
-  # so a third such rule cannot be added and silently forgotten.
-  def self.cross_instance_rules = registry.select { it.respond_to?(:counterparts) }
+  # Rules whose flags depend on other requests, and so need the other side
+  # recomputed when a new signup arrives here: the ones that include
+  # Flags::CrossInstanceFlag. A rule is registered by including it -- see
+  # there for what happens when that and `counterparts` do not go together.
+  def self.cross_instance_rules = registry.select { it < Flags::CrossInstanceFlag }
 
   def self.rule_names = registry.map(&:rule_name)
-
-  # What the signup-farm rules compare a request with: its own instance's
-  # queue always, and every participating instance's if its own participates.
-  # Symmetric, so the same scope finds the requests whose flags depend on it.
-  def self.comparable_requests(instance)
-    own = RegistrationRequest.where(instance_id: instance.id)
-    return own unless instance.participating?
-
-    own.or(RegistrationRequest.where(instance_id: Instance.participating.select(:id)))
-  end
 end

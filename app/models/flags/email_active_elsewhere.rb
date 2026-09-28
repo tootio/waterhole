@@ -11,6 +11,8 @@ module Flags
   # match must have opted in. That is why the opt-in is checked on the subject's
   # instance *and* joined onto the candidates.
   class EmailActiveElsewhere < Rule
+    include Flags::CrossInstanceFlag
+
     def call
       return nil unless request.instance.participating?
       return nil if request.canonical_email_hash.blank?

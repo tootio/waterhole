@@ -22,10 +22,12 @@ en:
         person again."
     shared_ip:
       label: "Shared IP"
-      help: "This applicant shares an IP address with one or more other pending
-        requests. That can be an innocent coincidence (a shared network, a school,
-        an office) but it can also mean the same person is submitting multiple
-        applications at once."
+      help: "This applicant shares an IP address (or, for IPv6, the containing /64
+        network) with one or more other requests on this instance. That can be an
+        innocent coincidence (a shared network, a school, an office) but it can
+        also mean the same person is submitting multiple applications at once.
+        iCloud Private Relay and Tor addresses are shared by strangers, so they
+        are not compared."
     datacenter_asn:
       label: "Datacenter ASN"
       help: "The signup came from an IP address belonging to a hosting or cloud
@@ -40,10 +42,13 @@ en:
         applicants."
     reapplication:
       label: "Reapplication"
-      help: "This application closely matches one or more earlier requests that
-        were rejected, based on shared details like email or IP. It's surfaced so a
-        moderator can decide whether the applicant addressed the reason for the
-        earlier rejection."
+      help: "This application matches one or more earlier requests on this
+        instance that were rejected. The same email address is critical: that is
+        almost certainly the same person. The same network (IP address, or for
+        IPv6 the /64) is only a warning, since networks are shared; iCloud Private
+        Relay and Tor addresses are not compared. Rejections are remembered for
+        the retention period. It's surfaced so a moderator can decide whether the
+        applicant addressed the reason for the earlier rejection."
     keyword_hit:
       label: "Watchword match"
       help: "Something of the application (join reason, bio, display name, username) 
@@ -59,18 +64,25 @@ en:
       label: "IP active elsewhere"
       help: "This applicant's IP address (or, for IPv6, the containing /64 network)
         is already associated with requests on other participating instances. This
-        is shared context across instances, not proof of anything on its own."
+        is shared context across instances, not proof of anything on its own.
+        iCloud Private Relay and Tor addresses are shared by strangers, so they
+        are not compared."
     similar_reason:
       label: "Similar join reason"
       help: "The applicant's join reason is nearly identical, word for word, to one
         or more other requests. Coordinated or scripted signups often reuse the
-        same or templated wording, which is what this flag looks for."
+        same or templated wording, which is what this flag looks for. A single
+        match on this instance is informational, since two people can write the
+        same thing; several matches, or one on another participating instance, is
+        a warning."
     signup_burst:
       label: "Signup burst"
       help: "A cluster of signups arrived within a short window of each other, from
         multiple networks, sharing a pattern such as the same email domain and a
         similar username shape. This is the kind of pattern automated signup
-        campaigns produce."
+        campaigns produce. On this instance alone it is informational, since a
+        wave of genuine newcomers can look the same; a burst that also spans other
+        participating instances is a warning."
     app_signup:
       label: "Signed up via app"
       help: "This account was created through Mastodon's API by an app, rather than

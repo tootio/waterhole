@@ -1,16 +1,16 @@
 # Keeps the domain blocklist in step with the IFTAS DNI list: rows this job
 # added are updated or removed to match, and rows it never touched (a
 # `manual` source) are left alone no matter what the list says. See
-# DomainPolicy#source and Blocklists::IftasDni.
+# DomainPolicy#source and DomainLists::IftasDni.
 class SyncIftasDniBlocklistJob < ApplicationJob
   queue_as :default
 
   retry_on Faraday::Error, wait: :polynomially_longer, attempts: 3
 
   def perform
-    entries = Blocklists::IftasDni.parse(fetch)
+    entries = DomainLists::IftasDni.parse(fetch)
 
-    if entries.size < Blocklists::IftasDni::MINIMUM_ROWS
+    if entries.size < DomainLists::IftasDni::MINIMUM_ROWS
       raise "only #{entries.size} rows parsed; keeping the existing blocklist"
     end
 
@@ -26,7 +26,7 @@ class SyncIftasDniBlocklistJob < ApplicationJob
           # A suspend on the DNI list means the whole network, not just the
           # bare domain: IFTAS entries block subdomains along with it.
           DomainPolicy.create!(domain: entry[:domain], kind: "blocked", include_subdomains: true,
-            source: Blocklists::IftasDni::SOURCE, reason: entry[:reason])
+            source: DomainLists::IftasDni::SOURCE, reason: entry[:reason])
           added += 1
         elsif policy.manual?
           skipped += 1

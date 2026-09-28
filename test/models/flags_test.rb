@@ -30,6 +30,20 @@ class FlagsTest < ActiveSupport::TestCase
     assert_equal "mailinator.com", @request.flags.find_by(rule: "disposable_email").details["domain"]
   end
 
+  test "a subdomain of a disposable email domain is flagged, but not a lookalike" do
+    @request.update!(email: "throwaway@anything.mailinator.com")
+    @request.recompute_flags!
+
+    flag = @request.reload.flags.find_by(rule: "disposable_email")
+    assert flag
+    assert_equal "anything.mailinator.com", flag.details["domain"]
+    assert_equal "mailinator.com", flag.details["listed"]
+
+    @request.update!(email: "someone@mailinator-fan.org")
+    @request.recompute_flags!
+    assert_not_includes flag_rules_for(@request), "disposable_email"
+  end
+
   test "a shared signup IP is flagged on both requests" do
     other = registration_requests(:claimed_alpha)
     @request.update!(ip: "192.0.2.50")
@@ -52,6 +66,56 @@ class FlagsTest < ActiveSupport::TestCase
     assert flag
     assert_equal "email", flag.details["matched_on"]
     assert_equal "critical", flag.severity
+  end
+
+  test "a reapplication from the same network is a warning, and says so" do
+    rejected = registration_requests(:rejected_alpha)
+    @request.update!(email: "someone-new@example.org", ip: rejected.ip)
+    @request.recompute_flags!
+
+    flag = @request.reload.flags.find_by(rule: "reapplication")
+    assert flag
+    assert_equal "ip", flag.details["matched_on"], "the email did not match, so the label must not say it did"
+    assert_equal "warning", flag.severity
+  end
+
+  test "a rejection from a relay address is no evidence against the network" do
+    rejected = registration_requests(:rejected_alpha)
+    rejected.update!(ip_relay: "tor")
+    @request.update!(email: "someone-new@example.org", ip: rejected.ip)
+    @request.recompute_flags!
+
+    assert_not_includes flag_rules_for(@request), "reapplication"
+  end
+
+  # Its verdict was reached on these flags; the world moving on (a list
+  # refresh, a watchword edit) belongs to the pending queue.
+  test "a decided request re-runs only the cross-instance rules" do
+    rejected = registration_requests(:rejected_alpha)
+    rejected.update_columns(email_domain: "mailinator.com")
+    KeywordRule.create!(instance: rejected.instance, pattern: "let me in", match_type: "substring", severity: "warning")
+    rejected.recompute_flags!
+
+    assert_empty flag_rules_for(rejected) & %w[disposable_email keyword_hit short_invite_request]
+  end
+
+  test "a request without an email does not match rejected requests without one" do
+    rejected = registration_requests(:rejected_alpha)
+    rejected.update_columns(canonical_email_hash: nil, ip: "198.51.100.1")
+    @request.update_columns(canonical_email_hash: nil)
+    @request.recompute_flags!
+
+    assert_not_includes flag_rules_for(@request), "reapplication"
+  end
+
+  test "relay addresses are shared by strangers, so they are not a shared IP" do
+    other = registration_requests(:claimed_alpha)
+    @request.update!(ip: "192.0.2.50", ip_relay: "private_relay")
+    other.update!(ip: "192.0.2.50", ip_relay: "private_relay")
+    [ @request, other ].each(&:recompute_flags!)
+
+    assert_not_includes flag_rules_for(@request), "shared_ip"
+    assert_not_includes flag_rules_for(other), "shared_ip"
   end
 
   test "a watchword hit takes the rule's severity" do

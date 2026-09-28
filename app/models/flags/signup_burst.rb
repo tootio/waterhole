@@ -9,6 +9,9 @@ module Flags
   # `warning` when the burst spans other instances: an exodus picks one new
   # home per person, a farm spreads its batch to avoid any one queue noticing.
   class SignupBurst < Rule
+    include Flags::CrossInstanceFlag
+    include Flags::SignupPatternRule
+
     WINDOW = 1.hour
     MINIMUM = 5
     CAP = 100
@@ -35,7 +38,7 @@ module Flags
     def self.scope(request)
       return RegistrationRequest.none if request.signup_shape.blank? || request.signed_up_at.nil?
 
-      Flags.comparable_requests(request.instance)
+      comparable_requests(request.instance)
         .where.not(id: request.id)
         .where(signup_shape: request.signup_shape,
           signed_up_at: (request.signed_up_at - WINDOW)..(request.signed_up_at + WINDOW))

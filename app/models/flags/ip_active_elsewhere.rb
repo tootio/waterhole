@@ -10,6 +10,8 @@ module Flags
   # SEES this if it also CONTRIBUTES, so the opt-in is checked on the subject's
   # instance and joined onto the candidates.
   class IpActiveElsewhere < Rule
+    include Flags::CrossInstanceFlag
+
     # A shared /64 behind carrier-grade NAT could match hundreds of rows, and
     # counterparts also drives the reverse fan-out. The email rule needs no cap
     # because an address matches a handful.

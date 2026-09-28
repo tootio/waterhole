@@ -8,6 +8,9 @@ module Flags
   # twice uses the same words, but a template travelling between queues is
   # a batch spread out to stay small in each.
   class SimilarReason < Rule
+    include Flags::CrossInstanceFlag
+    include Flags::SignupPatternRule
+
     CAP = 25
 
     def call
@@ -25,7 +28,7 @@ module Flags
     def self.counterparts(request)
       return RegistrationRequest.none if request.invite_fingerprint.nil?
 
-      Flags.comparable_requests(request.instance)
+      comparable_requests(request.instance)
         .where.not(id: request.id)
         .where.not(invite_fingerprint: nil)
         .where("bit_count((invite_fingerprint # ?)::bit(64)) <= ?",

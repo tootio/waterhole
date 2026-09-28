@@ -82,6 +82,17 @@ class Flags::SignupPatternsTest < ActiveSupport::TestCase
     assert_equal [ "beta.example" ], found.details["instances"]
   end
 
+  # participating? reads the loaded record, the scope the table: while an
+  # approval is revoked mid-sync they disagree, and the own queue must not drop out.
+  test "the own queue is compared even when the loaded instance is out of date" do
+    here = signup(@alpha, 1, reason: format(TEMPLATE, "Anna"))
+    signup(@alpha, 2, reason: format(TEMPLATE, "Marco"))
+    Instance.where(id: @alpha.id).update_all(signals_approved: false)
+
+    assert here.instance.participating?, "the record in memory still says participating"
+    assert flag(here, "similar_reason")
+  end
+
   test "a non-participating instance is compared with its own queue only, and not seen" do
     here = signup(@gamma, 1, reason: format(TEMPLATE, "Anna"))
     signup(@alpha, 2, reason: format(TEMPLATE, "Marco"))

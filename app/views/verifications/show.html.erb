@@ -1,5 +1,8 @@
 <% content_for :page_title, "About" %>
 <% content_for :description, "How #{Waterhole::Deployment.host} moderates Mastodon registrations with Waterhole, and how to bring your own instance's herd." %>
+<% if (operator_mastodon_url = Waterhole::Deployment.operator_mastodon_url) %>
+  <% content_for :head, tag.link(rel: "me", href: operator_mastodon_url) %>
+<% end %>
 
 <div class="relative isolate -mt-6 grid grid-cols-1 grid-rows-1">
   <div class="relative col-start-1 row-start-1 -z-10 ml-[calc(50%-50vw)] w-screen aspect-square sm:aspect-5/2 pb-6" aria-hidden="true">

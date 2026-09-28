@@ -6,6 +6,17 @@ class VerificationTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "the about page links the operator's Mastodon account with rel=me, when set" do
+    get verification_path
+    assert_select "head link[rel=me]", count: 0
+
+    ENV["WATERHOLE_OPERATOR_MASTODON"] = "https://mastodon.example/@this_is_me"
+    get verification_path
+    assert_select "head link[rel=me][href=?]", "https://mastodon.example/@this_is_me"
+  ensure
+    ENV.delete("WATERHOLE_OPERATOR_MASTODON")
+  end
+
   # This deployment's own details -- version, policy, blocklist -- live in the
   # result frame until a domain is checked, rather than on a page of their own.
   test "with no domain checked yet, the result frame shows this deployment's own details" do

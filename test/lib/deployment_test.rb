@@ -130,6 +130,28 @@ class DeploymentTest < ActiveSupport::TestCase
     ENV.delete("WATERHOLE_IFTAS_DNI_URL")
   end
 
+  test "operator_mastodon_url accepts a profile URL or a handle, and nothing else" do
+    assert_nil Waterhole::Deployment.operator_mastodon_url
+
+    {
+      "https://mastodon.example/@me" => "https://mastodon.example/@me",
+      " @me@mastodon.example " => "https://mastodon.example/@me",
+      "me@mastodon.example" => "https://mastodon.example/@me",
+      "javascript:alert(1)" => nil,
+      "http://mastodon.example/@me" => nil,
+      "not a handle" => nil
+    }.each do |value, expected|
+      ENV["WATERHOLE_OPERATOR_MASTODON"] = value
+      if expected
+        assert_equal expected, Waterhole::Deployment.operator_mastodon_url, value
+      else
+        assert_nil Waterhole::Deployment.operator_mastodon_url, value
+      end
+    end
+  ensure
+    ENV.delete("WATERHOLE_OPERATOR_MASTODON")
+  end
+
   test "issues_url is the issues page of a GitHub source repository" do
     %w[https://github.com/someone/waterhole https://github.com/someone/waterhole/ https://github.com/someone/waterhole.git].each do |source|
       ENV["WATERHOLE_SOURCE_URL"] = source

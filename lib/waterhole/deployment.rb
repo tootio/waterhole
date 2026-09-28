@@ -196,6 +196,18 @@ module Waterhole
       url.match?(%r{\Ahttps?://\S+\z}i) ? url : DEFAULT_SOURCE_URL
     end
 
+    # The Mastodon account of whoever runs this Waterhole, linked with
+    # rel="me" from the About page so that account can show this host as a
+    # verified profile link. Accepts the profile URL or the @user@host handle;
+    # anything else is nil and the link is left out.
+    def operator_mastodon_url
+      value = ENV["WATERHOLE_OPERATOR_MASTODON"].to_s.strip
+      return value if value.match?(%r{\Ahttps://\S+\z}i)
+
+      handle = value.match(/\A@?([^@\s\/]+)@([^@\s\/]+)\z/)
+      "https://#{handle[2]}/@#{handle[1]}" if handle
+    end
+
     # Issue forms in .github/ISSUE_TEMPLATE that issues_url can open directly.
     ISSUE_TEMPLATES = %w[bug_report watchword_suggestion].freeze
 

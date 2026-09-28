@@ -139,13 +139,17 @@ class Flags::SignupPatternsTest < ActiveSupport::TestCase
   end
 
   test "the shape keeps separators and collapses runs" do
-    assert_equal "a.a9", SignupShape.pattern("John.Smith84")
     assert_equal "a_a9", SignupShape.pattern("anna_berg2")
     assert_equal "ax", SignupShape.pattern("bpac455adb6e244c47")
     assert_equal "x", SignupShape.pattern("ac455adb6e244c47")
-    assert_equal "x", SignupShape.pattern("455ADb6E244C47")
+    assert_equal "xa9", SignupShape.pattern("455ADb6E244C47x123923")
     assert_equal "a_x", SignupShape.pattern("user_455adb6e244c47")
     assert_equal SignupShape.pattern("bpac455adb6e244c47"), SignupShape.pattern("bp621291304a0fbf9a")
+    # invalid usernames work, too
+    assert_equal "a.a9", SignupShape.pattern("John.Smith84")
+    assert_equal "a(a)🕹", SignupShape.pattern("CRÄZY(ا)🕹")
+    # but we refuse null-bytes
+    assert_raises(ArgumentError) { SignupShape.pattern("John.\x00Smith84") }
     assert_equal "gmail.com a9 -", SignupShape.call(email_domain: "gmail.com", username: "bob7", locale: nil)
   end
 

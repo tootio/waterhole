@@ -19,6 +19,8 @@ module SignupShape
   end
 
   def pattern(username)
+    raise ArgumentError, "username must be a string without null-bytes" unless username.is_a?(String) && !username.include?("\x00")
+
     username.downcase
       .gsub(HEX_RUN, "\x00")
       .gsub(/\p{L}+/, "a")

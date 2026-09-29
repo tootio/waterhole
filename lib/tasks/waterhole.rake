@@ -40,4 +40,19 @@ namespace :waterhole do
     end
     puts "Recomputed match keys on #{changed} #{changed == 1 ? "request" : "requests"}."
   end
+
+  # Flags are computed when a request arrives or changes, so a release that
+  # changes a rule (what it matches, its severity, what it ignores) leaves the
+  # waiting queue flagged by the old one. Pending requests only: a decided
+  # request keeps the flags it was decided on (see Flags::Recompute).
+  # Idempotent, and quiet where nothing changes.
+  desc "Recompute the flags of every pending request, e.g. after an update changed the rules"
+  task recompute_flags: :environment do
+    count = 0
+    RegistrationRequest.pending.includes(:instance).find_each do |request|
+      request.recompute_flags!
+      count += 1
+    end
+    puts "Recomputed the flags of #{count} pending #{count == 1 ? "request" : "requests"}."
+  end
 end

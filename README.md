@@ -128,6 +128,12 @@ docker compose pull && docker compose stop jobs web && docker compose up -d
 ```
 Migrations are run automatically.
 
+When the release notes say flag rules changed, recompute the flags of the
+requests already waiting (decided ones keep theirs):
+```shell
+docker compose exec web bin/rails waterhole:recompute_flags
+```
+
 ### Without Docker
 
 If you know your way around Ruby on Rails, it should not be too hard to run Waterhole without Docker.

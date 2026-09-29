@@ -26,6 +26,30 @@ class KeywordRulesTest < ActionDispatch::IntegrationTest
     refute KeywordRule.exists?(@own.id)
   end
 
+  test "a watchword is saved with the fields it checks, and listed with them" do
+    post keyword_rules_path, params: { keyword_rule: { pattern: "bot", match_type: "word", severity: "info", fields: [ "", "username", "display_name" ] } }
+    assert_equal %w[display_name username], KeywordRule.find_by!(pattern: "bot").fields
+
+    get keyword_rules_path
+    assert_select "li", /in display name and username/
+    assert_select "a[href=?]", root_path(watchword: [ KeywordRule.find_by!(pattern: "bot").id ], status: "all", email: "any"), "Matches"
+  end
+
+  test "applying a suggestion pre-fills its fields" do
+    suggestion = SuggestedWatchword.all.first
+    get new_keyword_rule_path(keyword_rule: suggestion.to_params)
+
+    suggestion.fields.each { assert_select "select#keyword_rule_fields option[selected][value=?]", it }
+    assert_select "select#keyword_rule_fields option[selected]", count: suggestion.fields.size
+  end
+
+  test "a watchword needs at least one field" do
+    post keyword_rules_path, params: { keyword_rule: { pattern: "bot", match_type: "word", severity: "info", fields: [ "" ] } }
+
+    assert_response :unprocessable_entity
+    refute KeywordRule.exists?(pattern: "bot")
+  end
+
   test "another instance's rules cannot be changed" do
     patch keyword_rule_path(@other), params: { keyword_rule: { pattern: ".*" } }
     assert_response :not_found

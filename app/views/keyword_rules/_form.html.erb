@@ -30,6 +30,17 @@
     </div>
   </div>
 
+  <div class="relative" data-controller="tom-select" data-tom-select-placeholder-value="Choose fields…">
+    <%= f.label :fields, "Check in", class: "block text-sm font-medium" %>
+    <%= f.select :fields, KeywordRule::FIELDS.map { |field, label| [ label, field ] }, {},
+          multiple: true, required: true, data: { tom_select_target: "select" },
+          aria: { describedby: "keyword_rule_fields_hint" },
+          class: "mt-1 w-full rounded border border-stone-300 dark:border-stone-700 px-3 py-2" %>
+    <p id="keyword_rule_fields_hint" class="mt-1 text-xs text-stone-500 dark:text-stone-400">
+      Each field is checked on its own, so <code>\A</code> and <code>\z</code> in a regex mean the start and end of that field.
+    </p>
+  </div>
+
   <div>
     <%= f.label :description, "Note (optional)", class: "block text-sm font-medium" %>
     <%= f.text_field :description, class: "mt-1 w-full rounded border border-stone-300 dark:border-stone-700 px-3 py-2" %>

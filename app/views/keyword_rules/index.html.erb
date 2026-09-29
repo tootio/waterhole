@@ -4,7 +4,7 @@
 <div class="mb-4 flex items-center justify-between">
   <div>
     <h1 class="text-2xl font-semibold tracking-tight">Watchwords</h1>
-    <p class="mt-1 text-sm text-stone-600 dark:text-stone-300">Patterns checked against each applicant's reason, bio, username, and display name.</p>
+    <p class="mt-1 text-sm text-stone-600 dark:text-stone-300">Patterns checked against the fields you choose for each: join reason, profile note, display name, username.</p>
   </div>
   <%= link_to "Add watchword", new_keyword_rule_path, class: button_classes(:solid, "px-4 py-2 text-sm") %>
 </div>
@@ -16,9 +16,11 @@
         <code class="rounded bg-stone-100 dark:bg-stone-800 px-2 py-0.5 text-sm"><%= rule.pattern %></code>
         <span class="text-xs text-stone-500 dark:text-stone-400"><%= rule.match_type %></span>
         <span class="rounded px-1.5 py-0.5 text-xs <%= severity_style(rule.severity) %>"><%= rule.severity %></span>
+        <span class="text-xs text-stone-500 dark:text-stone-400">in <%= rule.field_labels.map(&:downcase).to_sentence %></span>
         <% unless rule.enabled? %><span class="text-xs text-stone-500 dark:text-stone-400">disabled</span><% end %>
         <% if rule.description.present? %><span class="text-sm text-stone-600 dark:text-stone-300"><%= rule.description %></span><% end %>
         <span class="ml-auto flex gap-3 text-sm">
+          <%= link_to "Matches", root_path(watchword: [ rule.id ], status: "all", email: "any"), class: button_classes(:ghost, "rounded underline") %>
           <%= link_to "Edit", edit_keyword_rule_path(rule), class: button_classes(:ghost, "rounded underline") %>
           <%= button_to "Delete", keyword_rule_path(rule), method: :delete,
                 form: { data: { turbo_confirm: "Delete this watchword?" } }, class: button_classes(:ghost, "rounded underline hover:text-red-700 dark:hover:text-red-400") %>
@@ -42,6 +44,7 @@
           <code class="rounded bg-stone-100 dark:bg-stone-800 px-2 py-0.5 text-sm"><%= suggestion.pattern %></code>
           <span class="text-xs text-stone-500 dark:text-stone-400"><%= suggestion.match_type %></span>
           <span class="rounded px-1.5 py-0.5 text-xs <%= severity_style(suggestion.severity) %>"><%= suggestion.severity %></span>
+          <span class="text-xs text-stone-500 dark:text-stone-400">in <%= suggestion.field_labels.map(&:downcase).to_sentence %></span>
           <span class="ml-auto text-sm">
             <% if suggestion.applied?(@keyword_rules) %>
               <span class="text-xs text-stone-500 dark:text-stone-400">Applied</span>

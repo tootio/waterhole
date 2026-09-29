@@ -1,0 +1,42 @@
+<% content_for :page_title, "Search help" %>
+
+<%
+  code_class = "rounded bg-stone-100 dark:bg-stone-800 px-1.5 py-0.5 font-mono text-xs"
+  rows = [
+    [ "crypto", "Anywhere in the username, display name, email domain or join reason" ],
+    [ "\"free followers\"", "A phrase: quotes keep the words together" ],
+    [ "username:bot", "Only in the username" ],
+    [ "name:…", "Only in the display name" ],
+    [ "domain:proton", "Only in the email domain" ],
+    [ "reason:crypto", "Only in the join reason" ],
+    [ "bio:…", "Only in the profile note, which plain words don't search" ],
+    [ "flag:tor_relay", "Requests with that flag — its name, or its label in quotes: flag:\"Tor relay\"" ],
+    [ "flag:keyword_hit@warning", "…with that flag at warning or above (info, warning, critical)" ],
+    [ "severity:critical", "Requests with any flag at critical or above" ],
+    [ "-domain:gmail.com", "A leading - leaves out what matches instead" ]
+  ]
+%>
+
+<h1 class="mb-4 text-2xl font-semibold tracking-tight">Search help</h1>
+
+<p class="mb-6 text-sm text-stone-600 dark:text-stone-300">
+  Every term has to match, so <code class="<%= code_class %>">reason:crypto -domain:gmail.com</code>
+  finds join reasons mentioning crypto from any email domain but gmail.com. Case doesn't matter,
+  and a term matches part of a word: <code class="<%= code_class %>">domain:proton</code> finds
+  proton.me and protonmail.com alike.
+</p>
+
+<section class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-5">
+  <dl class="divide-y divide-stone-200 dark:divide-stone-800 text-sm">
+    <% rows.each do |syntax, description| %>
+      <div class="flex items-start gap-4 py-2">
+        <dt class="w-44 shrink-0"><code class="<%= code_class %> whitespace-pre"><%= syntax %></code></dt>
+        <dd class="text-stone-600 dark:text-stone-300"><%= description %></dd>
+      </div>
+    <% end %>
+  </dl>
+</section>
+
+<p class="mt-6 text-sm text-stone-600 dark:text-stone-300">
+  Flag names: <%= safe_join(Flags.rule_names.map { content_tag(:code, it, class: code_class) }, ", ") %>.
+</p>

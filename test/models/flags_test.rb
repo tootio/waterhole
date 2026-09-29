@@ -129,6 +129,18 @@ class FlagsTest < ActiveSupport::TestCase
     assert_includes flag.details["patterns"], "airdrop"
   end
 
+  test "a watchword only checks the fields it names, and the flag records which one matched" do
+    @request.update!(invite_request: "join my airdrop for guaranteed returns")
+    reason_only = KeywordRule.create!(instance: @request.instance, pattern: "airdrop", match_type: "word", severity: "warning", fields: %w[invite_request])
+    KeywordRule.create!(instance: @request.instance, pattern: "guaranteed", match_type: "word", severity: "critical", fields: %w[username bio])
+    @request.recompute_flags!
+
+    flag = @request.reload.flags.find_by(rule: "keyword_hit")
+    assert_equal [ reason_only.id ], flag.details["rule_ids"]
+    assert_equal [ "airdrop" ], flag.details["patterns"]
+    assert_equal "warning", flag.severity
+  end
+
   test "a runaway regex cannot hang the queue" do
     rule = KeywordRule.create!(instance: @request.instance, pattern: "(a+)+$", match_type: "regex", severity: "warning")
 

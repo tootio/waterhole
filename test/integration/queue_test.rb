@@ -188,6 +188,46 @@ class QueueTest < ActionDispatch::IntegrationTest
     assert_select "body", { count: 0, text: /Nothing here/ }
   end
 
+  test "the queue filters by watchword, and offers only this instance's" do
+    sign_in_as @moderator
+    rowan = registration_requests(:pending_alpha)
+    rule = KeywordRule.create!(instance: @moderator.instance, pattern: "smaller", match_type: "word", severity: "info")
+    KeywordRule.create!(instance: instances(:beta), pattern: "elsewhere-only", match_type: "word", severity: "info")
+    rowan.recompute_flags!
+
+    get root_path, params: { watchword: [ rule.id ] }
+
+    assert_response :success
+    assert_select "select[name='watchword[]'] option[selected][value=?]", rule.id.to_s
+    assert_select "select[name='watchword[]'] option", { count: 0, text: "elsewhere-only" }
+    assert_select "a[href*=?]", registration_request_path(rowan)
+    assert_select "a[href*=?]", registration_request_path(registration_requests(:claimed_alpha)), count: 0
+  end
+
+  test "flags and a severity filter the queue, and an older single-flag link still works" do
+    sign_in_as @moderator
+    rowan = registration_requests(:pending_alpha)
+    rowan.flags.create!(rule: "shared_ip", severity: "warning")
+    registration_requests(:claimed_alpha).flags.create!(rule: "keyword_hit", severity: "info")
+
+    get root_path, params: { flag: %w[shared_ip keyword_hit], severity: "warning" }
+    assert_select "select[name='flag[]'] option[selected]", 2
+    assert_select "select[name=severity] option[selected][value=warning]"
+    assert_select "a[href*=?]", registration_request_path(rowan)
+    assert_select "a[href*=?]", registration_request_path(registration_requests(:claimed_alpha)), count: 0
+
+    get root_path, params: { flag: "shared_ip" }
+    assert_select "select[name='flag[]'] option[selected][value=shared_ip]"
+  end
+
+  test "search help explains the syntax" do
+    sign_in_as @moderator
+    get search_help_path
+
+    assert_response :success
+    assert_select "code", "-domain:gmail.com"
+  end
+
   test "an empty filtered queue still shows the plain empty state" do
     sign_in_as @moderator
     @moderator.instance.registration_requests.destroy_all
@@ -206,7 +246,7 @@ class QueueTest < ActionDispatch::IntegrationTest
 
     get root_path
     assert_select "li span", "IP active elsewhere"
-    assert_select "select[name=flag] option[value=datacenter_asn]", "Datacenter ASN"
+    assert_select "select[name='flag[]'] option[value=datacenter_asn]", "Datacenter ASN"
 
     get registration_request_path(request)
     # The label's <p> also carries the "About this flag" link, so match by

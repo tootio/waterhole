@@ -5,6 +5,8 @@ class SuggestedWatchwordTest < ActiveSupport::TestCase
     SuggestedWatchword.all.each do |suggestion|
       rule = KeywordRule.new(instance: instances(:alpha), **suggestion.to_params)
       assert rule.valid?, "#{suggestion.pattern}: #{rule.errors.full_messages.to_sentence}"
+      # The setter drops what it does not know; a misspelt field would vanish.
+      assert_equal suggestion.fields.sort, rule.fields.sort, "#{suggestion.pattern}: unknown fields"
     end
   end
 

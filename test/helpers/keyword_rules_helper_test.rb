@@ -12,19 +12,26 @@ class KeywordRulesHelperTest < ActionView::TestCase
   end
 
   test "returns unchanged text when no keyword rules exist" do
-    assert_equal "hello world", highlight_keywords("hello world")
+    assert_equal "hello world", highlight_keywords("hello world", field: :invite_request)
   end
 
   test "returns nil/blank when input is nil or blank" do
-    assert_nil highlight_keywords(nil)
-    assert_equal "", highlight_keywords("")
+    assert_nil highlight_keywords(nil, field: :invite_request)
+    assert_equal "", highlight_keywords("", field: :invite_request)
+  end
+
+  test "only watchwords that check the field mark it" do
+    @instance.keyword_rules.create!(pattern: "crypto", match_type: "word", severity: "warning", fields: %w[username])
+
+    assert_equal "crypto fan", highlight_keywords("crypto fan", field: :invite_request)
+    assert_equal "#{mark("crypto", :warning)} fan", highlight_keywords("crypto fan", field: :username)
   end
 
   test "highlights matches across multiple enabled rules" do
     @instance.keyword_rules.create!(pattern: "crypto", match_type: "word", severity: "warning")
     @instance.keyword_rules.create!(pattern: "air", match_type: "substring", severity: "warning")
 
-    result = highlight_keywords("crypto airdrop")
+    result = highlight_keywords("crypto airdrop", field: :invite_request)
 
     assert_equal "#{mark("crypto", :warning)} #{mark("air", :warning)}drop", result
     assert result.html_safe?
@@ -34,14 +41,14 @@ class KeywordRulesHelperTest < ActionView::TestCase
     @instance.keyword_rules.create!(pattern: "crypto", match_type: "word", severity: "critical")
     @instance.keyword_rules.create!(pattern: "air", match_type: "substring", severity: "info")
 
-    assert_equal "#{mark("crypto", :critical)} #{mark("air", :info)}drop", highlight_keywords("crypto airdrop")
+    assert_equal "#{mark("crypto", :critical)} #{mark("air", :info)}drop", highlight_keywords("crypto airdrop", field: :invite_request)
   end
 
   test "handles multiple rules matching the exact same token without duplicating mark tags" do
     @instance.keyword_rules.create!(pattern: "spam", match_type: "word", severity: "warning")
     @instance.keyword_rules.create!(pattern: "spam", match_type: "substring", severity: "warning")
 
-    result = highlight_keywords("stop spam now")
+    result = highlight_keywords("stop spam now", field: :invite_request)
 
     assert_equal "stop #{mark("spam", :warning)} now", result
     assert result.html_safe?
@@ -52,7 +59,7 @@ class KeywordRulesHelperTest < ActionView::TestCase
     @instance.keyword_rules.create!(pattern: "spam", match_type: "substring", severity: "critical")
     @instance.keyword_rules.create!(pattern: "sp.m", match_type: "regex", severity: "warning")
 
-    assert_equal "stop #{mark("spam", :critical)} now", highlight_keywords("stop spam now")
+    assert_equal "stop #{mark("spam", :critical)} now", highlight_keywords("stop spam now", field: :invite_request)
   end
 
   test "a strictly nested match wins over the match around it, whatever the severities" do
@@ -60,49 +67,49 @@ class KeywordRulesHelperTest < ActionView::TestCase
     @instance.keyword_rules.create!(pattern: "ptocur", match_type: "substring", severity: "info")
 
     assert_equal "invest in #{mark("cry", :critical, joined: %i[ end ])}#{mark("ptocur", :info, joined: %i[ start end ])}#{mark("rency", :critical, joined: %i[ start ])}",
-      highlight_keywords("invest in cryptocurrency")
+      highlight_keywords("invest in cryptocurrency", field: :invite_request)
   end
 
   test "a nested match sharing the start is decided by severity" do
     @instance.keyword_rules.create!(pattern: "cryptocurrency", match_type: "word", severity: "critical")
     @instance.keyword_rules.create!(pattern: "crypto", match_type: "substring", severity: "info")
 
-    assert_equal "invest in #{mark("cryptocurrency", :critical)}", highlight_keywords("invest in cryptocurrency")
+    assert_equal "invest in #{mark("cryptocurrency", :critical)}", highlight_keywords("invest in cryptocurrency", field: :invite_request)
   end
 
   test "a nested match sharing the end with higher severity wins its part" do
     @instance.keyword_rules.create!(pattern: "cryptocurrency", match_type: "word", severity: "info")
     @instance.keyword_rules.create!(pattern: "currency", match_type: "substring", severity: "critical")
 
-    assert_equal "invest in #{mark("crypto", :info, joined: %i[ end ])}#{mark("currency", :critical, joined: %i[ start ])}", highlight_keywords("invest in cryptocurrency")
+    assert_equal "invest in #{mark("crypto", :info, joined: %i[ end ])}#{mark("currency", :critical, joined: %i[ start ])}", highlight_keywords("invest in cryptocurrency", field: :invite_request)
   end
 
   test "a nested match sharing a boundary with equal severity keeps its own mark" do
     @instance.keyword_rules.create!(pattern: "cryptocurrency", match_type: "word", severity: "warning")
     @instance.keyword_rules.create!(pattern: "crypto", match_type: "substring", severity: "warning")
 
-    assert_equal "invest in #{mark("crypto", :warning, joined: %i[ end ])}#{mark("currency", :warning, joined: %i[ start ])}", highlight_keywords("invest in cryptocurrency")
+    assert_equal "invest in #{mark("crypto", :warning, joined: %i[ end ])}#{mark("currency", :warning, joined: %i[ start ])}", highlight_keywords("invest in cryptocurrency", field: :invite_request)
   end
 
   test "partially overlapping matches: the highest severity takes the overlap" do
     @instance.keyword_rules.create!(pattern: "supe", match_type: "substring", severity: "critical")
     @instance.keyword_rules.create!(pattern: "perm", match_type: "substring", severity: "info")
 
-    assert_equal "#{mark("supe", :critical, joined: %i[ end ])}#{mark("rm", :info, joined: %i[ start ])}an", highlight_keywords("superman")
+    assert_equal "#{mark("supe", :critical, joined: %i[ end ])}#{mark("rm", :info, joined: %i[ start ])}an", highlight_keywords("superman", field: :invite_request)
   end
 
   test "partially overlapping matches of equal severity: the first one takes the overlap" do
     @instance.keyword_rules.create!(pattern: "supe", match_type: "substring", severity: "warning")
     @instance.keyword_rules.create!(pattern: "perm", match_type: "substring", severity: "warning")
 
-    assert_equal "#{mark("supe", :warning, joined: %i[ end ])}#{mark("rm", :warning, joined: %i[ start ])}an", highlight_keywords("superman")
+    assert_equal "#{mark("supe", :warning, joined: %i[ end ])}#{mark("rm", :warning, joined: %i[ start ])}an", highlight_keywords("superman", field: :invite_request)
   end
 
   test "touching matches keep separate marks" do
     @instance.keyword_rules.create!(pattern: "super", match_type: "substring", severity: "warning")
     @instance.keyword_rules.create!(pattern: "hero", match_type: "substring", severity: "warning")
 
-    result = highlight_keywords("look at the superhero")
+    result = highlight_keywords("look at the superhero", field: :invite_request)
 
     assert_equal "look at the #{mark("super", :warning, joined: %i[ end ])}#{mark("hero", :warning, joined: %i[ start ])}", result
     assert result.html_safe?
@@ -112,7 +119,7 @@ class KeywordRulesHelperTest < ActionView::TestCase
     @instance.keyword_rules.create!(pattern: "super", match_type: "substring", severity: "warning")
     @instance.keyword_rules.create!(pattern: "man", match_type: "substring", severity: "warning")
 
-    result = highlight_keywords("superduperman")
+    result = highlight_keywords("superduperman", field: :invite_request)
 
     assert_equal "#{mark("super", :warning)}duper#{mark("man", :warning)}", result
     assert result.html_safe?
@@ -151,7 +158,7 @@ class KeywordRulesHelperTest < ActionView::TestCase
   test "escapes unescaped HTML content safely while highlighting matches" do
     @instance.keyword_rules.create!(pattern: "alert", match_type: "word", severity: "warning")
 
-    result = highlight_keywords("<script>alert('xss')</script>")
+    result = highlight_keywords("<script>alert('xss')</script>", field: :invite_request)
 
     assert_equal "&lt;script&gt;#{mark("alert", :warning)}(&#39;xss&#39;)&lt;/script&gt;", result
     assert result.html_safe?
@@ -161,7 +168,7 @@ class KeywordRulesHelperTest < ActionView::TestCase
     @instance.keyword_rules.create!(pattern: "crypto", match_type: "word", severity: "warning")
     @instance.keyword_rules.create!(pattern: "mark", match_type: "substring", severity: "warning")
 
-    result = highlight_keywords("crypto market")
+    result = highlight_keywords("crypto market", field: :invite_request)
 
     assert_equal "#{mark("crypto", :warning)} #{mark("mark", :warning)}et", result
     assert result.html_safe?
@@ -170,7 +177,7 @@ class KeywordRulesHelperTest < ActionView::TestCase
   test "ignores disabled rules" do
     @instance.keyword_rules.create!(pattern: "crypto", match_type: "word", severity: "warning", enabled: false)
 
-    result = highlight_keywords("crypto enthusiast")
+    result = highlight_keywords("crypto enthusiast", field: :invite_request)
 
     assert_equal "crypto enthusiast", result
   end

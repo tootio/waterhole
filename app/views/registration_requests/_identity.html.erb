@@ -91,7 +91,7 @@
     <% if registration_request.bio.present? %>
       <div>
         <dt class="text-xs text-stone-500 dark:text-stone-400">Profile note</dt>
-        <dd class="whitespace-pre-wrap text-stone-700 dark:text-stone-300"><%= registration_request.bio %></dd>
+        <dd class="whitespace-pre-wrap text-stone-700 dark:text-stone-300"><%= highlight_keywords(registration_request.bio, field: :bio) %></dd>
       </div>
     <% end %>
 

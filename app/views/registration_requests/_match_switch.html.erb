@@ -1,0 +1,13 @@
+<%# The label of a multiple select, with its "any of"/"all of" switch beside it.
+    Radios, so it works without JavaScript; styled as a two-way switch. %>
+<div class="flex items-center justify-between gap-2">
+  <%= form.label field, label, class: "block text-xs font-medium text-stone-600 dark:text-stone-300" %>
+  <span role="radiogroup" aria-label="<%= label %>: requests with" class="flex rounded border border-stone-300 dark:border-stone-700 text-xs">
+    <% [ [ "any", "any of" ], [ "all", "all of" ] ].each do |value, text| %>
+      <label class="cursor-pointer px-1.5 text-stone-500 dark:text-stone-400 has-checked:bg-stone-200 has-checked:text-stone-900 dark:has-checked:bg-stone-700 dark:has-checked:text-stone-100 has-focus-visible:outline-2 has-focus-visible:outline-offset-1">
+        <%= form.radio_button param, value, checked: current == value, class: "sr-only",
+              data: { action: "change->auto-submit#submit" } %><%= text %>
+      </label>
+    <% end %>
+  </span>
+</div>

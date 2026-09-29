@@ -58,6 +58,6 @@ class KeywordRulesController < ApplicationController
   end
 
   def keyword_rule_params
-    params.expect(keyword_rule: [ :pattern, :match_type, :severity, :enabled, :description ])
+    params.expect(keyword_rule: [ :pattern, :match_type, :severity, :enabled, :description, fields: [] ])
   end
 end

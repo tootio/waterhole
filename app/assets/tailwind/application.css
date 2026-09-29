@@ -167,3 +167,106 @@
     .text-marker-critical { --text-marker-color: color-mix(in oklab, var(--color-red-800) 80%, transparent); }
   }
 }
+
+/* tom-select (tom_select_controller.js), styled here rather than with its own
+   stylesheet so a multiple select looks like the app's other controls. The
+   wrapper carries the select's own classes (border, padding, text size); these
+   rules only fill in what TomSelect's markup needs. */
+@layer components {
+  /* The original select stays in the form, visually hidden but submitted --
+     and validated: put the controller on a positioned element, so the
+     browser's "choose an item" bubble points at the field. */
+  .ts-hidden-accessible {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+    clip: rect(0 0 0 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Transparent like the plain inputs next to it, which Tailwind's reset
+     leaves without a background of their own. */
+  .ts-wrapper { position: relative; cursor: text; }
+  .ts-wrapper.focus { outline: auto; outline-offset: 1px; }
+  .ts-wrapper.disabled { cursor: not-allowed; opacity: 0.4; }
+
+  .ts-control { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem; min-height: 1.25rem; }
+  .ts-control > input {
+    flex: 1 1 4rem;
+    min-width: 4rem;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    outline: none;
+    font: inherit;
+    color: inherit;
+  }
+  .ts-control > input::placeholder { color: var(--color-stone-400); }
+  /* Chips chosen and the control not focused: the input (and its placeholder)
+     step aside until it is. */
+  .ts-wrapper.input-hidden .ts-control > input { position: absolute; left: -10000px; opacity: 0; }
+
+  .ts-control .item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-radius: var(--radius-sm);
+    background: var(--color-stone-100);
+    padding: 0 0.125rem 0 0.375rem;
+    line-height: 1.5;
+    cursor: default;
+  }
+  .ts-control .item.active { background: var(--color-stone-200); }
+  .ts-control .item .remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1rem;
+    border-radius: var(--radius-sm);
+    color: var(--color-stone-500);
+    text-decoration: none;
+  }
+  .ts-control .item .remove:hover { background: var(--color-stone-300); color: var(--color-stone-900); }
+
+  .ts-dropdown {
+    position: absolute;
+    z-index: 20;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    margin-top: 0.25rem;
+    overflow: hidden;
+    border: 1px solid var(--color-stone-200);
+    border-radius: var(--radius-lg);
+    background: var(--color-white);
+    box-shadow: var(--shadow-lg);
+    font-size: var(--text-sm);
+  }
+  .ts-dropdown-content { max-height: 15rem; overflow-y: auto; padding-block: 0.25rem; }
+  .ts-dropdown .option,
+  .ts-dropdown .no-results { padding: 0.375rem 0.75rem; }
+  .ts-dropdown .option { cursor: pointer; }
+  .ts-dropdown .option.active { background: var(--color-stone-100); }
+  .ts-dropdown .no-results { color: var(--color-stone-500); }
+  .ts-dropdown .highlight { background: none; font-weight: 600; }
+
+  /* Must stay AFTER the light rules above. */
+  @variant dark {
+    .ts-dropdown { background: var(--color-stone-900); }
+    .ts-control > input::placeholder { color: var(--color-stone-500); }
+    .ts-control .item { background: var(--color-stone-800); }
+    .ts-control .item.active { background: var(--color-stone-700); }
+    .ts-control .item .remove { color: var(--color-stone-400); }
+    .ts-control .item .remove:hover { background: var(--color-stone-600); color: var(--color-stone-100); }
+    .ts-dropdown { border-color: var(--color-stone-800); }
+    .ts-dropdown .option.active { background: var(--color-stone-800); }
+    .ts-dropdown .no-results { color: var(--color-stone-400); }
+  }
+}
+
+/* Outside the layer: the wrapper carries the select's border-* utilities,
+   which outrank anything in the components layer. */
+.ts-wrapper.invalid { border-color: var(--color-red-500); }

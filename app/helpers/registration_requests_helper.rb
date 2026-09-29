@@ -3,7 +3,8 @@ module RegistrationRequestsHelper
   # string would let ?host= or ?protocol= rewrite a link into another origin
   # or a javascript: URL, so links are always rebuilt from this allowlist
   # instead of from whatever the request happens to have on it.
-  FILTER_PARAMS = %i[status claim email flag search sort].freeze
+  FILTER_PARAMS = [ :status, :claim, :email, :flag, :flag_match, :severity, :search, :sort, :watchword_match,
+                    { status: [], flag: [], watchword: [] } ].freeze
 
   STATUS_STYLES = {
     "pending"            => "bg-amber-100 dark:bg-amber-900 text-amber-900 dark:text-amber-200",

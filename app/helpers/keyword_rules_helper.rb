@@ -7,11 +7,13 @@ module KeywordRulesHelper
   }.freeze
 
   # Any watchword match is wrapped in <mark />, coloured by its rule's severity.
-  # Where matches overlap, see #resolve_match_intervals for which one shows.
-  def highlight_keywords(text)
+  # Only the watchwords that check `field` (a KeywordRule::FIELDS key) mark it,
+  # as only they can flag it. Where matches overlap, see
+  # #resolve_match_intervals for which one shows.
+  def highlight_keywords(text, field:)
     return text if text.blank?
 
-    intervals = instance_keyword_rules.flat_map do |rule|
+    intervals = instance_keyword_rules.select { it.checks?(field) }.flat_map do |rule|
       rule.match_indices(text).map { |start_pos, stop_pos| Match.new(start_pos, stop_pos, rule.severity) }
     end
     return text if intervals.empty?

@@ -16,7 +16,7 @@ class FilterSelectsTest < ApplicationSystemTestCase
     visit registration_requests_path
     assert_selector "#registration_request_#{registration_requests(:claimed_alpha).id}"
 
-    watchword_select.click
+    open_select "Watchword"
     find(".ts-dropdown .option", text: "smaller").click
 
     assert_current_path(/watchword/)
@@ -34,9 +34,7 @@ class FilterSelectsTest < ApplicationSystemTestCase
     visit registration_requests_path
     assert_no_selector "#registration_request_#{rejected.id}"
 
-    # Its input steps aside while a chip shows and it is not focused; the label
-    # focuses it, as it would for a person.
-    find("label", text: "Status", exact_text: true).click
+    open_select "Status"
     find(".ts-dropdown .option", text: "Rejected", exact_text: true).click
     assert_selector "#registration_request_#{rejected.id}"
     assert_selector "#registration_request_#{@rowan.id}"
@@ -53,10 +51,10 @@ class FilterSelectsTest < ApplicationSystemTestCase
     claimed.flags.create!(rule: "tor_relay", severity: "warning")
     visit registration_requests_path
 
-    [ "Shared IP", "Tor relay" ].each do |label|
-      flag_select.find("input").click # not the wrapper: its middle may be a chip
-      find(".ts-dropdown .option", text: label).click
-    end
+    open_select "Flag"
+    # The list stays open, ticking what is chosen.
+    [ "Shared IP", "Tor relay" ].each { |label| find(".ts-dropdown .option", text: label).click }
+    assert_selector ".ts-dropdown .option input:checked", count: 2
     assert_selector "#registration_request_#{@rowan.id}"
 
     find("label", text: "all of", match: :first).click
@@ -82,6 +80,10 @@ class FilterSelectsTest < ApplicationSystemTestCase
   end
 
   private
+
+  # The label opens the list and focuses its search field, as it would for a
+  # person -- clicking the control's middle could land on a chip instead.
+  def open_select(label) = find("label", text: label, exact_text: true).click
 
   def status_select = find("select[name='status[]']", visible: :all).sibling(".ts-wrapper")
 

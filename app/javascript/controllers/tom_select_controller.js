@@ -2,8 +2,9 @@ import { Controller } from "@hotwired/stimulus"
 import TomSelect from "tom-select"
 
 // Progressive enhancement for a <select multiple>: the choices show as chips
-// with a remove button, and typing filters the options. Without JavaScript the
-// plain multiple select still submits the same parameters.
+// with a remove button, the options list ticks what is chosen (a click
+// toggles it), and a search field at the top of the list filters it. Without JavaScript the plain
+// multiple select still submits the same parameters.
 //
 // Put the controller on an element wrapping the select, not on the select:
 // TomSelect hides the select and inserts its own markup next to it, and the
@@ -18,11 +19,18 @@ export default class extends Controller {
   connect() {
     this.clearRestoredMarkup()
     this.tomSelect = new TomSelect(this.selectTarget, {
-      plugins: { remove_button: { title: "Remove" } },
+      plugins: {
+        remove_button: { title: "Remove" },
+        // Keeps chosen options in the list, ticked (it turns hideSelected off).
+        checkbox_options: {},
+        // Typing goes into a field at the top of the list rather than between
+        // the chips; the control itself takes the focus.
+        dropdown_input: {}
+      },
       placeholder: this.placeholderValue,
       hidePlaceholder: true,
-      hideSelected: true,
-      closeAfterSelect: true,
+      // Open while ticking several; Escape or a click elsewhere closes it.
+      closeAfterSelect: false,
       maxOptions: null,
       // The select's own classes size the wrapper like the other controls; the
       // dropdown is styled separately.

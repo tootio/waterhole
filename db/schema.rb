@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_25_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_29_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -108,6 +108,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_25_130000) do
     t.datetime "created_at", null: false
     t.string "description"
     t.boolean "enabled", default: true, null: false
+    t.string "fields", default: ["invite_request", "bio", "display_name", "username"], null: false, array: true
     t.bigint "instance_id", null: false
     t.string "match_type", default: "word", null: false
     t.string "pattern", null: false

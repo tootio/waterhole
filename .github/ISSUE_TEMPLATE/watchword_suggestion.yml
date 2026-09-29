@@ -1,5 +1,7 @@
 # Linked from the Watchwords page's "Propose it as a suggestion". Accepted
-# proposals go into config/watchwords.yml, whose fields these mirror.
+# proposals go into config/watchwords.yml, whose fields these mirror (the
+# "Check in" labels are KeywordRule::FIELDS: invite_request, bio,
+# display_name, username).
 name: Watchword suggestion
 description: Propose a watchword that Waterhole should suggest to every instance.
 title: "Watchword suggestion: "
@@ -26,6 +28,22 @@ body:
         - substring
         - word
         - regex
+    validations:
+      required: true
+  - type: dropdown
+    id: fields
+    attributes:
+      label: Check in
+      description: |
+        The texts the watchword is checked against, each on its own, so \A and \z
+        in a regex mean the start and end of that field. Choose only where the
+        pattern belongs: fewer fields, fewer false positives.
+      multiple: true
+      options:
+        - Join reason
+        - Profile note
+        - Display name
+        - Username
     validations:
       required: true
   - type: dropdown

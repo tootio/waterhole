@@ -70,4 +70,15 @@ class KeywordRuleTest < ActiveSupport::TestCase
 
     assert_equal [], indices
   end
+
+  test "fields default to all four, keep the form's order, and cannot be empty" do
+    assert_equal KeywordRule::FIELDS.keys, KeywordRule.new.fields
+
+    rule = KeywordRule.new(instance: @instance, pattern: "x", fields: [ "", "username", "nope", "bio" ])
+    assert_equal %w[bio username], rule.fields
+
+    rule.fields = [ "" ]
+    refute rule.valid?
+    assert_includes rule.errors[:fields], "must include at least one field"
+  end
 end

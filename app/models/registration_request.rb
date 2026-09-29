@@ -82,7 +82,25 @@ class RegistrationRequest < ApplicationRecord
   scope :unclaimed, -> { where(claimed_by_id: nil) }
   scope :claimed, -> { where.not(claimed_by_id: nil) }
   scope :claimed_by_moderator, ->(m) { where(claimed_by: m) }
-  scope :with_flag, ->(rule) { where(id: Flag.where(rule: rule).select(:registration_request_id)) }
+  # Carrying a flag of `rule` (one, several, or nil for any), optionally at
+  # `min_severity` or above -- compared on the flag itself, so a severe flag of
+  # another rule never counts.
+  scope :with_flag, ->(rule, min_severity: nil) {
+    flags = rule.nil? ? Flag.all : Flag.where(rule:)
+    where(id: flags.at_least(min_severity).select(:registration_request_id))
+  }
+  # Flagged by any of these watchwords (KeywordRule records), as recorded when
+  # the flag was computed. Flags from before rule_ids were recorded fall back
+  # to the pattern text they did record.
+  scope :with_watchwords, ->(rules) {
+    matches = rules.map do |rule|
+      Flag.where("details -> 'rule_ids' @> ?", [ rule.id ].to_json)
+        .or(Flag.where("NOT jsonb_exists(details, 'rule_ids') AND jsonb_exists(details -> 'patterns', ?)", rule.pattern))
+    end
+    next none if matches.empty?
+
+    where(id: Flag.where(rule: Flags::KeywordHit.rule_name).merge(matches.inject(:or)).select(:registration_request_id))
+  }
   # Requests from the same network as `request`, for the rules that compare
   # networks: see #network_key.
   scope :same_network_as, ->(request) {
@@ -94,13 +112,8 @@ class RegistrationRequest < ApplicationRecord
   # so counting them would advertise work that is not there.
   scope :awaiting_review, -> { pending.email_confirmed }
 
-  scope :search, ->(term) {
-    term = term.to_s.strip
-    next all if term.blank?
-
-    pattern = "%#{sanitize_sql_like(term)}%"
-    where("username ILIKE :p OR display_name ILIKE :p OR email_domain ILIKE :p OR invite_request ILIKE :p", p: pattern)
-  }
+  # Free text with optional property:value terms; see RegistrationRequests::Search.
+  scope :search, ->(text) { RegistrationRequests::Search.new(text).apply(all) }
 
   def claimed? = claimed_by_id.present?
 

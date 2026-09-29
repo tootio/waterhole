@@ -13,6 +13,8 @@ class Flag < ApplicationRecord
   validates :rule, presence: true, uniqueness: { scope: :registration_request_id }
 
   scope :by_severity, -> { order(severity: :desc) }
+  # At `severity` ("warning", :critical, …) or above; nil for any.
+  scope :at_least, ->(severity) { severity ? where(severity: severities.fetch(severity.to_s)..) : all }
 
   # Rule names are identifiers; config/locales/en.yml holds what people read.
   def self.label_for(rule) = I18n.t("flags.#{rule}.label")

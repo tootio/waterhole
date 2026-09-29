@@ -2,7 +2,7 @@
 # suggestions: applying one opens the New watchword form pre-filled, and the
 # saved rule belongs to that instance alone (see KeywordRule for why there are
 # no deployment-wide rules).
-class SuggestedWatchword < Data.define(:pattern, :match_type, :severity, :description, :reasoning)
+class SuggestedWatchword < Data.define(:pattern, :match_type, :severity, :fields, :description, :reasoning)
   FILE = Rails.root.join("config/watchwords.yml")
 
   # Not memoized: the file is tiny, and edits show up without a restart.
@@ -14,5 +14,7 @@ class SuggestedWatchword < Data.define(:pattern, :match_type, :severity, :descri
   def applied?(rules) = rules.any? { it.pattern == pattern && it.match_type == match_type }
 
   # `reasoning` only explains the suggestion; it is not part of the rule.
-  def to_params = { pattern:, match_type:, severity:, description: }
+  def to_params = { pattern:, match_type:, severity:, fields:, description: }
+
+  def field_labels = fields.map { KeywordRule::FIELDS.fetch(it) }
 end

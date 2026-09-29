@@ -4,23 +4,31 @@
     }, class: "mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-3" do |f| %>
 
   <div class="min-w-56 flex-1">
-    <%= f.label :search, "Search", class: "block text-xs font-medium text-stone-600 dark:text-stone-300" %>
+    <div class="flex items-center justify-between gap-3">
+      <%= f.label :search, "Search", class: "block text-xs font-medium text-stone-600 dark:text-stone-300" %>
+      <%= link_to search_help_path, data: { action: "modal#open" }, aria: { label: "Search help" },
+            class: button_classes(:ghost, "rounded text-xs hover:text-stone-900 dark:hover:text-stone-100") do %>
+        <span aria-hidden="true">ⓘ</span> Syntax
+      <% end %>
+    </div>
     <%= f.search_field :search, value: query.filters[:search],
-          placeholder: "username, email domain, or reason…",
+          placeholder: "words, or e.g. reason:crypto -domain:gmail.com",
           data: { action: "input->auto-submit#submit" },
           class: "mt-1 w-full rounded border border-stone-300 dark:border-stone-700 px-2 py-1.5 text-sm" %>
   </div>
 
-  <div>
+  <div class="relative min-w-48" data-controller="tom-select" data-tom-select-placeholder-value="Any status">
     <%= f.label :status, "Status", class: "block text-xs font-medium text-stone-600 dark:text-stone-300" %>
+    <%# include_hidden stays: an emptied select must still say "any status", not fall back to pending. %>
     <%= f.select :status,
           options_for_select([ %w[Pending pending], %w[Approved approved], %w[Rejected rejected],
                                [ "Approved in Mastodon", "approved_elsewhere" ],
                                [ "Rejected in Mastodon", "rejected_elsewhere" ],
-                               [ "Expired (never confirmed)", "expired" ], %w[All all] ],
-                             query.filters[:status]),
-          {}, data: { action: "change->auto-submit#submit" },
-          class: "mt-1 rounded border border-stone-300 dark:border-stone-700 px-2 py-1.5 text-sm" %>
+                               [ "Expired (never confirmed)", "expired" ] ],
+                             Array(query.filters[:status]) - [ "all" ]),
+          {}, multiple: true,
+          data: { tom_select_target: "select", action: "change->auto-submit#submit" },
+          class: "mt-1 w-full rounded border border-stone-300 dark:border-stone-700 px-2 py-1.5 text-sm" %>
   </div>
 
   <div>
@@ -42,13 +50,34 @@
           class: "mt-1 rounded border border-stone-300 dark:border-stone-700 px-2 py-1.5 text-sm" %>
   </div>
 
-  <div>
-    <%= f.label :flag, "Flag", class: "block text-xs font-medium text-stone-600 dark:text-stone-300" %>
-    <%= f.select :flag,
-          options_for_select([ [ "Any", "" ] ] + Flags.rule_names.map { |r| [ Flag.label_for(r), r ] }, query.filters[:flag]),
-          {}, data: { action: "change->auto-submit#submit" },
-          class: "mt-1 rounded border border-stone-300 dark:border-stone-700 px-2 py-1.5 text-sm" %>
+  <div class="relative min-w-48" data-controller="tom-select" data-tom-select-placeholder-value="Any flag">
+    <%= render "match_switch", form: f, label: "Flag", field: :flag, param: :flag_match, current: query.flag_match %>
+    <%= f.select :flag, options_for_select(Flags.rule_names.map { [ Flag.label_for(it), it ] }, query.filters[:flag]),
+          { include_hidden: false }, multiple: true,
+          data: { tom_select_target: "select", action: "change->auto-submit#submit" },
+          class: "mt-1 w-full rounded border border-stone-300 dark:border-stone-700 px-2 py-1.5 text-sm" %>
   </div>
+
+  <div>
+    <%= f.label :severity, "Severity", class: "block text-xs font-medium text-stone-600 dark:text-stone-300" %>
+    <%= f.select :severity,
+          options_for_select([ [ "Any", "" ], [ "Info and above", "info" ], [ "Warning and above", "warning" ],
+                               [ "Critical and above", "critical" ] ], query.filters[:severity]),
+          {}, data: { action: "change->auto-submit#submit" },
+          aria: { describedby: "severity_hint" },
+          class: "mt-1 rounded border border-stone-300 dark:border-stone-700 px-2 py-1.5 text-sm" %>
+    <span id="severity_hint" class="sr-only">Applies to the chosen flags, or to any flag when none is chosen.</span>
+  </div>
+
+  <% if (watchwords = query.available_watchwords.to_a).any? %>
+    <div class="relative min-w-48" data-controller="tom-select" data-tom-select-placeholder-value="Any watchword">
+      <%= render "match_switch", form: f, label: "Watchword", field: :watchword, param: :watchword_match, current: query.watchword_match %>
+      <%= f.select :watchword, options_for_select(watchwords.map { [ it.pattern, it.id ] }, query.filters[:watchword]),
+            { include_hidden: false }, multiple: true,
+            data: { tom_select_target: "select", action: "change->auto-submit#submit" },
+            class: "mt-1 w-full rounded border border-stone-300 dark:border-stone-700 px-2 py-1.5 text-sm" %>
+    </div>
+  <% end %>
 
   <div>
     <%= f.label :sort, "Sort", class: "block text-xs font-medium text-stone-600 dark:text-stone-300" %>

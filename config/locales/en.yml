@@ -51,8 +51,9 @@ en:
         applicant addressed the reason for the earlier rejection."
     keyword_hit:
       label: "Watchword match"
-      help: "Something of the application (join reason, bio, display name, username) 
-        matched one of this instance's configured watchwords.
+      help: "Something of the application (join reason, profile note, display name, username)
+        matched one of this instance's configured watchwords, in a field that watchword
+        is set to check.
         Watchwords are moderator-edited phrases (see the Watchwords page) meant to
         catch known spam wording or topics the instance wants a human to review."
     email_active_elsewhere:

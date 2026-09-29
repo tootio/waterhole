@@ -21,6 +21,9 @@ class HelpController < ApplicationController
   def regexp
   end
 
+  def search
+  end
+
   def sign_in
   end
 

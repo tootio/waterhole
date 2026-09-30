@@ -35,7 +35,7 @@ class LayoutTest < ActionDispatch::IntegrationTest
     assert_select "header nav a[href=?]", new_session_path, text: "Sign in"
     assert_select "header nav a[href=?]", root_path, { count: 0 },
       "moderator navigation has no meaning signed out"
-    assert_select "header details", false
+    assert_select "header [data-controller=dropdown]", false
   end
 
   test "the sign-in page does not offer a sign-in button" do
@@ -64,11 +64,11 @@ class LayoutTest < ActionDispatch::IntegrationTest
     get root_path
 
     assert_select "header nav", 1
-    assert_select "header nav > :last-child details[data-controller=dropdown]", 1
+    assert_select "header nav > :last-child [data-controller=dropdown]", 1
     order_classes = css_select("header [class]").flat_map { it["class"].split }.grep(/\A([\w-]+:)*order-/)
     assert_empty order_classes, "visual order must not be rearranged away from DOM order"
-    assert_select "header details summary", text: /#{Regexp.escape(moderator.handle)}/
-    assert_select "header details #account-menu" do
+    assert_select "header .dropdown-toggle", text: /#{Regexp.escape(moderator.handle)}/
+    assert_select "header [data-controller=dropdown] #account-menu" do
       assert_select "*", text: /#{Regexp.escape(moderator.handle)}/
       assert_select "form[action=?] button", session_path, text: "Sign out"
     end
@@ -78,8 +78,8 @@ class LayoutTest < ActionDispatch::IntegrationTest
     sign_in_as moderators(:avery)
     get root_path
 
-    assert_select "header summary img", false
-    assert_select "header summary span[aria-hidden=true]", text: "A"
+    assert_select "header .dropdown-toggle img", false
+    assert_select "header .dropdown-toggle span[aria-hidden=true]", text: "A"
   end
 
   test "with an avatar the menu shows our own copy of it" do
@@ -87,7 +87,7 @@ class LayoutTest < ActionDispatch::IntegrationTest
     moderator.create_avatar!(image: "\x89PNG\r\n\x1A\n".b, content_type: "image/png", source_url: "https://files.example/a.png")
     get root_path
 
-    assert_select "header summary img[alt=''][src^=?]", "#{avatar_path}?v="
+    assert_select "header .dropdown-toggle img[alt=''][src^=?]", "#{avatar_path}?v="
   end
 
   # Signing out has to stay reachable from the consent page, where nothing
@@ -98,7 +98,7 @@ class LayoutTest < ActionDispatch::IntegrationTest
     get consent_path
 
     assert_select "header nav a", false
-    assert_select "header details form[action=?]", session_path
+    assert_select "header #account-menu form[action=?]", session_path
   end
 
   test "the queue offers Sync now beside when it last synced" do

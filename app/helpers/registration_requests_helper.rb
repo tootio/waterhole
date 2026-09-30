@@ -36,6 +36,46 @@ module RegistrationRequestsHelper
     "mailto:#{to}#{"?#{query}" if query.present?}"
   end
 
+  # Public databases to look the signup network up in, grouped by what they are
+  # keyed on: { "IP address" => [[label, url], ...], "AS…" => ..., country => ... }.
+  # The address is re-parsed rather than interpolated as stored, so only a
+  # well-formed address ever lands in a URL.
+  def network_research_links(registration_request)
+    ip = begin
+      IPAddr.new(registration_request.ip.to_s).to_s if registration_request.ip.present?
+    rescue IPAddr::Error
+      nil
+    end
+    asn = registration_request.ip_asn
+    country = registration_request.ip_country.to_s[/\A[A-Z]{2}\z/]
+
+    links = {}
+    if ip
+      links[ip] = [
+        [ "AbuseIPDB", "https://www.abuseipdb.com/check/#{ip}" ],
+        [ "Spamhaus", "https://check.spamhaus.org/results/?query=#{ip}" ],
+        [ "GreyNoise", "https://viz.greynoise.io/ip/#{ip}" ],
+        [ "Shodan", "https://www.shodan.io/host/#{ip}" ],
+        [ "IPinfo", "https://ipinfo.io/#{ip}" ],
+        [ "Hurricane Electric BGP", "https://bgp.he.net/ip/#{ip}" ]
+      ]
+    end
+    if asn.present?
+      links["AS#{asn.to_i}"] = [
+        [ "bgp.tools", "https://bgp.tools/as/#{asn.to_i}" ],
+        [ "Hurricane Electric BGP", "https://bgp.he.net/AS#{asn.to_i}" ],
+        [ "IPinfo", "https://ipinfo.io/AS#{asn.to_i}" ],
+        [ "PeeringDB", "https://www.peeringdb.com/asn/#{asn.to_i}" ]
+      ]
+    end
+    if country
+      links[Ip::Countries.name_for(country) || country] = [
+        [ "Networks in this country (Hurricane Electric)", "https://bgp.he.net/country/#{country}" ]
+      ]
+    end
+    links
+  end
+
   def next_in_list_path(registration_request)
     next_registration_request_path(registration_request, params.permit(*FILTER_PARAMS))
   end

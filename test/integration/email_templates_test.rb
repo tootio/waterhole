@@ -55,8 +55,8 @@ class EmailTemplatesTest < ActionDispatch::IntegrationTest
     request = registration_requests(:pending_alpha)
     get registration_request_path(request)
 
-    assert_select "details a[href=?]", "mailto:rowan@fastmail.com?subject=About%20rowan&body=Hello%20rowan", text: "Ask for more"
-    assert_select "details a", { count: 0, text: "Beta only" }
+    assert_select "[data-controller=dropdown] a[href=?]", "mailto:rowan@fastmail.com?subject=About%20rowan&body=Hello%20rowan", text: "Ask for more"
+    assert_select "[data-controller=dropdown] a", { count: 0, text: "Beta only" }
   end
 
   test "a disabled template is listed for editing but not offered on the request page" do
@@ -67,14 +67,14 @@ class EmailTemplatesTest < ActionDispatch::IntegrationTest
     assert_select "li", /Ask for more.*disabled/m
 
     get registration_request_path(registration_requests(:pending_alpha))
-    assert_select "main details", false
+    assert_select "main [data-controller=dropdown]", false
   end
 
   test "without templates the request page points to setting them up" do
     EmailTemplate.delete_all
     get registration_request_path(registration_requests(:pending_alpha))
 
-    assert_select "main details", false
+    assert_select "main [data-controller=dropdown]", false
     assert_select "a[href=?]", email_templates_path
   end
 
@@ -83,6 +83,6 @@ class EmailTemplatesTest < ActionDispatch::IntegrationTest
     request.update_columns(email: nil)
     get registration_request_path(request)
 
-    assert_select "main details", false
+    assert_select "main [data-controller=dropdown]", false
   end
 end

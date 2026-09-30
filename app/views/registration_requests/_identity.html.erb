@@ -15,9 +15,10 @@
           <button type="button" class="<%= button_classes(:ghost, "rounded text-xs hover:text-stone-700 dark:hover:text-stone-300") %>"
                   data-action="clipboard#copy" data-clipboard-value="<%= registration_request.email %>">copy</button>
           <% if email_templates.any? %>
-            <details data-controller="dropdown" class="relative">
-              <summary aria-controls="email-template-menu" aria-expanded="false" class="<%= button_classes(:ghost, "cursor-pointer list-none rounded text-xs whitespace-nowrap hover:text-stone-700 dark:hover:text-stone-300") %>">email ▾</summary>
-              <ul id="email-template-menu" class="absolute right-0 z-10 mt-1 w-56 overflow-hidden rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 py-1 shadow-lg">
+            <div data-controller="dropdown" class="dropdown">
+              <button type="button" popovertarget="email-template-menu" aria-expanded="false" data-dropdown-target="toggle"
+                      class="dropdown-toggle <%= button_classes(:ghost, "rounded text-xs whitespace-nowrap hover:text-stone-700 dark:hover:text-stone-300") %>">email ▾</button>
+              <ul id="email-template-menu" popover data-dropdown-target="panel" class="dropdown-panel sm:w-56">
                 <% email_templates.each do |template| %>
                   <li>
                     <%= link_to template.name, template_mailto(template, registration_request),
@@ -29,7 +30,7 @@
                         class: "block px-3 py-1.5 text-xs text-stone-500 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 #{focus_ring_classes}" %>
                 </li>
               </ul>
-            </details>
+            </div>
           <% else %>
             <%= link_to "templates", email_templates_path, title: "Set up email templates to write to applicants in one click",
                   class: button_classes(:ghost, "rounded text-xs hover:text-stone-700 dark:hover:text-stone-300") %>
@@ -62,7 +63,12 @@
         <dt class="text-xs text-stone-500 dark:text-stone-400">Network</dt>
         <dd>
           <% if registration_request.ip_country.present? %>
-            <span class="font-medium"><%= registration_request.ip_country %></span>
+            <% country_name = Ip::Countries.name_for(registration_request.ip_country) %>
+            <% if country_name %>
+              <abbr title="<%= country_name %>" class="font-medium no-underline cursor-help"><%= registration_request.ip_country %></abbr>
+            <% else %>
+              <span class="font-medium"><%= registration_request.ip_country %></span>
+            <% end %>
           <% end %>
           <% if registration_request.ip_asn.present? %>
             <span class="text-stone-600 dark:text-stone-300">
@@ -70,6 +76,25 @@
             </span>
           <% elsif registration_request.ip_country.blank? %>
             <span class="text-stone-500 dark:text-stone-400">no data for this address</span>
+          <% end %>
+          <% if (research = network_research_links(registration_request)).any? %>
+            <div data-controller="dropdown" class="dropdown inline-block">
+              <button type="button" popovertarget="network-research-menu" aria-expanded="false" data-dropdown-target="toggle"
+                      class="dropdown-toggle <%= button_classes(:ghost, "rounded text-xs whitespace-nowrap hover:text-stone-700 dark:hover:text-stone-300") %>">look up ▾</button>
+              <div id="network-research-menu" popover data-dropdown-target="panel" class="dropdown-panel sm:w-64">
+                <% research.each_with_index do |(subject, links), index| %>
+                  <p class="<%= "border-t border-stone-200 dark:border-stone-800 mt-1 pt-1 " if index > 0 %>px-3 py-1 font-mono text-xs text-stone-500 dark:text-stone-400 truncate"><%= subject %></p>
+                  <ul>
+                    <% links.each do |label, url| %>
+                      <li>
+                        <%= link_to label, url, target: "_blank", rel: "noopener noreferrer",
+                              class: "block px-3 py-1.5 text-sm hover:bg-stone-100 dark:hover:bg-stone-800 #{focus_ring_classes}" %>
+                      </li>
+                    <% end %>
+                  </ul>
+                <% end %>
+              </div>
+            </div>
           <% end %>
           <% case registration_request.ip_relay %>
           <% when "private_relay" %>

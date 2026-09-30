@@ -34,4 +34,24 @@ class RegistrationRequestsHelperTest < ActionView::TestCase
 
     assert_equal "mailto:rowan@fastmail.com?body=Hi", template_mailto(template, registration_requests(:pending_alpha))
   end
+
+  test "network research links cover the address, its AS and its country" do
+    request = RegistrationRequest.new(ip: "203.0.113.5", ip_asn: 64500, ip_country: "DE")
+    links = network_research_links(request)
+
+    assert_equal [ "203.0.113.5", "AS64500", "Germany" ], links.keys
+    assert_includes links["203.0.113.5"], [ "AbuseIPDB", "https://www.abuseipdb.com/check/203.0.113.5" ]
+    assert_includes links["AS64500"], [ "bgp.tools", "https://bgp.tools/as/64500" ]
+  end
+
+  test "a malformed address never lands in a research link" do
+    request = RegistrationRequest.new(ip: "203.0.113.5/../../evil", ip_country: "de<")
+
+    assert_empty network_research_links(request)
+  end
+
+  test "country codes resolve to names, and unknown ones to nil" do
+    assert_equal "Netherlands", Ip::Countries.name_for("nl")
+    assert_nil Ip::Countries.name_for("ZZ")
+  end
 end

@@ -76,7 +76,9 @@ SCENES = [
   { desktop: [ "/requests", "document.querySelector('a[href=\"/help/shortcuts\"]').click()" ], mobile: "/keyword_rules" }
 ].freeze
 
-DESKTOP = { width: 1100, height: 720, deviceScaleFactor: 2, mobile: false }.freeze
+# Tall enough that the window, scaled to WINDOW_WIDTH, leaves the same 48px
+# margin above and below it as to its left.
+DESKTOP = { width: 1100, height: 876, deviceScaleFactor: 2, mobile: false }.freeze
 MOBILE = { width: 390, height: 844, deviceScaleFactor: 2, mobile: true }.freeze
 MOBILE_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 " \
             "(KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1"
@@ -178,10 +180,10 @@ def compose(desktop_png, mobile_png, scheme, out)
          screen, "-geometry", "+#{BEZEL}+#{BEZEL}", "-composite", phone
 
   # The window centred on the left, the phone just overlapping its right edge
-  # and hanging a little below it.
+  # and hanging a little below it, 40px in from the canvas's corner.
   window_h = shot_h + bar_h + 2
   window_at = [ 48, (CANVAS[1] - window_h) / 2 ]
-  phone_at = [ CANVAS[0] - 40 - (PHONE_WIDTH + 2 * BEZEL), CANVAS[1] - 64 - (phone_h + 2 * BEZEL) ]
+  phone_at = [ CANVAS[0] - 40 - (PHONE_WIDTH + 2 * BEZEL), CANVAS[1] - 40 - (phone_h + 2 * BEZEL) ]
   place = lambda do |file, (x, y)|
     [ "(", file, "(", "+clone", "-background", "#0008", "-shadow", SHADOW, ")", "+swap",
       "-background", "none", "-layers", "merge", "+repage", ")",

@@ -61,7 +61,7 @@ class VotesTest < ActionDispatch::IntegrationTest
     patch registration_request_vote_path(@subject), params: { vote: "reject" }
     get registration_request_path(@subject)
 
-    assert_select "h2", /Moderator notes and votes/
+    assert_select "h2", /Moderator votes and notes/
     assert_select "#votes dt", text: "1 approve"
     assert_select "#votes dt", text: "1 reject"
     assert_select "#votes button[aria-pressed=true]", text: /Reject/

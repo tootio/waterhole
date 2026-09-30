@@ -225,6 +225,7 @@ claimed = requests.first
 claimed.update!(claimed_by: blake, claimed_at: 20.minutes.ago)
 note = claimed.notes.create!(moderator: blake, body: "Looks genuine to me — the Discord checks out. Anyone object?")
 claimed.notes.create!(moderator: avery, parent: note, body: "No objection. Approve when you're ready.")
+[ blake, avery ].each { |moderator| claimed.votes.create!(moderator:, vote: "approve") }
 
 requests.each(&:recompute_flags!)
 

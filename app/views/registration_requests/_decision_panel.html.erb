@@ -51,7 +51,7 @@
                 turbo_confirm: "Approve @#{registration_request.username} on #{registration_request.instance.domain}?",
                 detail_nav_target: "approveAndNextForm"
               } },
-              class: "rounded-r border-l border-emerald-700 bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 #{focus_ring_classes}" %>
+              class: "rounded-r border-l border-l-2 border-emerald-700 dark:border-emerald-400 bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 #{focus_ring_classes}" %>
       </div>
       <div class="inline-flex">
         <%= button_to registration_request_decision_path(registration_request, decision_action: "reject"),
@@ -65,7 +65,7 @@
                 turbo_confirm: "Reject @#{registration_request.username}? Mastodon deletes the account on rejection, and this cannot be undone.",
                 detail_nav_target: "rejectAndNextForm"
               } },
-              class: "rounded-r border-l border-red-700 bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700 #{focus_ring_classes}" %>
+              class: "rounded-r border-l border-l-2 border-red-700 dark:border-red-400 bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700 #{focus_ring_classes}" %>
       </div>
     </div>
     <p class="mt-3 text-xs text-stone-500 dark:text-stone-400">

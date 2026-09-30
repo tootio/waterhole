@@ -58,14 +58,13 @@
 
           <div class="ml-auto flex shrink-0">
             <% if signed_in? %>
-              <details data-controller="dropdown" class="relative">
-                <summary aria-controls="account-menu" aria-expanded="false"
-                         class="flex cursor-pointer list-none rounded-full [&::-webkit-details-marker]:hidden <%= focus_ring_classes %>">
+              <div data-controller="dropdown" class="dropdown flex">
+                <button type="button" popovertarget="account-menu" aria-expanded="false" data-dropdown-target="toggle"
+                        class="dropdown-toggle flex cursor-pointer rounded-full <%= focus_ring_classes %>">
                   <%= moderator_avatar(current_moderator) %>
                   <span class="sr-only">Account: <%= current_moderator.handle %></span>
-                </summary>
-                <div id="account-menu"
-                     class="absolute right-0 z-20 mt-2 w-64 max-w-[calc(100vw-2rem)] overflow-hidden rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 py-1 shadow-lg">
+                </button>
+                <div id="account-menu" popover data-dropdown-target="panel" class="dropdown-panel sm:w-64">
                   <p class="px-3 py-2 text-xs text-stone-500 dark:text-stone-400">
                     Signed in as
                     <span class="block break-all text-sm font-medium text-stone-900 dark:text-stone-100"><%= current_moderator.handle %></span>
@@ -75,7 +74,7 @@
                           class: "block w-full px-3 py-1.5 text-left text-sm hover:bg-stone-100 dark:hover:bg-stone-800 #{focus_ring_classes}" %>
                   </div>
                 </div>
-              </details>
+              </div>
             <% elsif !(controller_name == "sessions" && action_name == "new") %>
               <%= link_to new_session_path, title: "Sign in",
                     class: "flex size-8 items-center justify-center rounded-full bg-stone-200 dark:bg-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-300 dark:hover:bg-stone-600 #{focus_ring_classes}" do %>

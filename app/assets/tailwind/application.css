@@ -126,6 +126,86 @@
   }
 }
 
+/* The dropdowns (dropdown_controller.js): .dropdown around a .dropdown-toggle
+   and its popover, the .dropdown-panel. Widths stay utilities on the panel,
+   with an sm: prefix so they never reach the bottom sheet.
+
+   A popover sits in the top layer, fixed: nothing clips it and it never grows
+   the page. Where it goes:
+   - anchor positioning: tethered to the toggle, right edges aligned, flipping
+     above it (or across) when it would leave the viewport.
+   - no anchor positioning: the controller does the same in script.
+   - a phone: a bottom sheet over a backdrop, either way. */
+@layer components {
+  /* Resets the UA's popover look (centred, bordered, Canvas-coloured). Never
+     set display here: the UA's display: none is what keeps it closed. */
+  .dropdown-panel {
+    inset: auto;
+    margin: 0;
+    max-width: calc(100vw - 1rem);
+    max-height: calc(100dvh - 1rem);
+    overflow-x: hidden;
+    overflow-y: auto;
+    border: 1px solid var(--color-stone-200);
+    border-radius: var(--radius-lg);
+    background: var(--color-white);
+    color: inherit;
+    padding: 0.25rem 0;
+    box-shadow: var(--shadow-lg);
+  }
+
+  @supports (position-area: bottom) {
+    /* Only the open dropdown's toggle carries the name, so the many closed
+       ones on a page never compete for it. */
+    .dropdown:has(> .dropdown-panel:popover-open) > .dropdown-toggle { anchor-name: --dropdown; }
+
+    .dropdown-panel {
+      position-anchor: --dropdown;
+      position-area: bottom span-left;
+      margin-top: 0.25rem;
+      position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline;
+    }
+  }
+
+  /* Tailwind's sm breakpoint, inverted. */
+  @media (width < 40rem) {
+    .dropdown-panel {
+      position-area: none;
+      position-try-fallbacks: none;
+      inset: auto 0 0 0;
+      width: auto;
+      max-width: none;
+      max-height: 85dvh;
+      margin: 0;
+      overscroll-behavior: contain;
+      border-width: 1px 0 0;
+      border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+      padding: 0.5rem 0 calc(0.5rem + env(safe-area-inset-bottom));
+      font-size: var(--text-base);
+      transition: translate 150ms ease-out;
+
+      @starting-style { translate: 0 100%; }
+    }
+
+    .dropdown-panel::backdrop { background: rgb(0 0 0 / 0.4); }
+
+    /* Roomier rows for a thumb. */
+    .dropdown-panel :is(a, button) { padding-block: 0.625rem; }
+
+    /* The page behind a sheet stays put, as behind a modal dialog. */
+    html:has(.dropdown-panel:popover-open) { overflow: hidden; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dropdown-panel { transition: none; }
+  }
+
+  /* Must stay AFTER the light rules above. */
+  @variant dark {
+    .dropdown-panel { border-color: var(--color-stone-800); background: var(--color-stone-900); }
+  }
+}
+
 /* A hand-drawn highlighter stroke for watchword matches (KeywordRulesHelper).
    The padding/margin pair lets the stroke overshoot the word without moving
    the text; clone repeats the rounded ends on every line a match wraps onto.

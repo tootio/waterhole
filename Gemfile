@@ -88,7 +88,7 @@ gem "faraday-follow_redirects", "~> 0.5.0"
 # Error reporting to Sentry or GlitchTip. Inert unless SENTRY_DSN is set; see
 # config/initializers/sentry.rb.
 gem "sentry-ruby", "~> 7.0"
-gem "sentry-rails", "~> 7.0"
+gem "sentry-rails", "~> 7.1"
 
 # Punycode for internationalised email domains (EmailCanonicalizer), the same
 # UTS #46 lookup mapping browsers and Go's idna package use.

@@ -45,6 +45,6 @@ class VerificationsController < ApplicationController
   # domain), so verification_path(domain: x) silently drops it and yields
   # "/verification". :instance_domain cannot collide.
   def set_domain
-    @domain = Instance.new(domain: params[:instance_id] || params[:instance_domain]).domain
+    @domain = Instance.normalize_domain(params[:instance_domain])
   end
 end

@@ -47,6 +47,18 @@ class SignInTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_path
   end
 
+  test "a domain on a non-standard port is rejected before any DNS lookup" do
+    exploding = Class.new { def txt_records(_) = raise("must not be consulted") }.new
+
+    DnsAllowlist.stub_resolver(exploding) do
+      post session_path, params: { domain: "https://elsewhere.example:8443/explore" }
+    end
+
+    assert_redirected_to new_session_path
+    assert_match(/port/, flash[:alert])
+    assert_nil Instance.find_by(domain: "elsewhere.example")
+  end
+
   test "a callback with a tampered state is refused" do
     get oauth_callback_path, params: { code: "abc", state: "not-a-valid-signed-state" }
 

@@ -25,7 +25,24 @@ class Instance < ApplicationRecord
   # instance is verified again (see #access_ended_since).
   before_save :track_access_end, if: :will_save_change_to_status?
 
-  normalizes :domain, with: ->(d) { d.to_s.strip.downcase.delete_prefix("https://").delete_prefix("http://").chomp("/") }
+  normalizes :domain, with: ->(d) { normalize_domain(d) }
+
+  # Accepts whatever a moderator pastes -- "mastodon.example", or
+  # "https://mastodon.example/explore" from the address bar -- and keeps only
+  # the host. Every request goes to base_url, i.e. the default HTTPS port, so a
+  # server on any other port is unreachable: nil, rather than quietly pointing
+  # at a different server than the one that was entered.
+  #
+  # Unparseable input is passed through as typed, for validation to reject.
+  def self.normalize_domain(input)
+    input = input.to_s.strip.downcase
+    # Without a scheme, "mastodon.example:443" would parse as scheme "mastodon.example".
+    _scheme, _userinfo, host, port = URI.split(input.include?("://") ? input : "https://#{input}")
+    # split reports the port only when one was written, so a bare http:// URL is not mistaken for port 80.
+    host.to_s unless port.present? && port != "443"
+  rescue URI::InvalidURIError
+    input
+  end
 
   validates :domain, presence: true, uniqueness: true,
     format: { with: /\A(?=.{1,253}\z)[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+\z/,

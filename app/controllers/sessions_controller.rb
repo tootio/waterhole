@@ -31,7 +31,10 @@ class SessionsController < ApplicationController
   end
 
   def create
-    domain = Instance.new(domain: params[:domain]).domain # reuse the normalizer
+    domain = Instance.normalize_domain(params[:domain])
+    if domain.nil?
+      return redirect_to(new_session_path, alert: "Waterhole can only reach instances on the standard HTTPS port (443).")
+    end
     return redirect_to(new_session_path, alert: "Enter your instance's domain.") if domain.blank?
 
     @admission = Admission.call(domain)

@@ -67,7 +67,7 @@ gem "faraday-retry", "~> 2.4"
 # needs it explicitly declared.
 gem "csv", "~> 3.3"
 
-gem "webmock", "~> 3.26", group: :test
+gem "webmock", "~> 3.30", group: :test
 
 # Ruby 4.0 bundles json 3.x, which dropped positional options from JSON.parse.
 # ActiveSupport 8.1.3.1 still calls `JSON.parse(json, options)` with two

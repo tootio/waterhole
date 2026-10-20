@@ -2,6 +2,7 @@
 import "domfortify_init"
 import { Turbo, cable } from "@hotwired/turbo-rails"
 import "controllers"
+import "lib/scroll_lock"
 
 // Turbo's default disables the submit button for the length of the request,
 // and disabling a focused button drops focus to <body> -- so after any form

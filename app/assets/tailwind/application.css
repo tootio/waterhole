@@ -8,9 +8,13 @@
   html { color-scheme: light dark; }
 
   /* A modal dialog covers the viewport, but the page behind it can still be
-     scrolled with a wheel or touch unless we say otherwise. Following the
-     dialog's own state means no close path can leave the page locked. */
-  html:has(dialog:modal) { overflow: hidden; }
+     scrolled with a wheel or touch unless we say otherwise. lib/scroll_lock.js
+     sets the attribute, and measures the scrollbar this takes away so the
+     padding can stand in for it. */
+  html[data-scroll-locked] {
+    overflow: hidden !important;
+    padding-right: var(--scroll-gutter, 0) !important;
+  }
 }
 
 /* One disabled look for every control.
@@ -191,9 +195,6 @@
 
     /* Roomier rows for a thumb. */
     .dropdown-panel :is(a, button) { padding-block: 0.625rem; }
-
-    /* The page behind a sheet stays put, as behind a modal dialog. */
-    html:has(.dropdown-panel:popover-open) { overflow: hidden; }
   }
 
   @media (prefers-reduced-motion: reduce) {

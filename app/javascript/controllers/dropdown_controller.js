@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { SHEET } from "lib/sheet"
 
 // A toggle button and a popover panel next to it. A disclosure, not an ARIA
 // menu -- the panel holds ordinary links and buttons reached with Tab, so there
@@ -26,7 +27,6 @@ import { Controller } from "@hotwired/stimulus"
 //   the back-forward cache on a full navigation, so Back never shows it open
 //   (nor a phone's page still locked behind a sheet)
 const ANCHORS = CSS.supports("position-area: bottom")
-const SHEET = window.matchMedia("(width < 40rem)")
 const GAP = 4 // between toggle and panel, as margin-top in the stylesheet
 const EDGE = 8 // kept free at the viewport's edges
 

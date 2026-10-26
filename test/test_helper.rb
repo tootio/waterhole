@@ -8,6 +8,12 @@ WebMock.disable_net_connect!(allow_localhost: true)
 
 Dir[Rails.root.join("test/support/**/*.rb")].each { |f| require f }
 
+# Fixtures only reset the tables they have files for. Anything else left in the
+# test database -- bin/ci seeds it, and seeds fill moderator_avatars -- would leak
+# into the suite and fail the fixtures' foreign-key check. Parallel workers get
+# freshly loaded databases; this covers the single-process run.
+ApplicationRecord.with_connection { it.truncate_tables(*it.tables) }
+
 module ActiveSupport
   class TestCase
     parallelize(workers: :number_of_processors)

@@ -38,6 +38,7 @@ Rails.application.routes.draw do
   # --- instance administration ----------------------------------------------
   resource  :sync,      only: :create
   resources :sync_runs, only: :index
+  resource  :stats,     only: :show
   resources :keyword_rules, except: :show
   resources :email_templates, except: :show
 

@@ -12,6 +12,10 @@ defaults: &defaults
   refresh_cross_instance_flags:
     class: RefreshCrossInstanceFlagsJob
     schedule: every hour at minute 17
+  # After refresh_cross_instance_flags, so the hour's signal counts are current.
+  roll_up_registration_stats:
+    class: RollUpRegistrationStatsJob
+    schedule: every hour at minute 37
   # Sign-in checks the Mastodon role once; this keeps checking.
   verify_moderators:
     class: VerifyModeratorsJob

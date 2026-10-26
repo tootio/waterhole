@@ -13,6 +13,8 @@ class Instance < ApplicationRecord
   has_many :keyword_rules, dependent: :destroy
   has_many :email_templates, dependent: :destroy
   has_many :sync_runs, dependent: :destroy
+  has_many :registration_stats, dependent: :delete_all
+  has_many :purged_registration_stats, dependent: :delete_all
   has_many :purged_registrations, dependent: :delete_all
 
   # The moderator whose token background sync borrows, since jobs have no
@@ -204,6 +206,8 @@ class Instance < ApplicationRecord
       keyword_rules.destroy_all
       email_templates.destroy_all
       sync_runs.destroy_all
+      registration_stats.delete_all
+      purged_registration_stats.delete_all
 
       update!(
         actor_public_key:, actor_key_pinned_at: Time.current, actor_key_proven_at: nil,

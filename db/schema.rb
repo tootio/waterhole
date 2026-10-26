@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_29_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_26_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -163,6 +163,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_120000) do
     t.index ["registration_request_id"], name: "index_notes_on_registration_request_id"
   end
 
+  create_table "purged_registration_stats", force: :cascade do |t|
+    t.integer "approved", default: 0, null: false
+    t.integer "approved_elsewhere", default: 0, null: false
+    t.integer "expired", default: 0, null: false
+    t.integer "flagged", default: 0, null: false
+    t.datetime "hour", null: false
+    t.bigint "instance_id", null: false
+    t.integer "pending", default: 0, null: false
+    t.integer "rejected", default: 0, null: false
+    t.integer "rejected_elsewhere", default: 0, null: false
+    t.integer "signalled", default: 0, null: false
+    t.integer "signups", default: 0, null: false
+    t.index ["instance_id", "hour"], name: "index_purged_registration_stats_on_instance_id_and_hour", unique: true
+  end
+
   create_table "purged_registrations", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "instance_id", null: false
@@ -221,6 +236,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_120000) do
     t.check_constraint "status::text = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text, 'approved_elsewhere'::text, 'rejected_elsewhere'::text, 'expired'::text])", name: "registration_requests_status_check"
   end
 
+  create_table "registration_stats", force: :cascade do |t|
+    t.integer "approved", default: 0, null: false
+    t.integer "approved_elsewhere", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.integer "expired", default: 0, null: false
+    t.integer "flagged", default: 0, null: false
+    t.datetime "hour", null: false
+    t.bigint "instance_id", null: false
+    t.integer "pending", default: 0, null: false
+    t.integer "rejected", default: 0, null: false
+    t.integer "rejected_elsewhere", default: 0, null: false
+    t.integer "signalled", default: 0, null: false
+    t.integer "signups", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["instance_id", "hour"], name: "index_registration_stats_on_instance_id_and_hour", unique: true
+  end
+
   create_table "sessions", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "ip_address"
@@ -271,9 +303,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_120000) do
   add_foreign_key "notes", "moderators"
   add_foreign_key "notes", "notes", column: "parent_id"
   add_foreign_key "notes", "registration_requests"
+  add_foreign_key "purged_registration_stats", "instances"
   add_foreign_key "purged_registrations", "instances"
   add_foreign_key "registration_requests", "instances"
   add_foreign_key "registration_requests", "moderators", column: "claimed_by_id"
+  add_foreign_key "registration_stats", "instances"
   add_foreign_key "sessions", "moderators"
   add_foreign_key "sync_runs", "instances"
   add_foreign_key "votes", "moderators"

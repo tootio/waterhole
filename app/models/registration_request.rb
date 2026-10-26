@@ -129,6 +129,7 @@ class RegistrationRequest < ApplicationRecord
 
     transaction do
       PurgedRegistration.find_or_create_by!(instance_id:, mastodon_account_id:)
+      PurgedRegistrationStat.record(self)
       destroy!
     end
 

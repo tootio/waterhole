@@ -1,0 +1,63 @@
+<% content_for :page_title, "Stats" %>
+<%= render "shared/my_herd_tabs" %>
+
+<div class="mb-4 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <h1 class="text-2xl font-semibold tracking-tight">Stats</h1>
+    <p class="mt-1 text-sm text-stone-500 dark:text-stone-400">
+      Signups by the time people signed up, and what became of them. Counted every hour.
+    </p>
+  </div>
+
+  <nav aria-label="Period" class="flex items-center gap-1 text-sm">
+    <% RegistrationStats::Series::PERIODS.each_value do |period| %>
+      <% active = period == @period %>
+      <%= link_to period.label, stats_path(period: period.key),
+            class: "#{nav_class(active)} whitespace-nowrap", aria: { current: ("page" if active) } %>
+    <% end %>
+  </nav>
+</div>
+
+<div class="space-y-6">
+  <%= render "summary", series: @series, signals: current_instance.participating? %>
+
+  <section class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-5">
+    <h2 class="mb-3 text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+      Signups to <%= current_instance.domain %>
+    </h2>
+    <% if @series.empty? %>
+      <p class="text-sm text-stone-500 dark:text-stone-400">No signups in the last <%= @period.label %>.</p>
+    <% else %>
+      <%= stats_chart @series, kind: "outcomes", label: "Signups to #{current_instance.domain} per #{@period.unit}, by outcome" %>
+      <%= render "table", series: @series,
+            columns: { "signups" => "Signups", **StatsHelper::OUTCOME_LABELS, "flagged" => "Flagged" } %>
+    <% end %>
+  </section>
+
+  <section id="shared" class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-5">
+    <h2 class="mb-3 text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">Across participating herds</h2>
+    <% if !current_instance.participating? %>
+      <p class="text-sm text-stone-700 dark:text-stone-300">
+        Herds that share cross-instance signals also see their signups added up, to spot a wave
+        that hits several herds at once. Your herd does not share signals, so this is not shown here.
+        <%= link_to "About cross-instance signals", herd_path(current_instance, anchor: "signals"), class: "underline" %>
+      </p>
+    <% elsif @shared_series.nil? %>
+      <p class="text-sm text-stone-700 dark:text-stone-300">
+        <%= pluralize(@shared_herds, "herd") %> share<%= "s" if @shared_herds == 1 %> signals so far. The total is shown from
+        <%= StatsController::MIN_SHARED_HERDS %> herds up: with fewer, it would give away the other herds' own numbers.
+      </p>
+    <% else %>
+      <p class="mb-3 text-sm text-stone-500 dark:text-stone-400">
+        All <%= @shared_herds %> herds that share signals, yours included, added up. Signal hits are signups that carry a
+        cross-instance flag.
+      </p>
+      <% if @shared_series.empty? %>
+        <p class="text-sm text-stone-500 dark:text-stone-400">No signups in the last <%= @period.label %>.</p>
+      <% else %>
+        <%= stats_chart @shared_series, kind: "shared", label: "Signups across #{@shared_herds} participating herds per #{@period.unit}, with signal hits" %>
+        <%= render "table", series: @shared_series, columns: { "signups" => "Signups", "signalled" => "Signal hits" } %>
+      <% end %>
+    <% end %>
+  </section>
+</div>

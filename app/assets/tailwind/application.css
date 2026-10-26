@@ -1,4 +1,7 @@
 @import "tailwindcss";
+/* The stats page's charts (vendor/javascript/uplot.js). Small enough to ship
+   with everything else rather than load on that page alone. */
+@import "../../../vendor/stylesheets/uplot.css";
 
 /* Lets the browser paint its own chrome to match: the interior and glyph of a
    checkbox, the <select> popup, the caret, ::placeholder and the scrollbar. The
@@ -399,3 +402,37 @@
 /* Outside the layer: the wrapper carries the select's border-* utilities,
    which outrank anything in the components layer. */
 .ts-wrapper.invalid { border-color: var(--color-red-500); }
+
+/* The stats charts draw on a canvas, which cannot read a Tailwind class: the
+   chart controller reads these instead, and redraws when the scheme flips. */
+@layer components {
+  .chart {
+    --chart-axis: var(--color-stone-500);
+    --chart-grid: var(--color-stone-200);
+    --chart-pending: var(--color-amber-400);
+    --chart-approved: var(--color-emerald-600);
+    --chart-approved_elsewhere: var(--color-emerald-300);
+    --chart-rejected: var(--color-red-600);
+    --chart-rejected_elsewhere: var(--color-red-300);
+    --chart-expired: var(--color-stone-400);
+    --chart-signups: var(--color-sky-600);
+    --chart-flagged: var(--color-stone-900);
+    --chart-signalled: var(--color-violet-600);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .chart {
+      --chart-axis: var(--color-stone-400);
+      --chart-grid: var(--color-stone-800);
+      --chart-pending: var(--color-amber-500);
+      --chart-approved: var(--color-emerald-500);
+      --chart-approved_elsewhere: var(--color-emerald-800);
+      --chart-rejected: var(--color-red-500);
+      --chart-rejected_elsewhere: var(--color-red-800);
+      --chart-expired: var(--color-stone-600);
+      --chart-signups: var(--color-sky-500);
+      --chart-flagged: var(--color-stone-100);
+      --chart-signalled: var(--color-violet-400);
+    }
+  }
+}

@@ -54,9 +54,9 @@ module ApplicationHelper
     end
   end
 
-  # Watchwords, email templates, sync history and your own herd's page all sit
+  # Watchwords, email templates, stats, sync history and your own herd's page all sit
   # under "My herd" in the header; every other herd's page is under "Herds".
-  MY_HERD_CONTROLLERS = %w[keyword_rules email_templates sync_runs].freeze
+  MY_HERD_CONTROLLERS = %w[keyword_rules email_templates stats sync_runs].freeze
 
   def my_herd_page?
     return true if controller_name.in?(MY_HERD_CONTROLLERS)

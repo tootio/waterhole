@@ -15,3 +15,4 @@ pin_all_from "app/javascript/lib", under: "lib"
 pin "tom-select" # @2.6.2
 pin "@orchidjs/sifter", to: "@orchidjs--sifter.js" # @1.1.0
 pin "@orchidjs/unicode-variants", to: "@orchidjs--unicode-variants.js" # @1.2.2
+pin "uplot" # @1.6.32

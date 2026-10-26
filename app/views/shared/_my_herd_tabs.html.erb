@@ -7,6 +7,7 @@
          [ "Overview",        herd_path(current_instance), controller_name == "instances" ],
          [ "Watchwords",      keyword_rules_path,          controller_name == "keyword_rules" ],
          [ "Email templates", email_templates_path,        controller_name == "email_templates" ],
+         [ "Stats",           stats_path,                  controller_name == "stats" ],
          [ "Sync history",    sync_runs_path,              controller_name == "sync_runs" ]
        ].each do |label, path, active| %>
       <%= link_to label, path, class: "#{nav_class(active)} whitespace-nowrap", aria: { current: ("page" if active) } %>

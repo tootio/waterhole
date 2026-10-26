@@ -1,0 +1,16 @@
+<%# The headline numbers for the period, readable without the chart or JavaScript. %>
+<dl class="grid grid-cols-2 gap-3 <%= signals ? "sm:grid-cols-5" : "sm:grid-cols-4" %>">
+  <% [
+       [ "Signups",     number_with_delimiter(series.total("signups")), nil ],
+       [ "Approved",    number_with_delimiter(series.approved), "#{stats_percent(series.approved, series.decided)} of decided" ],
+       [ "Rejected",    number_with_delimiter(series.rejected), "#{stats_percent(series.rejected, series.decided)} of decided" ],
+       [ "Flagged",     number_with_delimiter(series.total("flagged")), "#{stats_percent(series.total("flagged"), series.total("signups"))} of signups" ],
+       ([ "Signal hits", number_with_delimiter(series.total("signalled")), "cross-instance flags" ] if signals)
+     ].compact.each do |label, value, note| %>
+    <div class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 px-4 py-3">
+      <dt class="text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400"><%= label %></dt>
+      <dd class="mt-1 text-2xl font-semibold tabular-nums"><%= value %></dd>
+      <% if note %><dd class="text-xs text-stone-500 dark:text-stone-400"><%= note %></dd><% end %>
+    </div>
+  <% end %>
+</dl>

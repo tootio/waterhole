@@ -112,12 +112,12 @@ class LayoutTest < ActionDispatch::IntegrationTest
     moderator = sign_in_as moderators(:avery)
     own = herd_path(moderator.instance)
 
-    [ own, keyword_rules_path, new_keyword_rule_path, email_templates_path, new_email_template_path, sync_runs_path ].each do |path|
+    [ own, keyword_rules_path, new_keyword_rule_path, email_templates_path, new_email_template_path, stats_path, sync_runs_path ].each do |path|
       get path
 
       assert_select "header nav a.bg-stone-900", { text: "My herd", count: 1 }, "My herd should be active on #{path}"
       assert_select "header nav a.bg-stone-900", { text: "Herds", count: 0 }
-      assert_select "main nav[aria-label='My herd'] a", 4
+      assert_select "main nav[aria-label='My herd'] a", 5
       assert_select "main nav[aria-label='My herd'] a[aria-current=page]", 1
     end
   end

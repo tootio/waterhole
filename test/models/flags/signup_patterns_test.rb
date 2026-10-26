@@ -4,6 +4,11 @@ require "test_helper"
 # residential proxies: similar_reason and signup_burst.
 class Flags::SignupPatternsTest < ActiveSupport::TestCase
   TEMPLATE = "Hi, I am %s, a digital artist from Berlin and I would love to share my illustrations and meet other creative people here."
+  # Long enough that a swapped name stays within MAX_DISTANCE under nearly
+  # every key (all but 11 of 3000 pairs over 1000 keys), so the flag tests
+  # don't hang on the test key. How close shorter variations land is tested
+  # over several keys below.
+  FARM_TEMPLATE = "#{TEMPLATE} I mostly draw city scenes and old buildings, sometimes portraits of friends, and I post new work every week or so."
 
   setup do
     @alpha = instances(:alpha)   # participates
@@ -26,13 +31,44 @@ class Flags::SignupPatternsTest < ActiveSupport::TestCase
     b = ReasonFingerprint.call(format(TEMPLATE, "Marco"))
     other = ReasonFingerprint.call("Looking for a place to talk about open source databases, especially PostgreSQL tuning.")
 
-    distance = ->(x, y) { ((x ^ y) & (2**64 - 1)).to_s(2).count("1") }
-    assert_operator distance.(a, b), :<=, ReasonFingerprint::MAX_DISTANCE
-    assert_operator distance.(a, other), :>, ReasonFingerprint::MAX_DISTANCE
+    assert_operator distance(a, b), :<=, ReasonFingerprint::MAX_DISTANCE
+    assert_operator distance(a, other), :>, ReasonFingerprint::MAX_DISTANCE
+  end
+
+  # Templates in scripts written without spaces, with a word to change and a
+  # reason that has nothing to do with them.
+  FOREIGN_TEMPLATES = {
+    "Chinese" => [ "你好，我是%s，一名来自柏林的数字艺术家，我很想在这里分享我的插画，认识其他有创意的人。",
+      %w[安娜 马可], %w[插画 照片], "想找个地方讨论开源数据库，特别是PostgreSQL的性能调优。" ],
+    "Japanese" => [ "こんにちは、%sです。ベルリン出身のデジタルアーティストで、ここでイラストを共有して、クリエイティブな人たちと出会いたいです。",
+      %w[アンナ マルコ], %w[イラスト 写真], "オープンソースのデータベース、特にPostgreSQLのチューニングについて話せる場所を探しています。" ],
+    "Thai" => [ "สวัสดีครับ ผมชื่อ%s เป็นศิลปินดิจิทัลจากเบอร์ลิน อยากแบ่งปันภาพวาดของผมและพบปะผู้คนที่มีความคิดสร้างสรรค์ที่นี่",
+      %w[อันนา มาร์โก], %w[ภาพวาด ภาพถ่าย], "กำลังมองหาที่สำหรับพูดคุยเกี่ยวกับฐานข้อมูลโอเพนซอร์ส โดยเฉพาะการปรับแต่ง PostgreSQL" ]
+  }.freeze
+
+  # How close a variation lands depends on the key, so these are counted over
+  # several: most variations match, no unrelated reason does.
+  FOREIGN_TEMPLATES.each do |language, (template, names, change, unrelated)|
+    test "#{language} template variations fingerprint close, different reasons far apart" do
+      text = format(template, names.first)
+      close, far = 0, 0
+      20.times do |k|
+        with_hmac_key("variation-key-#{k}") do
+          a = ReasonFingerprint.call(text)
+          close += [ format(template, names.last), text.sub(*change) ]
+            .count { distance(a, ReasonFingerprint.call(it)) <= ReasonFingerprint::MAX_DISTANCE }
+          far += 1 if distance(a, ReasonFingerprint.call(unrelated)) > ReasonFingerprint::MAX_DISTANCE
+        end
+      end
+
+      assert_operator close, :>=, 28, "variations matched under #{close} of 40 keys"
+      assert_equal 20, far
+    end
   end
 
   test "short reasons get no fingerprint" do
     assert_nil ReasonFingerprint.call("I want to join please")
+    assert_nil ReasonFingerprint.call("我想加入这个社区。")
     assert_nil ReasonFingerprint.call(nil)
   end
 
@@ -43,6 +79,8 @@ class Flags::SignupPatternsTest < ActiveSupport::TestCase
       refute_equal original, ReasonFingerprint.call(text)
     end
   end
+
+  def distance(x, y) = ((x ^ y) & (2**64 - 1)).to_s(2).count("1")
 
   def with_hmac_key(value)
     saved = ENV["WATERHOLE_SHARING_HMAC_KEY"]
@@ -55,9 +93,9 @@ class Flags::SignupPatternsTest < ActiveSupport::TestCase
   # --- similar_reason --------------------------------------------------------
 
   test "a templated reason matches across participating instances, by domain only" do
-    here  = signup(@alpha, 1, reason: format(TEMPLATE, "Anna"), username: "anna")
-    local = signup(@alpha, 2, reason: format(TEMPLATE, "Marco"), username: "marco")
-    signup(@beta, 3, reason: format(TEMPLATE, "Lena"), username: "lena")
+    here  = signup(@alpha, 1, reason: format(FARM_TEMPLATE, "Anna"), username: "anna")
+    local = signup(@alpha, 2, reason: format(FARM_TEMPLATE, "Marco"), username: "marco")
+    signup(@beta, 3, reason: format(FARM_TEMPLATE, "Lena"), username: "lena")
 
     found = flag(here, "similar_reason")
     assert_equal "warning", found.severity, "several matches is the pattern of a farm"
@@ -67,15 +105,15 @@ class Flags::SignupPatternsTest < ActiveSupport::TestCase
   end
 
   test "a single match is only info" do
-    here = signup(@alpha, 1, reason: format(TEMPLATE, "Anna"))
-    signup(@alpha, 2, reason: format(TEMPLATE, "Marco"))
+    here = signup(@alpha, 1, reason: format(FARM_TEMPLATE, "Anna"))
+    signup(@alpha, 2, reason: format(FARM_TEMPLATE, "Marco"))
 
     assert_equal "info", flag(here, "similar_reason").severity
   end
 
   test "a single match on another instance is a warning" do
-    here = signup(@alpha, 1, reason: format(TEMPLATE, "Anna"))
-    signup(@beta, 2, reason: format(TEMPLATE, "Marco"))
+    here = signup(@alpha, 1, reason: format(FARM_TEMPLATE, "Anna"))
+    signup(@beta, 2, reason: format(FARM_TEMPLATE, "Marco"))
 
     found = flag(here, "similar_reason")
     assert_equal "warning", found.severity
@@ -85,8 +123,8 @@ class Flags::SignupPatternsTest < ActiveSupport::TestCase
   # participating? reads the loaded record, the scope the table: while an
   # approval is revoked mid-sync they disagree, and the own queue must not drop out.
   test "the own queue is compared even when the loaded instance is out of date" do
-    here = signup(@alpha, 1, reason: format(TEMPLATE, "Anna"))
-    signup(@alpha, 2, reason: format(TEMPLATE, "Marco"))
+    here = signup(@alpha, 1, reason: format(FARM_TEMPLATE, "Anna"))
+    signup(@alpha, 2, reason: format(FARM_TEMPLATE, "Marco"))
     Instance.where(id: @alpha.id).update_all(signals_approved: false)
 
     assert here.instance.participating?, "the record in memory still says participating"
@@ -94,17 +132,17 @@ class Flags::SignupPatternsTest < ActiveSupport::TestCase
   end
 
   test "a non-participating instance is compared with its own queue only, and not seen" do
-    here = signup(@gamma, 1, reason: format(TEMPLATE, "Anna"))
-    signup(@alpha, 2, reason: format(TEMPLATE, "Marco"))
+    here = signup(@gamma, 1, reason: format(FARM_TEMPLATE, "Anna"))
+    signup(@alpha, 2, reason: format(FARM_TEMPLATE, "Marco"))
 
     assert_nil flag(here, "similar_reason")
   end
 
   test "a new signup flags the requests it resembles" do
-    earlier = signup(@beta, 1, reason: format(TEMPLATE, "Anna"))
+    earlier = signup(@beta, 1, reason: format(FARM_TEMPLATE, "Anna"))
     assert_nil flag(earlier, "similar_reason")
 
-    perform_enqueued_jobs { signup(@alpha, 2, reason: format(TEMPLATE, "Marco")) }
+    perform_enqueued_jobs { signup(@alpha, 2, reason: format(FARM_TEMPLATE, "Marco")) }
 
     assert flag(earlier, "similar_reason")
   end

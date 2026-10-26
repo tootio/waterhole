@@ -139,7 +139,7 @@ docker compose exec web bin/rails waterhole:recompute_flags
 
 If you know your way around Ruby on Rails, it should not be too hard to run Waterhole without Docker.
 It's a standard Rails app with Solid*, Turbo, and a PostgreSQL database.
-Waterhole is built and tested against Ruby 4.0.6 and PostgreSQL 18; those are the minimum versions we support.
+Waterhole is built and tested against Ruby 4.0.9 and PostgreSQL 18; those are the minimum versions we support.
 
 ## Development
 

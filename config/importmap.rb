@@ -4,7 +4,7 @@ pin "application"
 pin "@hotwired/turbo-rails", to: "turbo.min.js"
 pin "@hotwired/stimulus", to: "stimulus.min.js"
 pin "@hotwired/stimulus-loading", to: "stimulus-loading.js"
-pin "dompurify" # @3.4.16
+pin "dompurify" # @3.4.17
 pin "domfortify" # @1.0.3
 pin "domfortify_init"
 pin_all_from "app/javascript/controllers", under: "controllers"

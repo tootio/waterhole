@@ -175,7 +175,7 @@ class RegistrationRequest < ApplicationRecord
 
   def account_age_at_signup = signed_up_at
 
-  def invite_request_words = invite_request.to_s.split.size
+  def invite_request_words = Words.count(invite_request)
 
   # The signup network, for comparing with other requests: ip_group, grouped
   # because IPv6 hosts rotate their low bits. Nil behind iCloud Private Relay

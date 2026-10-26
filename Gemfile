@@ -97,3 +97,7 @@ gem "simpleidn", "~> 0.3"
 # The public suffix list, so DomainLists::DisposableEmailDomains walks from an address's
 # domain up to its registrable domain and never past it (co.uk, github.io).
 gem "public_suffix", "~> 7.0"
+
+# ICU's word boundaries (Words), which split Chinese, Japanese, Thai, Lao,
+# Khmer and Burmese -- scripts written without spaces -- by dictionary.
+gem "ffi-icu", "~> 0.7"

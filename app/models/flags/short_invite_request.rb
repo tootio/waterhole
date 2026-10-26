@@ -5,9 +5,10 @@ module Flags
     def call
       text = request.invite_request
       return nil if text.blank? # NoInviteRequest covers this
-      return nil if request.invite_request_words >= MIN_WORDS
+      words = request.invite_request_words
+      return nil if words >= MIN_WORDS
 
-      detect(:info, word_count: request.invite_request_words)
+      detect(:info, word_count: words)
     end
   end
 end

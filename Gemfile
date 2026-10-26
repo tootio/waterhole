@@ -60,7 +60,7 @@ group :development, :test do
   gem "selenium-webdriver"
 end
 
-gem "faraday", "~> 2.14"
+gem "faraday", "~> 2.15"
 gem "faraday-retry", "~> 2.4"
 
 # Ruby 3.4 unbundled csv from the default gems; parsing the IFTAS DNI export

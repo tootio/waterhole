@@ -34,12 +34,26 @@
     <section class="rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-5">
       <h2 class="mb-2 text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">Why they want to join</h2>
       <% if @registration_request.invite_request.present? %>
-        <div data-controller="expandable" data-action="turbo:render@document->expandable#reconcile">
-          <div data-expandable-target="content" class="text-marker-room overflow-hidden whitespace-pre-wrap text-lg leading-relaxed"><%= highlight_keywords(@registration_request.invite_request, field: :invite_request) %></div>
-          <button type="button" data-expandable-target="toggle" data-action="expandable#toggle"
-                  class="<%= button_classes(:ghost, "mt-2 hidden rounded text-sm underline") %>">Show more</button>
+        <%# lang="": the applicant's language is unknown here, and inheriting the
+            page's lang would tell browsers and screen readers it is English.
+            translate_controller fills in what it detects. %>
+        <div data-controller="translate" data-action="turbo:render@document->translate#reconcile">
+          <div data-controller="expandable" data-action="turbo:render@document->expandable#reconcile">
+            <div data-expandable-target="content" data-translate-target="source" lang="" class="text-marker-room overflow-hidden whitespace-pre-wrap text-lg leading-relaxed"><%= highlight_keywords(@registration_request.invite_request, field: :invite_request) %></div>
+            <button type="button" data-expandable-target="toggle" data-action="expandable#toggle"
+                    class="<%= button_classes(:ghost, "mt-2 hidden rounded text-sm underline") %>">Show more</button>
+          </div>
+          <p class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-stone-500 dark:text-stone-400">
+            <span><%= pluralize(@registration_request.invite_request_words, "word") %></span>
+            <span data-translate-target="language" hidden class="rounded-full bg-stone-100 dark:bg-stone-800 px-2 py-0.5 text-stone-600 dark:text-stone-300"></span>
+            <button type="button" data-translate-target="button" data-action="translate#translate" hidden
+                    class="<%= button_classes(:ghost, "rounded underline") %>"></button>
+            <%# permanent: a morph would empty this live region, and putting the text back would announce it again. %>
+            <span id="translate_status" data-turbo-permanent data-translate-target="status" role="status"></span>
+          </p>
+          <div data-translate-target="output" hidden
+               class="mt-3 whitespace-pre-wrap border-l-2 border-stone-300 dark:border-stone-700 pl-3 text-lg leading-relaxed text-stone-700 dark:text-stone-300"></div>
         </div>
-        <p class="mt-3 text-xs text-stone-500 dark:text-stone-400"><%= pluralize(@registration_request.invite_request_words, "word") %></p>
       <% else %>
         <p class="text-stone-500 dark:text-stone-400 italic">They gave no reason.</p>
       <% end %>

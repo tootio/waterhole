@@ -73,28 +73,31 @@ class RollUpRegistrationStatsJob < ApplicationJob
     totals
   end
 
+  # Built from Arel rather than SQL strings: every name and value here is a
+  # constant, but Brakeman cannot tell, and it fails CI on interpolated SQL.
   def live_counts(since)
+    requests = RegistrationRequest.arel_table
+    hour = Arel::Nodes::NamedFunction.new("date_trunc", [ Arel::Nodes.build_quoted("hour"), requests[:signed_up_at] ])
     signalled = Flag.where(rule: Flags.cross_instance_rules.map(&:rule_name))
-      .where("flags.registration_request_id = registration_requests.id")
-    warning = Flag::SEVERITIES[:warning]
+      .where(Flag.arel_table[:registration_request_id].eq(requests[:id]))
 
     # Aliased apart from the counters' names: registration_requests has an
     # `approved` column of its own, and the model would cast a count by that
     # name to a boolean.
-    selects = [
-      "instance_id",
-      "date_trunc('hour', signed_up_at) AS hour",
-      "COUNT(*) AS signups_count",
-      *RegistrationStat::OUTCOMES.map { |status|
-        RegistrationRequest.sanitize_sql([ "COUNT(*) FILTER (WHERE status = ?) AS #{status}_count", status ])
-      },
-      "COUNT(*) FILTER (WHERE max_flag_severity >= #{warning}) AS flagged_count",
-      "COUNT(*) FILTER (WHERE EXISTS (#{signalled.to_sql})) AS signalled_count"
-    ]
+    conditions = {
+      "signups" => nil,
+      **RegistrationStat::OUTCOMES.index_with { requests[:status].eq(it) },
+      "flagged" => requests[:max_flag_severity].gteq(Flag::SEVERITIES[:warning]),
+      "signalled" => Arel::Nodes::Exists.new(signalled.arel)
+    }
+    counts = conditions.map do |counter, condition|
+      count = Arel.star.count
+      (condition ? count.filter(condition) : count).as("#{counter}_count")
+    end
 
     RegistrationRequest.where(signed_up_at: since..)
-      .group(:instance_id, "date_trunc('hour', signed_up_at)")
-      .select(*selects)
+      .group(:instance_id, hour)
+      .select(requests[:instance_id], hour.as("hour"), *counts)
       .map { |row| { "instance_id" => row.instance_id, "hour" => row.hour, **RegistrationStat::COUNTERS.index_with { row["#{it}_count"] } } }
   end
 end

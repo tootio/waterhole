@@ -59,11 +59,15 @@ module RegistrationStats
 
     private
 
+    # Arel rather than SQL strings, for the same reason as in
+    # RollUpRegistrationStatsJob#live_counts.
     def sums
+      stats = RegistrationStat.arel_table
+      bucket = Arel::Nodes::NamedFunction.new("date_trunc", [ Arel::Nodes.build_quoted(period.unit), stats[:hour] ])
+
       RegistrationStat.where(instance: @instances, hour: buckets.first...(buckets.last + @step))
-        .group("bucket")
-        .select("date_trunc('#{period.unit}', hour) AS bucket",
-          *RegistrationStat::COUNTERS.map { "SUM(#{it}) AS #{it}" })
+        .group(bucket)
+        .select(bucket.as("bucket"), *RegistrationStat::COUNTERS.map { stats[it].sum.as(it) })
         .map(&:attributes)
     end
   end

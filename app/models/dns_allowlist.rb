@@ -48,7 +48,7 @@ class DnsAllowlist
   end
 
   # Wraps Resolv::DNS with the settings this design depends on. Verified against
-  # Ruby 4.0.6:
+  # Ruby 4.0.9:
   #
   #   1. `raise_timeout_errors: true` is MANDATORY. Resolv::DNS::Config#resolv
   #      ends with `rescue ResolvError; raise if @raise_timeout_errors && ...`,

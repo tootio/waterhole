@@ -7,21 +7,24 @@ return if Rails.env.production?
 
 puts "Seeding Waterhole…"
 
-Flag.delete_all
-Note.delete_all
-Vote.delete_all
-Decision.delete_all
-RegistrationRequest.delete_all
-Session.delete_all
-SyncRun.delete_all
-Instance.update_all(sync_moderator_id: nil)
-Moderator::Avatar.delete_all
-Moderator.delete_all
-KeywordRule.delete_all
-EmailTemplate.delete_all
-PurgedRegistration.delete_all
-Instance.delete_all
-DomainPolicy.delete_all
+# The records below enqueue jobs (RecomputeFlagsJob above all) that seeding
+# makes redundant by computing every flag itself at the end. With bin/dev
+# running, a worker would run them mid-seed, rewriting what was just seeded and
+# holding the row locks a reseed's TRUNCATE deadlocks on. The test adapter
+# holds them in memory and never runs them.
+ActiveJob::Base.queue_adapter = :test
+
+# Every table, not a hand-kept list: a table added later can't be missed, and
+# foreign keys don't dictate an order. Only the primary database -- queued
+# jobs, cache and cable live in their own. A recurring job can still hold a
+# lock the TRUNCATE needs; Postgres then aborts one side, so try again.
+attempts = 0
+begin
+  ApplicationRecord.with_connection { it.truncate_tables(*it.tables) }
+rescue ActiveRecord::Deadlocked
+  retry if (attempts += 1) < 5
+  raise
+end
 
 # Seeded as already accepting whatever documents this deployment currently
 # publishes, so a seeded instance is coherent rather than going stale at the very

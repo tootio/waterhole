@@ -7,6 +7,9 @@
     <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
+    <% if Waterhole::Deployment.push_configured? %>
+      <link rel="manifest" href="<%= pwa_manifest_path %>">
+    <% end %>
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#1c1917" media="(prefers-color-scheme: dark)">
     <%= render "shared/meta" %>
@@ -70,6 +73,10 @@
                     <span class="block break-all text-sm font-medium text-stone-900 dark:text-stone-100"><%= current_moderator.handle %></span>
                   </p>
                   <div class="border-t border-stone-200 dark:border-stone-800 pt-1">
+                    <% if Waterhole::Deployment.push_configured? && current_moderator.consent_current? %>
+                      <%= link_to "Notifications", push_preferences_path,
+                            class: "block w-full px-3 py-1.5 text-left text-sm hover:bg-stone-100 dark:hover:bg-stone-800 #{focus_ring_classes}" %>
+                    <% end %>
                     <%= button_to "Sign out", session_path, method: :delete,
                           class: "block w-full px-3 py-1.5 text-left text-sm hover:bg-stone-100 dark:hover:bg-stone-800 #{focus_ring_classes}" %>
                   </div>

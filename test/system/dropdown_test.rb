@@ -30,7 +30,7 @@ class DropdownTest < ApplicationSystemTestCase
     assert_button "Sign out"
 
     press :tab
-    assert_equal "Sign out", active_element_text
+    assert_equal "Notifications", active_element_text
     press :escape
 
     assert_no_button "Sign out"
@@ -41,6 +41,7 @@ class DropdownTest < ApplicationSystemTestCase
   test "tabbing out of the account menu closes it" do
     visit root_path
     find("header .dropdown-toggle").click
+    press :tab # Notifications
     press :tab # Sign out
     press :tab # out of the header
 

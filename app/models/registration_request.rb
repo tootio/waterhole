@@ -50,6 +50,8 @@ class RegistrationRequest < ApplicationRecord
   after_destroy_commit -> { instance.broadcast_queue_badge_later if awaiting_review? }
   after_update_commit  -> { instance.broadcast_queue_badge_later if awaiting_review_changed? }
 
+  before_save :track_queue_entry
+
   before_validation :derive_email_fields
   # After the email fields: the signup shape includes the email domain.
   before_validation :derive_pattern_fields
@@ -187,6 +189,15 @@ class RegistrationRequest < ApplicationRecord
   def active? = ACTIVE_STATUSES.include?(status)
 
   private
+
+  # Since when this has been waiting on a moderator, and since when it has been
+  # pending at all. Neither signed_up_at nor created_at can say: someone can confirm
+  # their email days after signing up, and a resolved request can be listed as
+  # pending again. Push notifications count from here (PushNotifications::Digest).
+  def track_queue_entry
+    self.awaiting_since = awaiting_review? ? (awaiting_since || Time.current) : nil
+    self.pending_since = pending? ? (pending_since || Time.current) : nil
+  end
 
   def remember_previous_ip_group
     @previous_ip_group = attribute_in_database(:ip_group)

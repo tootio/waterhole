@@ -245,6 +245,16 @@ module Waterhole
       ActiveModel::Type::Boolean.new.cast(ENV["WATERHOLE_IFTAS_DNI_SYNC"]) || false
     end
 
+    # Push notifications to moderators. Optional: without both keys Waterhole
+    # never mentions push and never schedules DispatchPushNotificationsJob.
+    # Subscriptions are bound to the public key, so changing the pair silently
+    # ends every browser's subscription until its moderator enables it again.
+    def vapid_public_key = ENV["WATERHOLE_VAPID_PUBLIC_KEY"].presence
+
+    def vapid_private_key = ENV["WATERHOLE_VAPID_PRIVATE_KEY"].presence
+
+    def push_configured? = vapid_public_key.present? && vapid_private_key.present?
+
     def iftas_dni_url
       ENV["WATERHOLE_IFTAS_DNI_URL"].presence || DomainLists::IftasDni::DEFAULT_CSV_URL
     end

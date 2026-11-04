@@ -19,6 +19,13 @@ class ContentSecurityPolicyTest < ActionDispatch::IntegrationTest
     assert_select "script[type=importmap][nonce=?]", nonce
   end
 
+  test "Trusted Types names only the policies the app creates" do
+    get new_session_path
+
+    assert_match(/trusted-types default dompurify turbo-drive push-service-worker(;|\z)/, policy)
+    assert_match(/require-trusted-types-for 'script'/, policy)
+  end
+
   # Signing in redirects to the moderator's Mastodon server, and browsers apply
   # form-action to that redirect.
   test "only the sign-in pages may submit forms to another host" do

@@ -70,6 +70,16 @@ whenever this privacy policy changes; until they agree they can only read the
 legal pages. Declining signs them out and deletes their record, or anonymises
 it where their notes or decisions are part of an instance's records.
 
+> **Optional — keep this paragraph only if you set `WATERHOLE_VAPID_PUBLIC_KEY`;
+> otherwise delete it together with this note.**
+
+Moderators can choose to receive push notifications about their queue. For each
+browser they enable, we store the address and keys that its vendor's push service
+issued for it, and their notification settings including a time zone. We do not
+track whether a moderator is using the service at the time. Turning notifications
+off for a browser deletes its address and keys immediately. The settings stay until
+the moderator's record is deleted or anonymised as above, which deletes them too.
+
 ## Cookies
 
 This service sets up to three cookies, all first-party. The first two are needed
@@ -130,6 +140,15 @@ IP geolocation uses public-domain datasets downloaded from a third party, and we
 also download Apple's list of iCloud Private Relay addresses and the Tor
 Project's list of Tor relays. Your IP address is **not** sent to any of them —
 every lookup happens on our own server.
+
+> **Optional — keep this paragraph only if you set `WATERHOLE_VAPID_PUBLIC_KEY`;
+> otherwise delete it together with this note.**
+
+A push notification reaches a moderator's browser through the push service of
+that browser's vendor (Apple, Google, Mozilla or Microsoft), which sees your
+browser's push address and when a message was sent, and so may learn that this
+service sent you one. The message itself is encrypted, and contains only a count
+such as "2 new registrations are waiting": no applicant's data and no instance name.
 
 > **Optional — keep this paragraph only if you set `SENTRY_DSN`; otherwise
 > delete it together with this note.**

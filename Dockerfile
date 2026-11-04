@@ -17,8 +17,9 @@ WORKDIR /rails
 
 # Install base packages. libicu76 is ICU on the image's Debian (trixie), for
 # ffi-icu's word boundaries; its name changes with the Debian release.
+# tzdata-legacy for zones like Asia/Calcutta, which is what browsers report.
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y curl libicu76 libjemalloc2 postgresql-client && \
+    apt-get install --no-install-recommends -y curl libicu76 libjemalloc2 postgresql-client tzdata tzdata-legacy && \
     ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
@@ -34,7 +35,7 @@ FROM base AS build
 
 # Install packages needed to build gems
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential git libpq-dev libyaml-dev pkg-config && \
+    apt-get install --no-install-recommends -y build-essential git libpq-dev libssl-dev libyaml-dev pkg-config && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Install application gems

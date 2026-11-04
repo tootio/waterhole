@@ -64,7 +64,24 @@ Rails.application.routes.draw do
   # Reveal health status on /up
   get "up" => "rails/health#show", as: :rails_health_check
 
-  # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)
-  # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
-  # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
+  # --- push notifications ------------------------------------------------------
+  # Only on a deployment that configured them: see Waterhole::Deployment.push_configured?.
+  constraints ->(_request) { Waterhole::Deployment.push_configured? } do
+    resource :push_preferences, path: "notifications", only: %i[show update]
+    resources :push_subscriptions, only: %i[create destroy] do
+      # POST rather than GET where the endpoint is a parameter: it is a credential
+      # of sorts, and URLs end up in logs.
+      collection do
+        post :check
+        post :send_test
+        delete :current
+      end
+    end
+    get "/help/push", to: "help#push", as: :push_help
+
+    # app/views/pwa/*. iOS only offers push to a site added to the home screen,
+    # which takes the manifest; other browsers need the worker to receive it.
+    get "manifest" => "rails/pwa#manifest", as: :pwa_manifest, defaults: { format: :json }
+    get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker, defaults: { format: :js }
+  end
 end

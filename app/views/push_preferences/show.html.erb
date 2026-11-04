@@ -1,0 +1,110 @@
+<% content_for :page_title, "Notifications" %>
+<%
+  field_class = "mt-1 rounded border border-stone-300 dark:border-stone-700 px-3 py-2"
+  section_class = "rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-5"
+  scopes = [ [ "Awaiting review (email confirmed)", "awaiting" ], [ "All pending (also unconfirmed email)", "all_pending" ] ]
+%>
+
+<div class="mx-auto max-w-2xl space-y-6" data-controller="push-subscription"
+     data-action="turbo:render@document->push-subscription#sync"
+     data-push-subscription-saved-zone-value="<%= @preference.time_zone if @preference.persisted? %>"
+     data-push-subscription-public-key-value="<%= Waterhole::Deployment.vapid_public_key %>"
+     data-push-subscription-subscriptions-url-value="<%= push_subscriptions_path %>"
+     data-push-subscription-check-url-value="<%= check_push_subscriptions_path %>"
+     data-push-subscription-test-url-value="<%= send_test_push_subscriptions_path %>"
+     data-push-subscription-current-url-value="<%= current_push_subscriptions_path %>">
+  <div>
+    <h1 class="text-2xl font-semibold tracking-tight">Notifications</h1>
+    <p class="mt-1 text-sm text-stone-600 dark:text-stone-300">
+      Off unless you turn them on. Notifications only ever contain a count, such as
+      “2 new registrations are waiting”.
+      <%= link_to "How this works", push_help_path, data: { action: "modal#open" },
+            class: button_classes(:ghost, "rounded underline") %>
+    </p>
+  </div>
+
+  <section class="<%= section_class %>" aria-labelledby="push_this_browser">
+    <h2 id="push_this_browser" class="font-medium">This browser</h2>
+    <p class="mt-1 text-sm text-stone-600 dark:text-stone-300" role="status" data-push-subscription-target="status">
+      Turning notifications on needs JavaScript.
+    </p>
+    <div class="mt-3 flex flex-wrap gap-3">
+      <button type="button" hidden data-push-subscription-target="enable" data-action="push-subscription#enable"
+              class="<%= button_classes(:solid, "px-4 py-2 text-sm") %>">Turn on in this browser</button>
+      <button type="button" hidden data-push-subscription-target="test" data-action="push-subscription#sendTest"
+              class="<%= button_classes(:outline, "px-4 py-2 text-sm") %>">Send a test notification</button>
+      <button type="button" hidden data-push-subscription-target="disable" data-action="push-subscription#disable"
+              class="<%= button_classes(:outline, "px-4 py-2 text-sm") %>">Turn off in this browser</button>
+    </div>
+  </section>
+
+  <%= form_with model: @preference, url: push_preferences_path, method: :patch, class: "#{section_class} space-y-4" do |f| %>
+    <% if @preference.errors.any? %>
+      <div class="rounded bg-red-50 dark:bg-red-950 px-3 py-2 text-sm text-red-900 dark:text-red-200">
+        <%= @preference.errors.full_messages.to_sentence %>
+      </div>
+    <% end %>
+
+    <fieldset class="space-y-3">
+      <legend class="font-medium">New registrations</legend>
+      <div class="flex flex-wrap gap-4">
+        <div>
+          <%= f.label :new_frequency, "Tell me", class: "block text-sm font-medium" %>
+          <%= f.select :new_frequency,
+                [ [ "Never", "off" ], [ "Every 5 minutes", "every_5_minutes" ], [ "Every hour", "hourly" ], [ "Once a day", "daily" ] ],
+                {}, class: field_class %>
+        </div>
+        <div>
+          <%= f.label :new_scope, "About", class: "block text-sm font-medium" %>
+          <%= f.select :new_scope, scopes, {}, class: field_class %>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="space-y-3">
+      <legend class="font-medium">Forgotten registrations</legend>
+      <div class="flex flex-wrap gap-4">
+        <div>
+          <%= f.label :forgotten_after_days, "Remind me after", class: "block text-sm font-medium" %>
+          <%= f.select :forgotten_after_days,
+                PushPreference::FORGOTTEN_AFTER_DAYS.map { [ pluralize(it, "day"), it ] },
+                { include_blank: "Never" }, class: field_class %>
+        </div>
+        <div>
+          <%= f.label :forgotten_scope, "About", class: "block text-sm font-medium" %>
+          <%= f.select :forgotten_scope, scopes, {}, class: field_class %>
+        </div>
+      </div>
+      <p class="text-xs text-stone-500 dark:text-stone-400">Once per registration, and at most once a day.</p>
+    </fieldset>
+
+    <div>
+      <%= f.label :daily_time, "Daily notifications arrive around", class: "block text-sm font-medium" %>
+      <%= f.time_field :daily_time, value: @preference.daily_time, required: true,
+            aria: { describedby: "push_daily_time_hint" }, class: field_class %>
+      <p id="push_daily_time_hint" class="mt-1 text-xs text-stone-500 dark:text-stone-400">
+        For “once a day” and for reminders. Your time zone:
+        <span data-push-subscription-target="zoneName"><%= @preference.time_zone %></span>.
+      </p>
+      <%= f.hidden_field :time_zone, data: { push_subscription_target: "timeZone" } %>
+    </div>
+
+    <%= f.submit "Save", class: button_classes(:solid, "px-4 py-2 text-sm") %>
+  <% end %>
+
+  <% if @subscriptions.any? %>
+    <section class="<%= section_class %>" aria-labelledby="push_browsers">
+      <h2 id="push_browsers" class="font-medium">Browsers receiving notifications</h2>
+      <ul class="mt-2 divide-y divide-stone-200 dark:divide-stone-800">
+        <% @subscriptions.each do |subscription| %>
+          <li class="flex items-center justify-between gap-3 py-2 text-sm">
+            <span>Through <%= subscription.push_service %>, added <%= local_time subscription.created_at %></span>
+            <%= button_to "Remove", push_subscription_path(subscription), method: :delete,
+                  form: { data: { turbo_confirm: "Stop notifications to this browser?" } },
+                  class: button_classes(:ghost, "rounded underline hover:text-red-700 dark:hover:text-red-400") %>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+</div>

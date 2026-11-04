@@ -40,6 +40,118 @@ en:
         exit or relay node. Tor use isn't inherently suspicious, but it does make
         it much harder to tell repeat or automated signups apart from genuine new
         applicants."
+    ai_bot:
+      label: "AI bot"
+      help: "The address belongs to a mailbox service built for AI agents and other
+        software, recognised by its domain or its mail servers. A person can sign up
+        for these too, but the address is more likely to be read by a program."
+    test_mail:
+      label: "Test mail"
+      help: "The address belongs to a service for testing email in software, whose
+        inboxes are read by programs and are easy to create in bulk. It is rarely
+        where a person keeps their own mail."
+    disposable_mail:
+      label: "Disposable mail"
+      help: "The address belongs to a disposable mail service, recognised by its mail
+        servers, their addresses, or a domain seen to be one of its own. The public list behind the
+        Disposable email flag doesn't have this domain yet: such services add new
+        domains all the time."
+    amazon_ses_inbound:
+      label: "Amazon SES inbound"
+      help: "Mail for this domain is received by Amazon SES, which hands it to
+        software rather than to a mailbox. Automated inbox services are often built
+        on it, but so are some people's own domains, forwarded to a personal mailbox.
+        The mail servers can't tell these apart: look at the domain itself."
+    inbound_email_api:
+      label: "Inbound email API"
+      help: "Mail for this domain is received by an email API (SendGrid Inbound
+        Parse, Mailgun or Postmark), which passes it to a program. That is a signal
+        rather than proof: some domains use these services just to forward mail."
+    cloudflare_email_routing:
+      label: "Cloudflare Email Routing"
+      help: "Mail for this domain is forwarded by Cloudflare to a mailbox elsewhere,
+        which stays hidden. Many people use it for their own domains, and throwaway
+        domains use it too. Nothing suspicious on its own."
+    email_alias:
+      label: "Email alias"
+      help: "The address is an alias from a privacy service (SimpleLogin, Proton
+        Pass, addy.io or AliasVault), which forwards mail to a mailbox that stays
+        hidden. Many people use these to protect their real address. Nothing
+        suspicious on its own."
+    gmail:
+      label: "Gmail"
+      help: "Mail for this domain goes to Gmail's consumer mail servers. For
+        information only."
+    google_workspace:
+      label: "Google Workspace"
+      help: "Mail for this domain is hosted by Google Workspace, usually for an
+        organisation or a personal domain. For information only."
+    office365:
+      label: "Office 365"
+      help: "Mail for this domain is hosted by Microsoft 365, usually for an
+        organisation. For information only."
+    outlook_com:
+      label: "Outlook.com"
+      help: "Mail for this domain goes to Microsoft's consumer mail servers, those
+        of Outlook.com and Hotmail. For information only."
+    icloud_mail:
+      label: "iCloud Mail"
+      help: "Mail for this domain is hosted by Apple iCloud. For information only."
+    yahoo_mail:
+      label: "Yahoo Mail"
+      help: "Mail for this domain is hosted by Yahoo. For information only."
+    proton_mail:
+      label: "Proton Mail"
+      help: "Mail for this domain is hosted by Proton. For information only."
+    fastmail:
+      label: "Fastmail"
+      help: "Mail for this domain is hosted by Fastmail. For information only."
+    zoho_mail:
+      label: "Zoho Mail"
+      help: "Mail for this domain is hosted by Zoho. For information only."
+    gmx_web_de:
+      label: "GMX / WEB.DE"
+      help: "Mail for this domain is hosted by GMX or WEB.DE. For information only."
+    yandex_mail:
+      label: "Yandex Mail"
+      help: "Mail for this domain is hosted by Yandex. For information only."
+    qq_mail:
+      label: "QQ Mail"
+      help: "Mail for this domain is hosted by Tencent QQ Mail. For information only."
+    feishu_lark:
+      label: "Feishu / Lark"
+      help: "Mail for this domain is hosted by Feishu (Lark), a workspace suite. For
+        information only."
+    tuta_mail:
+      label: "Tuta Mail"
+      help: "Mail for this domain is hosted by Tuta. For information only."
+    posteo:
+      label: "Posteo"
+      help: "Mail for this domain is hosted by Posteo. For information only."
+    mailfence:
+      label: "Mailfence"
+      help: "Mail for this domain is hosted by Mailfence. For information only."
+    mailo:
+      label: "Mailo"
+      help: "Mail for this domain is hosted by Mailo. For information only."
+    seznam:
+      label: "Seznam"
+      help: "Mail for this domain is hosted by Seznam. For information only."
+    t_online:
+      label: "T-Online"
+      help: "Mail for this domain is hosted by Deutsche Telekom's T-Online. For
+        information only."
+    vivaldi_mail:
+      label: "Vivaldi Mail"
+      help: "Mail for this domain is hosted by Vivaldi. For information only."
+    onion_mail:
+      label: "Onion Mail"
+      help: "Mail for this domain is hosted by Onion Mail, an anonymity-focused
+        provider. For information only."
+    jp_carrier_isp:
+      label: "Japanese carrier or ISP"
+      help: "Mail for this domain goes to the mail servers of a Japanese mobile
+        carrier or internet provider. For information only."
     reapplication:
       label: "Reapplication"
       help: "This application matches one or more earlier requests on this

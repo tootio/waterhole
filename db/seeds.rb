@@ -129,6 +129,33 @@ requests << request!(alpha, "111", username: "from_a_datacenter", email: "dc@exa
   ip: "203.0.113.42", ip_country: "US", ip_asn: 16509,
   ip_asn_org: "Amazon.com, Inc.", ip_enriched_at: Time.current, confirmed: true)
 
+# The mail infrastructure flags. Lookups happen in a job after a real sync, so the
+# hosts are seeded the same way as the IP data above.
+requests << request!(alpha, "130", username: "ses_inbox", email: "ses@inbound-only.example",
+  invite_request: "I would like to join and read along with the people here.",
+  email_mx_hosts: %w[inbound-smtp.us-east-1.amazonaws.com], email_mx_checked_at: Time.current, confirmed: true)
+requests << request!(alpha, "131", username: "slurpy", email: "slurpy@slurpinbox.com",
+  invite_request: "Looking forward to joining this community and its discussions.",
+  email_mx_hosts: %w[inbound-smtp.us-west-2.amazonaws.com mxslurp.click mailslurp.mx],
+  email_mx_checked_at: Time.current, confirmed: true)
+requests << request!(alpha, "132", username: "gmail_user", email: "gmail_user@gmail.com",
+  invite_request: "A friend recommended this server, and I live in the area.",
+  email_mx_hosts: %w[gmail-smtp-in.l.google.com alt1.gmail-smtp-in.l.google.com],
+  email_mx_checked_at: Time.current, confirmed: true)
+requests << request!(alpha, "133", username: "agent_mail", email: "agent@agentmail.to",
+  invite_request: "Keen to take part in the conversations happening on this server.",
+  email_mx_hosts: %w[inbound-smtp.us-east-1.amazonaws.com], email_mx_checked_at: Time.current, confirmed: true)
+requests << request!(alpha, "134", username: "parsed_inbox", email: "parsed@inbound-api.example",
+  invite_request: "I enjoy the topics discussed here and would like to contribute.",
+  email_mx_hosts: %w[mxa.mailgun.org mxb.mailgun.org], email_mx_checked_at: Time.current, confirmed: true)
+requests << request!(alpha, "135", username: "no_mail_servers", email: "nobody@no-mx.example",
+  invite_request: "I have been reading along for a while and would like an account.",
+  email_mx_hosts: [], email_mx_checked_at: Time.current, confirmed: true)
+requests << request!(alpha, "136", username: "fresh_throwaway", email: "fresh@new-throwaway.example",
+  invite_request: "This server seems like a friendly place to spend some time.",
+  email_mx_hosts: %w[mx.new-throwaway.example], email_mx_addresses: %w[78.47.124.133 94.130.108.80],
+  email_mx_checked_at: Time.current, confirmed: true)
+
 # The same IPv6 /64 on both participating instances: hosts rotate their low bits,
 # so these two would not match on an exact comparison.
 requests << request!(alpha, "112", username: "v6_here", email: "v6a@example.org",

@@ -8,6 +8,27 @@ class QueueTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_path
   end
 
+  test "the detail page shows the mail servers seen for the email domain" do
+    sign_in_as @moderator
+    request = registration_requests(:pending_alpha)
+
+    get registration_request_path(request)
+    assert_select "dt", text: "Mail servers", count: 0
+
+    request.update!(email_mx_hosts: %w[mx1.example.net mx2.example.net], email_mx_checked_at: Time.current)
+    get registration_request_path(request)
+    assert_select "dt", text: "Mail servers"
+    assert_select "dd", text: /mx1\.example\.net, mx2\.example\.net/
+
+    request.update!(email_mx_addresses: %w[78.47.124.133 2a01:4f8::1])
+    get registration_request_path(request)
+    assert_select "dd", text: /78\.47\.124\.133, 2a01:4f8::1/
+
+    request.update!(email_mx_hosts: [], email_mx_addresses: [])
+    get registration_request_path(request)
+    assert_select "dd", text: /none found/
+  end
+
   test "the queue lists this instance's pending requests" do
     sign_in_as @moderator
     get root_path

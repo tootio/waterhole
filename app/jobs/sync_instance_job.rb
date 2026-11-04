@@ -156,6 +156,12 @@ class SyncInstanceJob < ApplicationJob
     # also happens for decisions and departures, not only here.
     record.recompute_flags! if created || changed
 
+    # After the save: the job needs the row. It flags the request itself once it
+    # has an answer.
+    if record.needs_mail_infrastructure_lookup? && !MailInfrastructure::Lookup.recently_failed?(record.email_domain)
+      LookupMailInfrastructureJob.perform_later(record)
+    end
+
     run.increment!(:records_created) if created
     run.increment!(:records_updated) if changed && !created
   rescue ActiveRecord::RecordNotUnique

@@ -61,7 +61,8 @@ class Admission
         message: "#{@domain} has not published a DNS record authorising #{Waterhole::Deployment.host}.", dns:)
     else
       Result.new(outcome: :dns_unreachable, warning: nil,
-        message: "Could not reach DNS for #{@domain}. This is a problem on our side; try again shortly.", dns:)
+        message: "Could not get an answer from DNS for #{@domain}. Try again shortly; if this " \
+                 "keeps happening, check that #{@domain}'s nameservers are answering.", dns:)
     end
   end
 

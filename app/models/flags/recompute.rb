@@ -20,15 +20,24 @@ module Flags
         # Serialise concurrent recomputes of one request (a job racing the
         # hourly sweep, say): two passes would otherwise both insert the same
         # (request, rule) flag and trip the unique index. Rules are evaluated
-        # under the lock so a slower, staler pass can't overwrite a newer one.
-        stored_counts = RegistrationRequest.lock.where(id: @request.id).pick(:max_flag_severity, :flags_count)
+        # under the lock so a slower, staler pass can't overwrite a newer one, and
+        # on the row as it is now rather than the caller's copy, which may predate
+        # the very write another job just flagged (the hourly sweep's batches do).
+        current = RegistrationRequest.lock.find_by(id: @request.id)
+        # Purged since the caller loaded it, which a sweep's batch can outlast.
+        next unless current
 
-        rules      = @request.resolved? ? Flags.cross_instance_rules : Flags.registry
-        detections = rules.filter_map { |rule| rule.call(@request) }
+        # The caller's, so that a sweep's preloading still counts.
+        current.instance = @request.instance
+        stored_counts = [ current.max_flag_severity, current.flags_count ]
+
+        rules      = current.resolved? ? Flags.cross_instance_rules : Flags.registry
+        detections = rules.filter_map { |rule| rule.call(current) }
         by_rule    = detections.index_by(&:rule)
         existing   = Flag.where(registration_request_id: @request.id).index_by(&:rule)
-        # Flags of rules that did not run stand as they are.
-        kept       = existing.except(*rules.map(&:rule_name))
+        # A decided request's other flags stand as they are. A pending one has
+        # none to keep: every rule ran, so the rest are of rules that no longer exist.
+        kept       = current.resolved? ? existing.except(*rules.map(&:rule_name)) : {}
 
         stale = existing.except(*kept.keys, *by_rule.keys).values
         if stale.any?

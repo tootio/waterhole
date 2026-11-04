@@ -1,6 +1,40 @@
 require "test_helper"
 
 class DnsAllowlistTest < ActiveSupport::TestCase
+  include LoopbackNameserver::Helpers
+
+  def txt(value) = Resolv::DNS::Resource::IN::TXT.new(value)
+
+  def outcome_with(resolver) = DnsAllowlist.call("alpha.example", resolver:, terms: nil).outcome
+
+  test "a nameserver that fails to answer says nothing about the record" do
+    [ Resolv::DNS::RCode::ServFail, Resolv::DNS::RCode::Refused ].each do |rcode|
+      answering(rcode) { |resolver| assert_equal :unreachable, outcome_with(resolver) }
+    end
+  end
+
+  test "no such name, or no such record, is the record being absent" do
+    [ Resolv::DNS::RCode::NXDomain, Resolv::DNS::RCode::NoError ].each do |rcode|
+      answering(rcode) { |resolver| assert_equal :not_allowlisted, outcome_with(resolver) }
+    end
+  end
+
+  test "a published record is found through the real resolver" do
+    record = txt("v=waterhole1; host=#{Waterhole::Deployment.host}")
+
+    answering(Resolv::DNS::RCode::NoError, [ record ]) { |resolver| assert_equal :verified, outcome_with(resolver) }
+  end
+
+  test "a failed nameserver does not stop the next one being asked" do
+    failed  = LoopbackNameserver.new(Resolv::DNS::RCode::ServFail)
+    working = LoopbackNameserver.new(Resolv::DNS::RCode::NoError, [ txt("v=waterhole1; host=#{Waterhole::Deployment.host}") ])
+
+    assert_equal :verified, outcome_with(resolver_asking(failed, working))
+  ensure
+    failed.stop
+    working.stop
+  end
+
   test "a record naming this deployment verifies" do
     assert DnsAllowlist.call("alpha.example", resolver: dns_ok).verified?
   end
@@ -38,6 +72,13 @@ class DnsAllowlistTest < ActiveSupport::TestCase
 
     assert result.unreachable?, "a timeout must not be reported as unreachable's opposite"
     refute result.not_allowlisted?, "treating a timeout as absence would revoke healthy instances"
+  end
+
+  test "the detail an admin reads does not call every failure a timeout" do
+    result = DnsAllowlist.call("alpha.example", resolver: dns_unreachable)
+
+    assert_includes result.detail, "no usable answer"
+    assert_no_match(/timeout/i, result.detail)
   end
 
   test "socket-level failures are unreachable too" do

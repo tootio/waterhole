@@ -48,9 +48,13 @@ class RegistrationRequest < ApplicationRecord
   # nothing.
   after_create_commit  -> { instance.broadcast_queue_badge_later if awaiting_review? }
   after_destroy_commit -> { instance.broadcast_queue_badge_later if awaiting_review? }
+  after_destroy_commit -> { MailInfrastructure::Lookup.forget(email_domain) }
+  after_update_commit  -> { MailInfrastructure::Lookup.forget(email_domain_before_last_save) },
+    if: :saved_change_to_email_domain?
   after_update_commit  -> { instance.broadcast_queue_badge_later if awaiting_review_changed? }
 
   before_save :track_queue_entry
+  before_save :forget_mail_servers, if: -> { persisted? && pending? && email_domain_changed? }
 
   before_validation :derive_email_fields
   # After the email fields: the signup shape includes the email domain.
@@ -188,6 +192,10 @@ class RegistrationRequest < ApplicationRecord
 
   def active? = ACTIVE_STATUSES.include?(status)
 
+  # Pending only: looking up a decided request would record today's mail servers
+  # as if they had been seen at signup.
+  def needs_mail_infrastructure_lookup? = pending? && email_domain.present? && email_mx_checked_at.nil?
+
   private
 
   # Since when this has been waiting on a moderator, and since when it has been
@@ -250,6 +258,20 @@ class RegistrationRequest < ApplicationRecord
 
     self.email_domain         = EmailCanonicalizer.domain_of(email)
     self.canonical_email_hash = EmailCanonicalizer.hash_for(email)
+  end
+
+  # What was seen belongs to the old domain: look again. Pending only, because a
+  # decided request is never looked up again and keeps what it was decided on.
+  #
+  # will_change! so that this is written even if this copy already reads nil: the
+  # lookup job may have stored hosts for the old domain since it was loaded.
+  def forget_mail_servers
+    email_mx_hosts_will_change!
+    email_mx_addresses_will_change!
+    email_mx_checked_at_will_change!
+    self.email_mx_hosts      = nil
+    self.email_mx_addresses  = nil
+    self.email_mx_checked_at = nil
   end
 
   # Match keys for signup farms that rotate their addresses (the similar_reason

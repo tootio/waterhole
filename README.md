@@ -19,12 +19,14 @@ Mastodon instances that approve their signups by hand: each instance is a herd.
 * **No automatic decision-making**: Waterhole helps your moderators make decisions but never makes them for you.
 * Automatic **advisory flags** so your moderators quickly get a grasp of the request, each with its own help. Advisory flags include, among others:
   * throwaway addresses
+  * who receives the address's mail: inboxes built for AI agents or software tests, disposable mail services, Amazon SES inbound, and the big mail providers
   * datacenter networks
   * templated reasons for joining
   * bursts of look-alike signups
   * reapplications (remembered for the retention period, 90 days by default)
 * **Network details** for the signup IP: country, network (ASN), iCloud Private Relay, and Tor relays.
 * **Translate the reason for joining** with one click, right in your browser: the language gets detected and translated on your device, so the reason never leaves it (in browsers with built-in translation, currently Chrome).
+* **Push notifications** tell you when requests are waiting, if your Waterhole has them enabled. Opt in per browser and choose how often, about which requests and at what time of day. Messages contain only a count, so your browser vendor's push service learns nothing about applicants or your instance.
 * **Claim a request**, so other moderators see that someone is working on it.
 * Add **notes** to a request or **vote** on it.
 * Power through big queues: **filters, search, sorting by risk**, **keyboard shortcuts** and **bulk actions** help you tackle the next spam wave.

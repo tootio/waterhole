@@ -55,10 +55,11 @@ class AdmissionTest < ActiveSupport::TestCase
     refute result.policy_refusal?
   end
 
-  test "an unreachable resolver is reported as our problem, not theirs" do
+  test "an unreachable resolver is reported as worth retrying, and where to look if it lasts" do
     result = Admission.call("newcomer.example", resolver: dns_unreachable)
 
     assert_equal :dns_unreachable, result.outcome
-    assert_includes result.message, "our side"
+    assert_includes result.message, "Try again shortly"
+    assert_includes result.message, "nameservers"
   end
 end

@@ -111,6 +111,32 @@ class DnsAllowlist
       end
     end
 
+    # [preference, host] pairs, for MailInfrastructure::Lookup.
+    def mx_records(name)
+      with_dns do |dns|
+        dns.getresources(Resolv::DNS::Name.create(name), Resolv::DNS::Resource::IN::MX)
+           .map { |record| [ record.preference, record.exchange.to_s ] }
+      end
+    end
+
+    # IPv4 and IPv6 addresses, for MailInfrastructure::Lookup. Raises only if neither
+    # kind got an answer: some nameservers fail on AAAA alone, and what the other kind
+    # found is still true.
+    def address_records(name)
+      with_dns do |dns|
+        name = Resolv::DNS::Name.create(name)
+        answers = [ Resolv::DNS::Resource::IN::A, Resolv::DNS::Resource::IN::AAAA ].map do |type|
+          dns.getresources(name, type).map { |record| record.address.to_s }
+        rescue *ERRORS => e
+          e
+        end
+        failures, addresses = answers.partition { it.is_a?(Exception) }
+        raise failures.first if addresses.empty?
+
+        addresses.flatten
+      end
+    end
+
     private
 
     def with_dns

@@ -40,6 +40,13 @@ module ActiveSupport
       # And for the disposable email list: the vendored copy, never a download.
       DomainLists::DisposableEmailDomains.directory = Rails.root.join("test/fixtures/files/domain_lists_empty")
 
+      # And for MX lookups, which WebMock would not catch: DNS is not HTTP. Tests
+      # that want answers use MailInfrastructure::Lookup.stub_resolver.
+      MailInfrastructure::Lookup.resolver = Class.new do
+        def mx_records(_name) = []
+        def address_records(_name) = []
+      end.new
+
       # Rate-limit counters are per process; start every test with none spent.
       # NOT Rails.cache: that is the null store, and the limiter counts in
       # config.action_controller.cache_store (see config/environments/test.rb).
@@ -50,6 +57,7 @@ module ActiveSupport
       LegalDocuments.directory = nil
       Ip::Databases.directory = nil
       DomainLists::DisposableEmailDomains.directory = nil
+      MailInfrastructure::Lookup.resolver = nil
     end
   end
 end

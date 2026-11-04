@@ -21,7 +21,8 @@ module Flags
       Flags::IpActiveElsewhere,
       Flags::SimilarReason,
       Flags::SignupBurst,
-      Flags::AppSignup
+      Flags::AppSignup,
+      *Flags::MailProviderRule.rules
     ]
   end
 

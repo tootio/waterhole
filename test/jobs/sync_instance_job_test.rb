@@ -256,6 +256,7 @@ class SyncInstanceJobTest < ActiveSupport::TestCase
     payloads = still_pending_payloads
     stub_pending_accounts(@instance, accounts: payloads)
     SyncInstanceJob.perform_now(@instance) # settle enrichment and derived fields
+    perform_enqueued_jobs(only: LookupMailInfrastructureJob)
     clear_enqueued_jobs
 
     before = @instance.registration_requests.pending.pluck(:id, :updated_at).to_h
@@ -275,11 +276,52 @@ class SyncInstanceJobTest < ActiveSupport::TestCase
     assert_equal 0, run.records_updated
   end
 
+  test "the mail servers are looked up outside the sync, and asked for until there is an answer" do
+    stub_pending_accounts(@instance, accounts: still_pending_payloads)
+    lookups = -> { enqueued_jobs.count { it["job_class"] == "LookupMailInfrastructureJob" } }
+
+    SyncInstanceJob.perform_now(@instance)
+    expected = @instance.registration_requests.pending.where.not(email_domain: nil).count
+    assert_operator expected, :>, 0
+    assert_equal expected, lookups.call
+
+    # Nothing answered, a resolver outage say: the next pass asks again.
+    clear_enqueued_jobs
+    SyncInstanceJob.perform_now(@instance)
+    assert_equal expected, lookups.call
+
+    perform_enqueued_jobs(only: LookupMailInfrastructureJob)
+    clear_enqueued_jobs
+    SyncInstanceJob.perform_now(@instance)
+    assert_equal 0, lookups.call
+  end
+
+  test "a domain that just failed to answer is left alone for a while" do
+    previous = Rails.cache
+    stub_pending_accounts(@instance, accounts: still_pending_payloads)
+    SyncInstanceJob.perform_now(@instance)
+    clear_enqueued_jobs
+
+    Rails.cache = ActiveSupport::Cache::MemoryStore.new
+    failing = Class.new { def mx_records(_name) = raise(Resolv::ResolvTimeout, "no answer") }.new
+    @instance.registration_requests.pending.where.not(email_domain: nil).distinct.pluck(:email_domain).each do |domain|
+      MailInfrastructure::Lookup.stub_resolver(failing) do
+        assert_raises(Resolv::ResolvTimeout) { MailInfrastructure::Lookup.call(domain) }
+      end
+    end
+
+    SyncInstanceJob.perform_now(@instance)
+    assert_equal 0, enqueued_jobs.count { it["job_class"] == "LookupMailInfrastructureJob" }
+  ensure
+    Rails.cache = previous
+  end
+
   test "a request whose upstream data changed is still saved and broadcast" do
     existing = registration_requests(:pending_alpha)
     payloads = still_pending_payloads
     stub_pending_accounts(@instance, accounts: payloads)
     SyncInstanceJob.perform_now(@instance)
+    perform_enqueued_jobs(only: LookupMailInfrastructureJob)
     clear_enqueued_jobs
 
     changed = payloads.map do |payload|

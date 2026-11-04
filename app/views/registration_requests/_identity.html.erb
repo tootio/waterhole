@@ -47,6 +47,21 @@
       <% end %>
     </div>
 
+    <% if registration_request.email_mx_checked_at.present? %>
+      <div>
+        <dt class="text-xs text-stone-500 dark:text-stone-400">Mail servers</dt>
+        <dd class="break-all font-mono text-xs">
+          <%= safe_join(registration_request.email_mx_hosts.to_a, ", ").presence || "none found" %>
+        </dd>
+        <% if registration_request.email_mx_addresses.present? %>
+          <dd class="mt-1 break-all font-mono text-xs"><%= safe_join(registration_request.email_mx_addresses, ", ") %></dd>
+        <% end %>
+        <dd class="mt-1 text-xs text-stone-500 dark:text-stone-400">
+          as seen <%= local_time(registration_request.email_mx_checked_at) %>
+        </dd>
+      </div>
+    <% end %>
+
     <div>
       <dt class="text-xs text-stone-500 dark:text-stone-400">Signup IP</dt>
       <dd class="flex items-center gap-2">

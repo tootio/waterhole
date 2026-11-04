@@ -19,6 +19,7 @@ Mastodon instances that approve their signups by hand: each instance is a herd.
 * **No automatic decision-making**: Waterhole helps your moderators make decisions but never makes them for you.
 * Automatic **advisory flags** so your moderators quickly get a grasp of the request, each with its own help. Advisory flags include, among others:
   * throwaway addresses
+  * who receives the address's mail: inboxes built for AI agents or software tests, disposable mail services, Amazon SES inbound, and the big mail providers
   * datacenter networks
   * templated reasons for joining
   * bursts of look-alike signups

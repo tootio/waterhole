@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_04_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_04_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -227,6 +227,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_04_120000) do
     t.string "display_name"
     t.string "email"
     t.string "email_domain"
+    t.string "email_mx_addresses", array: true
+    t.datetime "email_mx_checked_at"
+    t.string "email_mx_hosts", array: true
     t.integer "flags_count", default: 0, null: false
     t.bigint "instance_id", null: false
     t.bigint "invite_fingerprint"

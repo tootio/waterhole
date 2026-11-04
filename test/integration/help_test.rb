@@ -39,6 +39,40 @@ class HelpTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", registration_request_path(request)
   end
 
+  test "a mail provider flag explains itself and names the mail server" do
+    request = registration_requests(:pending_alpha)
+    flag = request.flags.create!(rule: "amazon_ses_inbound", severity: "warning",
+      details: { "domain" => "example.org", "matched" => "inbound-smtp.us-east-1.amazonaws.com", "via" => "mx" })
+
+    get flag_help_path(flag)
+
+    assert_response :success
+    assert_match(/received by Amazon SES/, response.body)
+    assert_match(/mail for example\.org goes to inbound-smtp\.us-east-1\.amazonaws\.com/, response.body)
+  end
+
+  test "a mail provider flag found by the address says so" do
+    request = registration_requests(:pending_alpha)
+    flag = request.flags.create!(rule: "disposable_mail", severity: "warning",
+      details: { "domain" => "example.org", "matched" => "78.47.124.133", "via" => "ip" })
+
+    get flag_help_path(flag)
+
+    assert_response :success
+    assert_match(/mail for example\.org goes to a server at 78\.47\.124\.133, which this kind of service uses/, response.body)
+  end
+
+  test "a mail provider flag found by the domain says so" do
+    request = registration_requests(:pending_alpha)
+    flag = request.flags.create!(rule: "ai_bot", severity: "critical",
+      details: { "domain" => "agent.agentmail.to", "matched" => "agentmail.to", "via" => "domain" })
+
+    get flag_help_path(flag)
+
+    assert_response :success
+    assert_match(/agent\.agentmail\.to is known to belong to this kind of service \(subdomain of agentmail\.to\)/, response.body)
+  end
+
   test "a flag with no details omits the per-request details entry" do
     request = registration_requests(:pending_alpha)
     flag = request.flags.create!(rule: "no_invite_request", severity: "info", details: {})

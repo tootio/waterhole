@@ -40,7 +40,7 @@ class FilterSelectsTest < ApplicationSystemTestCase
     assert_selector "#registration_request_#{@rowan.id}"
 
     %w[Pending Rejected].each { |label| status_select.find(".item", text: label).find(".remove").click }
-    select "Either", from: "Email"
+    select "Any", from: "Email"
     assert_selector "#registration_request_#{registration_requests(:jules_alpha).id}"
     assert_selector "#registration_request_#{rejected.id}"
   end

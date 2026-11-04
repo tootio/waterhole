@@ -155,9 +155,12 @@ en:
     reapplication:
       label: "Reapplication"
       help: "This application matches one or more earlier requests on this
-        instance that were rejected. The same email address is critical: that is
-        almost certainly the same person. The same network (IP address, or for
-        IPv6 the /64) is only a warning, since networks are shared; iCloud Private
+        instance that were rejected. The same email address is critical if it was
+        confirmed on a rejected request: that is almost certainly the same person.
+        If it never was, this is only a warning, since anyone can sign up with
+        someone else's address and the applicant may be its real owner. The same
+        network (IP address, or for IPv6 the /64) is only a warning, since networks
+        are shared; iCloud Private
         Relay and Tor addresses are not compared. Rejections are remembered for
         the retention period. It's surfaced so a moderator can decide whether the
         applicant addressed the reason for the earlier rejection."
@@ -171,7 +174,10 @@ en:
     email_active_elsewhere:
       label: "Email active elsewhere"
       help: "This applicant's email address is already active on another
-        participating instance. That can be entirely normal for someone with
+        participating instance, and is confirmed on both. Addresses not known to be
+        confirmed are not compared, since anyone can sign up with someone else's
+        address, so applicants on instances that postpone confirmation emails do
+        not match while they are pending. That can be entirely normal for someone with
         multiple accounts, but it's useful context when weighing an application."
     ip_active_elsewhere:
       label: "IP active elsewhere"

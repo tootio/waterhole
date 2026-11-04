@@ -90,6 +90,16 @@ module RegistrationRequestsHelper
     tag.span label, class: "inline-flex rounded-full px-2 py-0.5 text-xs font-medium #{STATUS_STYLES.fetch(request.status, "bg-stone-100 dark:bg-stone-800")}"
   end
 
+  # Only what is known to be true: a frozen account usually means the confirmation
+  # mail is postponed, but one frozen by hand looks the same.
+  def account_state_label(request)
+    if request.account_frozen?
+      request.confirmed? ? "Frozen" : "Frozen, email not confirmed"
+    elsif !request.confirmed?
+      "Email not confirmed"
+    end
+  end
+
   def severity_style(severity)
     case severity.to_s
     when "critical" then "bg-red-100 dark:bg-red-900 text-red-900 dark:text-red-200 ring-1 ring-red-200 dark:ring-red-900"

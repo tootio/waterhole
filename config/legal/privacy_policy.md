@@ -31,8 +31,9 @@ Mirrored from the instance's own admin API so moderators can review them:
 - the mail servers of the email domain (its public MX records and their
   addresses) and the mail provider derived from them
 - the free-text reason given for wanting to join
-- locale, signup time, whether the address was confirmed, and whether the
-  account was created through an app rather than the website
+- locale, signup time, whether the address was confirmed, whether the account
+  is frozen, and whether the account was created through an app rather than the
+  website
 - the moderators' notes and decision about the application
 
 This is used for one purpose: deciding whether to admit the applicant. It is not

@@ -73,8 +73,8 @@ module PushNotifications
       @latest_daily > watermark && (@preference.daily_held_until.nil? || @latest_daily >= @preference.daily_held_until)
     end
 
-    # The queue hides unconfirmed sign-ups unless asked, and they may be all there
-    # is to see here.
+    # The queue hides sign-ups waiting for confirmation unless asked, and they
+    # may be all there is to see here.
     def addressing(scope)
       { audience: @preference.moderator_id, path: scope == "awaiting" ? "/" : "/?email=any" }
     end

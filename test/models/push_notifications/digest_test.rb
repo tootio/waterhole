@@ -67,6 +67,22 @@ module PushNotifications
       assert_equal [ "1 new registration is waiting" ], bodies(awaiting, start + 10.minutes)
     end
 
+    test "a postponed sign-up is announced once, however its account changes afterwards" do
+      start = Time.utc(2026, 5, 10, 12, 0)
+      record = preference(at: start)
+      request = travel_to(start + 1.minute) { waiting_request(@instance, confirmed: false, disabled: true) }
+
+      assert_equal [ "1 new registration is waiting" ], bodies(record, start + 5.minutes)
+      run_at(record, start + 5.minutes)
+
+      travel_to(start + 6.minutes) { request.update!(disabled: false) }
+      assert_empty bodies(record, start + 10.minutes), "out of the queue"
+      run_at(record, start + 10.minutes)
+
+      travel_to(start + 11.minutes) { request.update!(confirmed: true) }
+      assert_empty bodies(record, start + 15.minutes), "back in, but already announced"
+    end
+
     test "a request resolved before anyone was told does not count" do
       start = Time.utc(2026, 5, 10, 12, 0)
       record = preference(at: start)

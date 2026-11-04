@@ -36,8 +36,8 @@
     <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
       <span class="font-medium">@<%= highlight_keywords(registration_request.username, field: :username) %></span>
       <%= status_badge(registration_request) %>
-      <% unless registration_request.confirmed? %>
-        <span class="rounded-full bg-stone-100 dark:bg-stone-800 px-2 py-0.5 text-xs text-stone-600 dark:text-stone-300 ring-1 ring-stone-300 dark:ring-stone-700">Email not confirmed</span>
+      <% if (label = account_state_label(registration_request)) %>
+        <span class="rounded-full bg-stone-100 dark:bg-stone-800 px-2 py-0.5 text-xs text-stone-600 dark:text-stone-300 ring-1 ring-stone-300 dark:ring-stone-700"><%= label %></span>
       <% end %>
 
       <% if registration_request.claimed? %>

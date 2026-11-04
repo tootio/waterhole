@@ -10,7 +10,7 @@ class RegistrationRequest < ApplicationRecord
   STALE_CLAIM_AFTER = 4.hours
 
   # Mastodon's Scheduler::UserCleanupScheduler deletes accounts whose email is
-  # still unconfirmed this long after the confirmation mail was sent.
+  # still unconfirmed this long after the confirmation mail was sent, frozen or not.
   UNCONFIRMED_ACCOUNT_LIFETIME = 7.days
 
   encrypts :email, deterministic: true
@@ -54,6 +54,7 @@ class RegistrationRequest < ApplicationRecord
   after_update_commit  -> { instance.broadcast_queue_badge_later if awaiting_review_changed? }
 
   before_save :track_queue_entry
+  before_save :track_confirmation_request
   before_save :forget_mail_servers, if: -> { persisted? && pending? && email_domain_changed? }
 
   before_validation :derive_email_fields
@@ -68,9 +69,9 @@ class RegistrationRequest < ApplicationRecord
 
   # Cross-instance flags live on OTHER instances' requests, so a change here has
   # to reach them: joining or leaving the active set (a rejection, wherever it
-  # happens), or a new email or network. The old key matters as much as the new
-  # one -- a pending user who signs in from elsewhere must stop flagging the
-  # requests that matched their previous network.
+  # happens), a new email or network, or an email getting confirmed. The old key
+  # matters as much as the new one -- a pending user who signs in from elsewhere
+  # must stop flagging the requests that matched their previous network.
   before_save :remember_previous_ip_group, if: :ip_changed?
   after_commit :refresh_cross_instance_counterparts, on: %i[create update],
     if: :cross_instance_match_changed?
@@ -82,8 +83,18 @@ class RegistrationRequest < ApplicationRecord
   scope :riskiest_first, -> { order(max_flag_severity: :desc, flags_count: :desc, signed_up_at: :asc) }
 
   scope :active, -> { where(status: ACTIVE_STATUSES) }
+  # Nothing left for the applicant to do: see #reviewable?.
+  scope :reviewable, -> { where(confirmed: true).or(where(disabled: true)) }
+  scope :waiting_for_confirmation, -> { where(confirmed: false, disabled: false) }
   scope :email_confirmed, -> { where(confirmed: true) }
-  scope :email_unconfirmed, -> { where(confirmed: false) }
+  scope :frozen_unconfirmed, -> { where(confirmed: false, disabled: true) }
+  # Unconfirmed for long enough that Mastodon may have deleted it. From
+  # confirmation_requested_at where sync saw the mail go out, and otherwise from
+  # the decision, which is what sends a postponed account's.
+  scope :past_confirmation_deadline, -> {
+    deadline = UNCONFIRMED_ACCOUNT_LIFETIME.ago
+    where(confirmed: false, confirmation_requested_at: ..deadline).or(where(confirmed: false, resolved_at: ..deadline))
+  }
   scope :resolved, -> { where(status: RESOLVED_STATUSES) }
   scope :unclaimed, -> { where(claimed_by_id: nil) }
   scope :claimed, -> { where.not(claimed_by_id: nil) }
@@ -114,9 +125,9 @@ class RegistrationRequest < ApplicationRecord
   }
 
   # What the queue is actually waiting on, and so what the navigation badge
-  # counts: unconfirmed sign-ups are hidden by default and mostly never confirm,
-  # so counting them would advertise work that is not there.
-  scope :awaiting_review, -> { pending.email_confirmed }
+  # counts: sign-ups waiting for confirmation are hidden by default and mostly
+  # never confirm, so counting them would advertise work that is not there.
+  scope :awaiting_review, -> { pending.reviewable }
 
   # Free text with optional property:value terms; see RegistrationRequests::Search.
   scope :search, ->(text) { RegistrationRequests::Search.new(text).apply(all) }
@@ -146,12 +157,26 @@ class RegistrationRequest < ApplicationRecord
 
   def resolved? = RESOLVED_STATUSES.include?(status)
 
+  # Whether the next move is a moderator's rather than the applicant's: the email
+  # is confirmed, or the account is frozen.
+  #
+  # With Mastodon's "postpone confirmation emails" setting, new accounts start
+  # frozen and the mail only goes out once they are approved, so waiting for the
+  # confirmation would wait forever. The API does not say whether a mail was
+  # sent, so an account a moderator froze by hand looks the same, and that one
+  # is waiting on a moderator as well.
+  def reviewable? = confirmed? || disabled?
+
+  # Frozen as far as anyone here knows: `disabled` is only kept up to date while
+  # sync still lists the account, and a decision usually changes it.
+  def account_frozen? = pending? && disabled?
+
   # The per-record form of the awaiting_review scope, and whether this save
   # moved the record across it -- which is the only thing the queue badge counts.
-  def awaiting_review? = pending? && confirmed?
+  def awaiting_review? = pending? && reviewable?
 
   def awaiting_review_changed?
-    was = status_before_last_save == "pending" && confirmed_before_last_save
+    was = status_before_last_save == "pending" && (confirmed_before_last_save || disabled_before_last_save)
     was != awaiting_review?
   end
 
@@ -166,13 +191,16 @@ class RegistrationRequest < ApplicationRecord
   # deletes the user both on rejection and when the email stays unconfirmed for
   # UNCONFIRMED_ACCOUNT_LIFETIME, and the 404 looks the same either way.
   #
-  # signed_up_at stands in for when the confirmation mail was sent: resending it
-  # only pushes deletion later, so "unconfirmed and older than the lifetime" is
-  # when expiry is possible. Inside that window it can only be a rejection;
-  # outside it, expiry is the likelier story -- rejecting an unconfirmed
-  # account in Mastodon's own UI is the one case this misreads.
+  # confirmation_requested_at stands in for when the confirmation mail was sent:
+  # resending it only pushes deletion later, so "unconfirmed and older than the
+  # lifetime" is when expiry is possible. Inside that window it can only be a
+  # rejection; outside it, expiry is the likelier story -- rejecting an
+  # unconfirmed account in Mastodon's own UI is the one case this misreads.
+  #
+  # A postponed account has no such time: it was never sent the mail, and the
+  # cleanup only considers accounts that were, so it does not expire.
   def deleted_upstream_status
-    if !confirmed? && signed_up_at <= UNCONFIRMED_ACCOUNT_LIFETIME.ago
+    if !confirmed? && confirmation_requested_at&.<=(UNCONFIRMED_ACCOUNT_LIFETIME.ago)
       "expired"
     else
       "rejected_elsewhere"
@@ -202,9 +230,25 @@ class RegistrationRequest < ApplicationRecord
   # pending at all. Neither signed_up_at nor created_at can say: someone can confirm
   # their email days after signing up, and a resolved request can be listed as
   # pending again. Push notifications count from here (PushNotifications::Digest).
+  #
+  # awaiting_since only ends with being pending, not with leaving the queue while
+  # still pending: a frozen account that gets unfrozen, and then confirmed or
+  # frozen again, has been announced once already. Digest reads it through
+  # awaiting_review, so it does not count while out of the queue.
   def track_queue_entry
-    self.awaiting_since = awaiting_review? ? (awaiting_since || Time.current) : nil
+    self.awaiting_since = nil unless pending?
+    self.awaiting_since ||= Time.current if awaiting_review?
     self.pending_since = pending? ? (pending_since || Time.current) : nil
+  end
+
+  # Unfrozen and unconfirmed means Mastodon has sent the mail: at signup, unless
+  # we just saw this account unfrozen, which is what sends a postponed one's. Kept
+  # once set, so freezing an account later does not stop its clock, and neither
+  # does it stop Mastodon's.
+  def track_confirmation_request
+    return if confirmed? || disabled? || !pending?
+
+    self.confirmation_requested_at ||= disabled_changed? ? Time.current : signed_up_at
   end
 
   def remember_previous_ip_group
@@ -213,7 +257,7 @@ class RegistrationRequest < ApplicationRecord
 
   def cross_instance_match_changed?
     saved_change_to_canonical_email_hash? || saved_change_to_ip? || saved_change_to_ip_relay? ||
-      saved_change_to_invite_fingerprint? || saved_change_to_signup_shape? ||
+      saved_change_to_invite_fingerprint? || saved_change_to_signup_shape? || saved_change_to_confirmed? ||
       (saved_change_to_status? && ACTIVE_STATUSES.include?(status_before_last_save) != active?)
   end
 

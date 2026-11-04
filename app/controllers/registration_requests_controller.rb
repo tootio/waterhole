@@ -21,14 +21,14 @@ class RegistrationRequestsController < ApplicationController
 
     @registration_requests = @pagination.through_records
     pending  = registration_requests_scope.pending
-    awaiting = pending.email_confirmed
+    awaiting = registration_requests_scope.awaiting_review
     @counts = {
       pending: awaiting.count,
       unclaimed: awaiting.unclaimed.count,
       # a moderator can claim unconfirmed registrations. Count them, too.
       mine: pending.claimed_by_moderator(current_moderator).count,
       # Hidden by default, so say how many there are rather than let them vanish.
-      unconfirmed: pending.email_unconfirmed.count
+      unconfirmed: pending.waiting_for_confirmation.count
     }
   end
 

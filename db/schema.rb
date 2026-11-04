@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_04_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_04_150000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -254,6 +254,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_04_140000) do
     t.string "status", default: "pending", null: false
     t.datetime "updated_at", null: false
     t.string "username", null: false
+    t.boolean "disabled", default: false, null: false
+    t.datetime "confirmation_requested_at"
     t.index ["canonical_email_hash"], name: "index_registration_requests_on_canonical_email_hash"
     t.index ["claimed_by_id"], name: "index_registration_requests_on_claimed_by_id"
     t.index ["email_domain"], name: "index_registration_requests_on_email_domain"

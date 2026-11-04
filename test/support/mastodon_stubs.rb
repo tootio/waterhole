@@ -19,6 +19,7 @@ module MastodonStubs
       "locale" => "en",
       "invite_request" => "I would like to join this server because of the community.",
       "confirmed" => true,
+      "disabled" => false,
       "approved" => false,
       "account" => { "username" => username, "display_name" => username.humanize,
                      "note" => "", "avatar" => "", "url" => "https://#{username}.example" }

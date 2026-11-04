@@ -5,12 +5,20 @@
   <% if registration_request.resolved? %>
     <p class="text-sm text-stone-700 dark:text-stone-300">
       <%= status_badge(registration_request) %>
-      <% if decision&.moderator %>
-        by <strong><%= decision.moderator.name %></strong> <%= local_time(decision.performed_at || decision.created_at) %>
-      <% elsif registration_request.expired? %>
-        — the email address was never confirmed, so Mastodon deleted the account
+      <% if registration_request.expired? %>
+        <% approved_here = decision&.state_succeeded? && decision.approve? %>
+        <% if approved_here %>
+          — approved by <strong><%= decision.moderator.name %></strong> <%= local_time(decision.performed_at || decision.created_at) %>, but
+        <% else %>
+          —
+        <% end %>
+        the email address was never confirmed, so Mastodon deleted the account
         after <%= RegistrationRequest::UNCONFIRMED_ACCOUNT_LIFETIME.inspect %>.
-        (Rejecting an unconfirmed account in Mastodon's own interface looks the same.)
+        <% unless approved_here %>
+          (Rejecting an unconfirmed account in Mastodon's own interface looks the same.)
+        <% end %>
+      <% elsif decision&.moderator %>
+        by <strong><%= decision.moderator.name %></strong> <%= local_time(decision.performed_at || decision.created_at) %>
       <% elsif registration_request.resolved_elsewhere? %>
         — actioned directly in Mastodon, not here.
       <% end %>

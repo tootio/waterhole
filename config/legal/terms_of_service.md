@@ -66,7 +66,9 @@ normalising it, as a keyed hash) or signup network (the exact IPv4 address, or
 the same IPv6 /64) matches a request on another participating instance that is
 pending **or already approved**, moderators see that a match exists and the other
 instance's domain. They do not see the other applicant's name, address or any
-other detail.
+other detail. An email address is only compared once the instance's Mastodon server
+reports it as confirmed on both requests, since until then anyone could have
+entered it.
 
 The same applies to two patterns that give signup farms away. An applicant's
 reason for joining is compared, as a fingerprint computed on this service and

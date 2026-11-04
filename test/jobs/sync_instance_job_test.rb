@@ -125,6 +125,18 @@ class SyncInstanceJobTest < ActiveSupport::TestCase
     assert_requested read_back, times: 1
   end
 
+  test "an approved account that has since confirmed counts as updated" do
+    existing = approved_unconfirmed(resolved_at: 1.day.ago)
+    SyncInstanceJob.perform_now(@instance)
+    existing.update_columns(resolved_at: 8.days.ago)
+    stub_admin_account(@instance, id: existing.mastodon_account_id,
+      body: admin_account_payload(id: existing.mastodon_account_id, "approved" => true, "confirmed" => true))
+
+    SyncInstanceJob.perform_now(@instance)
+
+    assert_equal 1, @instance.sync_runs.order(:started_at).last.records_updated
+  end
+
   test "an approved account still unconfirmed upstream stays approved" do
     existing = approved_unconfirmed(resolved_at: 8.days.ago)
     stub_admin_account(@instance, id: existing.mastodon_account_id,
@@ -146,17 +158,77 @@ class SyncInstanceJobTest < ActiveSupport::TestCase
     assert_equal "approved", existing.reload.status
   end
 
+  # Mastodon's clock started at signup, so the account can be gone long before
+  # a week has passed since a late approval.
+  test "an approval late in the confirmation window is read back once that window ends" do
+    existing = approved_unconfirmed(resolved_at: 1.day.ago)
+    existing.update_columns(confirmation_requested_at: 8.days.ago)
+    stub_admin_account(@instance, id: existing.mastodon_account_id, status: 404,
+      body: { "error" => "Record not found" })
+
+    SyncInstanceJob.perform_now(@instance)
+
+    assert_equal "expired", existing.reload.status
+  end
+
   test "an approved account that expires stops flagging its counterparts on other instances" do
     existing = registration_requests(:jules_alpha)
     counterpart = registration_requests(:jules_beta)
-    existing.update_columns(status: "approved", confirmed: false, resolved_at: 8.days.ago)
+    existing.update_columns(status: "approved", confirmed: false, resolved_at: 8.days.ago, ip: "198.51.100.77")
+    counterpart.update_columns(ip: "198.51.100.77")
+    counterpart.reload.recompute_flags!
+    rule = Flags::IpActiveElsewhere.rule_name
+    assert counterpart.flags.exists?(rule:)
     stub_pending_accounts(@instance, accounts: still_pending_payloads)
     stub_admin_account(@instance, id: existing.mastodon_account_id, status: 404,
       body: { "error" => "Record not found" })
 
-    assert_enqueued_with(job: RecomputeFlagsJob, args: [ counterpart ]) do
-      SyncInstanceJob.perform_now(@instance)
-    end
+    perform_enqueued_jobs(only: RecomputeFlagsJob) { SyncInstanceJob.perform_now(@instance) }
+
+    refute counterpart.flags.exists?(rule:)
+  end
+
+  test "an approved account Mastodon will not show is left alone" do
+    existing = approved_unconfirmed(resolved_at: 8.days.ago)
+    stub_admin_account(@instance, id: existing.mastodon_account_id, status: 403,
+      body: { "error" => "This action is not allowed" })
+
+    SyncInstanceJob.perform_now(@instance)
+
+    assert_equal "approved", existing.reload.status
+    assert_equal "succeeded", @instance.sync_runs.order(:started_at).last.status
+  end
+
+  test "Mastodon failing on an approved account does not fail a sync that already worked" do
+    existing = approved_unconfirmed(resolved_at: 8.days.ago)
+    stub_admin_account(@instance, id: existing.mastodon_account_id, status: 500, body: { "error" => "boom" })
+
+    assert_no_enqueued_jobs(only: SyncInstanceJob) { SyncInstanceJob.perform_now(@instance) }
+
+    assert_equal "approved", existing.reload.status
+    assert_equal "succeeded", @instance.sync_runs.order(:started_at).last.status
+    assert_nil @instance.reload.last_sync_error
+    assert @instance.last_synced_at
+  end
+
+  test "a rejected token on an approved account still rotates the sync moderator" do
+    existing = approved_unconfirmed(resolved_at: 8.days.ago)
+    stub_admin_account(@instance, id: existing.mastodon_account_id, status: 401,
+      body: { "error" => "The access token is invalid" })
+
+    assert_raises(Mastodon::Unauthorized) { SyncInstanceJob.perform_now(@instance) }
+
+    assert moderators(:avery).reload.token_invalidated_at
+  end
+
+  test "a page that merely mentions confirmed does not count as confirmed" do
+    existing = approved_unconfirmed(resolved_at: 8.days.ago)
+    stub_request(:get, "#{@instance.base_url}/api/v1/admin/accounts/#{existing.mastodon_account_id}")
+      .to_return(status: 200, body: "<html>Your booking is confirmed</html>", headers: { "Content-Type" => "text/html" })
+
+    SyncInstanceJob.perform_now(@instance)
+
+    refute existing.reload.confirmed?
   end
 
   test "a failed walk does not read approved accounts back" do

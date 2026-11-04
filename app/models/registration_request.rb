@@ -88,6 +88,13 @@ class RegistrationRequest < ApplicationRecord
   scope :waiting_for_confirmation, -> { where(confirmed: false, disabled: false) }
   scope :email_confirmed, -> { where(confirmed: true) }
   scope :frozen_unconfirmed, -> { where(confirmed: false, disabled: true) }
+  # Unconfirmed for long enough that Mastodon may have deleted it. From
+  # confirmation_requested_at where sync saw the mail go out, and otherwise from
+  # the decision, which is what sends a postponed account's.
+  scope :past_confirmation_deadline, -> {
+    deadline = UNCONFIRMED_ACCOUNT_LIFETIME.ago
+    where(confirmed: false, confirmation_requested_at: ..deadline).or(where(confirmed: false, resolved_at: ..deadline))
+  }
   scope :resolved, -> { where(status: RESOLVED_STATUSES) }
   scope :unclaimed, -> { where(claimed_by_id: nil) }
   scope :claimed, -> { where.not(claimed_by_id: nil) }

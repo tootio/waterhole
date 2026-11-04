@@ -41,7 +41,10 @@ class SyncInstanceJob < ApplicationJob
     @run      = instance.sync_runs.create!(status: "running", started_at: Time.current)
 
     seen_ids, walk_complete = walk_pending
-    reconcile_unconfirmed_approvals(VERIFICATION_CAP - reconcile_departures(seen_ids)) if walk_complete
+    if walk_complete
+      verified = reconcile_departures(seen_ids)
+      reconcile_unconfirmed_approvals(VERIFICATION_CAP - verified)
+    end
 
     @run.update!(status: walk_complete ? "succeeded" : "failed", finished_at: Time.current)
 
@@ -194,19 +197,25 @@ class SyncInstanceJob < ApplicationJob
   # Mastodon's clock can restart when the mail is resent, so a row that reads back
   # unconfirmed stays in this set and is asked about again. In random order, so
   # that a cap's worth of those cannot keep the others from ever being checked.
+  #
+  # The queue is in sync by now and this can wait for the next run, so Mastodon
+  # failing here does not fail the sync. A dead token is still everyone's problem.
   def reconcile_unconfirmed_approvals(budget)
-    approvals = instance.registration_requests
-      .where(status: "approved", confirmed: false,
-        resolved_at: ..RegistrationRequest::UNCONFIRMED_ACCOUNT_LIFETIME.ago)
+    approvals = instance.registration_requests.approved.past_confirmation_deadline
       .order(Arel.sql("RANDOM()"))
       .limit(budget)
 
     approvals.each { |request| verify_unconfirmed_approval(request) }
+  rescue Mastodon::Unauthorized
+    raise
+  rescue Mastodon::Error => e
+    Rails.logger.warn("[waterhole] stopped checking unconfirmed approvals on #{instance.domain}: #{e.message}")
   end
 
   def verify_unconfirmed_approval(request)
     account = client.admin_account(request.mastodon_account_id)
-    return unless account["confirmed"]
+    # A 200 that is not JSON stays a String, whose [] finds the word in the page.
+    return unless account["confirmed"] == true
 
     request.update!(confirmed: true)
     run.increment!(:records_updated)

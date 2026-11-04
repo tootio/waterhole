@@ -1,6 +1,14 @@
 require "test_helper"
 
 class LayoutTest < ActionDispatch::IntegrationTest
+  # Without it every env(safe-area-inset-*) computes to 0, and nothing looks
+  # wrong until a phone puts the home indicator over the text.
+  test "the viewport covers the whole screen, so the safe-area insets are reported" do
+    get new_session_path
+
+    assert_select "meta[name=viewport][content*=?]", "viewport-fit=cover"
+  end
+
   # The sign-in and legal pages should not look like a different application.
   test "the header is present when signed out" do
     [ new_session_path, terms_path, verification_path ].each do |path|

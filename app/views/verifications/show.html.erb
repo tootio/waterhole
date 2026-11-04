@@ -5,7 +5,7 @@
 <% end %>
 
 <div class="relative isolate -mt-6 grid grid-cols-1 grid-rows-1">
-  <div class="relative col-start-1 row-start-1 -z-10 ml-[calc(50%-50vw)] w-screen aspect-square sm:aspect-5/2 pb-6" aria-hidden="true">
+  <div class="relative col-start-1 row-start-1 -z-10 ml-[calc(50%-50vw+(var(--gutter-right)-var(--gutter-left))/2)] w-screen aspect-square sm:aspect-5/2 pb-6" aria-hidden="true">
     <%= image_tag "/savanna-hero.svg", alt: "", class: "h-full w-full object-cover" %>
     <div class="absolute inset-0 hidden dark:block dark:bg-stone-950/70"></div>
   </div>

@@ -78,6 +78,29 @@ class DecisionsTest < ActionDispatch::IntegrationTest
     assert_match(/never confirmed/, flash[:alert])
   end
 
+  test "an approved account Mastodon later deleted says who approved it and why it is gone" do
+    @pending.update_columns(status: "expired", confirmed: false, resolved_at: 8.days.ago)
+    @pending.create_decision!(moderator: @moderator, action: "approve", state: "succeeded", performed_at: 8.days.ago)
+
+    get registration_request_path(@pending)
+
+    assert_response :success
+    assert_select "section", text: /approved by\s+#{Regexp.escape(@moderator.name)}.*never confirmed/m
+    assert_select "section", text: /Rejecting an unconfirmed account/, count: 0
+  end
+
+  test "a decision that found the account already expired explains it, naming nobody" do
+    @pending.update_columns(status: "expired", confirmed: false, resolved_at: 1.hour.ago)
+    @pending.create_decision!(moderator: @moderator, action: "reject", state: "conflict",
+      error_message: "This account no longer exists in Mastodon.")
+
+    get registration_request_path(@pending)
+
+    assert_response :success
+    assert_select "section", text: /Rejecting an unconfirmed account/
+    assert_select "section", text: /(by|approved by)\s+#{Regexp.escape(@moderator.name)}/, count: 0
+  end
+
   test "an undocumented 422 fails the decision instead of crashing" do
     stub_decision(@instance, id: @pending.mastodon_account_id, action: "approve", status: 422,
       body: { "error" => "Validation failed" })

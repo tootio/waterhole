@@ -23,8 +23,9 @@ class SyncInstanceJob < ApplicationJob
   # healthy run releases it as soon as it finishes.
   limits_concurrency to: 1, key: ->(instance) { instance }, duration: 10.minutes, on_conflict: :discard
 
-  # Individually verifying vanished rows costs one API call each; Mastodon allows
-  # 300 requests per 5 minutes per account, so cap it and let the next run finish.
+  # Individually verifying rows costs one API call each; Mastodon allows 300
+  # requests per 5 minutes per account, so cap it and let the next run finish.
+  # Per run, across everything verified one at a time.
   VERIFICATION_CAP = 50
 
   retry_on Mastodon::ConnectionError, Mastodon::ServerError,
@@ -40,7 +41,7 @@ class SyncInstanceJob < ApplicationJob
     @run      = instance.sync_runs.create!(status: "running", started_at: Time.current)
 
     seen_ids, walk_complete = walk_pending
-    reconcile_departures(seen_ids) if walk_complete
+    reconcile_unconfirmed_approvals(VERIFICATION_CAP - reconcile_departures(seen_ids)) if walk_complete
 
     @run.update!(status: walk_complete ? "succeeded" : "failed", finished_at: Time.current)
 
@@ -172,13 +173,53 @@ class SyncInstanceJob < ApplicationJob
   # guess why -- ask, one at a time. No limit on how many may leave at once: a
   # short walk only produces rows that read back as still pending, and a
   # moderator clearing the whole queue in Mastodon is a normal thing to do.
+  #
+  # Returns how many rows it read back, which the cap counts.
   def reconcile_departures(seen_ids)
     departed = instance.registration_requests.pending
       .where.not(mastodon_account_id: seen_ids)
       .limit(VERIFICATION_CAP)
+      .to_a
 
     resolved = departed.count { |request| verify_departure(request) }
     run.increment!(:records_resolved, resolved)
+    departed.size
+  end
+
+  # Approved accounts that had not confirmed their email, as far as we know, for
+  # long enough that Mastodon may have deleted them: its cleanup does not care
+  # that they were approved. Nothing else would notice, because approved rows
+  # never appear in the pending list.
+  #
+  # Mastodon's clock can restart when the mail is resent, so a row that reads back
+  # unconfirmed stays in this set and is asked about again. In random order, so
+  # that a cap's worth of those cannot keep the others from ever being checked.
+  def reconcile_unconfirmed_approvals(budget)
+    approvals = instance.registration_requests
+      .where(status: "approved", confirmed: false,
+        resolved_at: ..RegistrationRequest::UNCONFIRMED_ACCOUNT_LIFETIME.ago)
+      .order(Arel.sql("RANDOM()"))
+      .limit(budget)
+
+    approvals.each { |request| verify_unconfirmed_approval(request) }
+  end
+
+  def verify_unconfirmed_approval(request)
+    account = client.admin_account(request.mastodon_account_id)
+    return unless account["confirmed"]
+
+    request.update!(confirmed: true)
+    run.increment!(:records_updated)
+  rescue Mastodon::NotFound
+    # Not deleted_upstream_status: an approved account cannot be rejected, and a
+    # postponed one has no confirmation_requested_at to go by.
+    #
+    # resolved_at stays the moderator's decision, which is what the retention
+    # period counts from. Moving it would keep the applicant's data for longer.
+    request.update!(status: "expired")
+    run.increment!(:records_resolved)
+  rescue Mastodon::Forbidden
+    nil
   end
 
   def verify_departure(request)

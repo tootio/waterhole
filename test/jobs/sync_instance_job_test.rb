@@ -84,6 +84,110 @@ class SyncInstanceJobTest < ActiveSupport::TestCase
     assert_equal "rejected_elsewhere", existing.reload.status
   end
 
+  # Mastodon's cleanup deletes unconfirmed accounts whether or not they were
+  # approved, and approved rows never show up in the pending list.
+  test "an approved account that never confirmed and was deleted is marked expired" do
+    existing = approved_unconfirmed(resolved_at: 8.days.ago)
+    stub_admin_account(@instance, id: existing.mastodon_account_id, status: 404,
+      body: { "error" => "Record not found" })
+
+    SyncInstanceJob.perform_now(@instance)
+
+    existing.reload
+    assert_equal "expired", existing.status
+    assert_in_delta 8.days.ago, existing.resolved_at, 1.minute, "retention counts from the decision"
+    assert_equal 1, @instance.sync_runs.order(:id).last.records_resolved
+  end
+
+  # Unconfirmed with no confirmation_requested_at, which would read as a rejection.
+  test "a postponed account approved and then deleted is expired, not rejected" do
+    existing = approved_unconfirmed(resolved_at: 8.days.ago)
+    assert_nil existing.confirmation_requested_at
+    assert_equal "rejected_elsewhere", existing.deleted_upstream_status
+    stub_admin_account(@instance, id: existing.mastodon_account_id, status: 404,
+      body: { "error" => "Record not found" })
+
+    SyncInstanceJob.perform_now(@instance)
+
+    assert_equal "expired", existing.reload.status
+  end
+
+  test "an approved account that has since confirmed is not asked about again" do
+    existing = approved_unconfirmed(resolved_at: 8.days.ago)
+    read_back = stub_admin_account(@instance, id: existing.mastodon_account_id,
+      body: admin_account_payload(id: existing.mastodon_account_id, "approved" => true, "confirmed" => true))
+
+    2.times { SyncInstanceJob.perform_now(@instance) }
+
+    existing.reload
+    assert_equal "approved", existing.status
+    assert existing.confirmed?
+    assert_requested read_back, times: 1
+  end
+
+  test "an approved account still unconfirmed upstream stays approved" do
+    existing = approved_unconfirmed(resolved_at: 8.days.ago)
+    stub_admin_account(@instance, id: existing.mastodon_account_id,
+      body: admin_account_payload(id: existing.mastodon_account_id, "approved" => true, "confirmed" => false))
+
+    SyncInstanceJob.perform_now(@instance)
+
+    existing.reload
+    assert_equal "approved", existing.status
+    refute existing.confirmed?
+  end
+
+  test "an approval younger than the lifetime is not read back" do
+    existing = approved_unconfirmed(resolved_at: 6.days.ago)
+
+    SyncInstanceJob.perform_now(@instance)
+
+    assert_not_requested :get, "#{@instance.base_url}/api/v1/admin/accounts/#{existing.mastodon_account_id}"
+    assert_equal "approved", existing.reload.status
+  end
+
+  test "an approved account that expires stops flagging its counterparts on other instances" do
+    existing = registration_requests(:jules_alpha)
+    counterpart = registration_requests(:jules_beta)
+    existing.update_columns(status: "approved", confirmed: false, resolved_at: 8.days.ago)
+    stub_pending_accounts(@instance, accounts: still_pending_payloads)
+    stub_admin_account(@instance, id: existing.mastodon_account_id, status: 404,
+      body: { "error" => "Record not found" })
+
+    assert_enqueued_with(job: RecomputeFlagsJob, args: [ counterpart ]) do
+      SyncInstanceJob.perform_now(@instance)
+    end
+  end
+
+  test "a failed walk does not read approved accounts back" do
+    existing = approved_unconfirmed(resolved_at: 8.days.ago)
+    stub_request(:get, "#{@instance.base_url}/api/v2/admin/accounts")
+      .with(query: hash_including({ "status" => "pending" }))
+      .to_return(status: 500, body: { "error" => "boom" }.to_json,
+        headers: { "Content-Type" => "application/json" })
+
+    SyncInstanceJob.perform_now(@instance)
+
+    assert_not_requested :get, "#{@instance.base_url}/api/v1/admin/accounts/#{existing.mastodon_account_id}"
+  end
+
+  test "departures and unconfirmed approvals share one verification cap" do
+    departed = registration_requests(:pending_alpha)
+    stub_pending_accounts(@instance, accounts: still_pending_payloads(except: departed))
+    SyncInstanceJob::VERIFICATION_CAP.times do |i|
+      @instance.registration_requests.create!(mastodon_account_id: (6000 + i).to_s, username: "approved#{i}",
+        signed_up_at: 9.days.ago, status: "approved", confirmed: false, resolved_at: 8.days.ago)
+    end
+    read_backs = stub_request(:get, %r{\A#{Regexp.escape(@instance.base_url)}/api/v1/admin/accounts/\d+\z})
+      .to_return(status: 200, body: { "approved" => false, "confirmed" => false }.to_json,
+        headers: { "Content-Type" => "application/json" })
+
+    SyncInstanceJob.perform_now(@instance)
+
+    assert_requested read_backs, times: SyncInstanceJob::VERIFICATION_CAP
+    assert_requested :get, "#{@instance.base_url}/api/v1/admin/accounts/#{departed.mastodon_account_id}"
+  end
+
   # With "postpone confirmation emails", accounts start frozen and unconfirmed,
   # and stay that way until a moderator acts.
   test "a signup whose confirmation mail is postponed lands in the queue" do
@@ -418,4 +522,12 @@ class SyncInstanceJobTest < ActiveSupport::TestCase
   private
 
   def still_pending_payloads(except: nil) = pending_account_payloads(@instance, except:)
+
+  # Stubs the pending list without it, so the row is only reached by being read back.
+  def approved_unconfirmed(resolved_at:)
+    registration_requests(:pending_alpha).tap do |request|
+      request.update_columns(status: "approved", confirmed: false, resolved_at:)
+      stub_pending_accounts(@instance, accounts: still_pending_payloads)
+    end
+  end
 end

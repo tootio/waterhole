@@ -28,7 +28,7 @@ import { SHEET } from "lib/sheet"
 //   (nor a phone's page still locked behind a sheet)
 const ANCHORS = CSS.supports("position-area: bottom")
 const GAP = 4 // between toggle and panel, as margin-top in the stylesheet
-const EDGE = 8 // kept free at the viewport's edges
+const EDGE = 8 // kept free at the viewport's edges, on top of any safe-area inset
 
 export default class extends Controller {
   static targets = ["toggle", "panel"]
@@ -99,14 +99,19 @@ export default class extends Controller {
     const viewportHeight = document.documentElement.clientHeight
     const { offsetWidth: width, offsetHeight: height } = panel
 
-    const below = viewportHeight - toggle.bottom - GAP - EDGE
-    const above = toggle.top - GAP - EDGE
+    // Where the screen stops being usable: the notch and home indicator, as
+    // application.css hands them over.
+    const style = getComputedStyle(panel)
+    const edge = (side) => EDGE + (parseFloat(style.getPropertyValue(`--safe-${side}`)) || 0)
+
+    const below = viewportHeight - toggle.bottom - GAP - edge("bottom")
+    const above = toggle.top - GAP - edge("top")
     const up = height > below && above > below
     const room = Math.max(up ? above : below, 0)
     const shown = Math.min(height, room)
 
     panel.style.top = `${up ? toggle.top - GAP - shown : toggle.bottom + GAP}px`
-    panel.style.left = `${Math.max(EDGE, Math.min(toggle.right - width, viewportWidth - width - EDGE))}px`
+    panel.style.left = `${Math.max(edge("left"), Math.min(toggle.right - width, viewportWidth - width - edge("right")))}px`
     if (height > room) panel.style.maxHeight = `${room}px`
   }
 

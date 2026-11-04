@@ -10,6 +10,18 @@
 @layer base {
   html { color-scheme: light dark; }
 
+  /* The page's side padding, and whatever has to bleed out of it. viewport-fit=
+     cover (the layout's viewport meta) lets backgrounds run under the notch and
+     home indicator, and makes env() report them, so whatever holds text has to
+     step back from those edges itself. */
+  :root {
+    --gutter-left: max(1rem, env(safe-area-inset-left));
+    --gutter-right: max(1rem, env(safe-area-inset-right));
+  }
+
+  /* An anchor jump stops below the status bar, not under it. */
+  html { scroll-padding-top: env(safe-area-inset-top); }
+
   /* A modal dialog covers the viewport, but the page behind it can still be
      scrolled with a wheel or touch unless we say otherwise. lib/scroll_lock.js
      sets the attribute, and measures the scrollbar this takes away so the
@@ -18,6 +30,16 @@
     overflow: hidden !important;
     padding-right: var(--scroll-gutter, 0) !important;
   }
+}
+
+@utility px-gutter {
+  padding-left: var(--gutter-left);
+  padding-right: var(--gutter-right);
+}
+
+@utility -mx-gutter {
+  margin-left: calc(-1 * var(--gutter-left));
+  margin-right: calc(-1 * var(--gutter-right));
 }
 
 /* One disabled look for every control.
@@ -159,6 +181,11 @@
     color: inherit;
     padding: 0.25rem 0;
     box-shadow: var(--shadow-lg);
+    /* For the scripted placement: script has no env() of its own. */
+    --safe-top: env(safe-area-inset-top);
+    --safe-right: env(safe-area-inset-right);
+    --safe-bottom: env(safe-area-inset-bottom);
+    --safe-left: env(safe-area-inset-left);
   }
 
   @supports (position-area: bottom) {
@@ -170,6 +197,10 @@
       position-anchor: --dropdown;
       position-area: bottom span-left;
       margin-top: 0.25rem;
+      /* Counts as overflow, so it flips above the toggle rather than open
+         across the home indicator. Not the sides: flip-inline would swap such a
+         margin onto the edge aligned with the toggle, and push it out of line. */
+      margin-bottom: env(safe-area-inset-bottom);
       position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline;
     }
   }
@@ -187,7 +218,7 @@
       overscroll-behavior: contain;
       border-width: 1px 0 0;
       border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-      padding: 0.5rem 0 calc(0.5rem + env(safe-area-inset-bottom));
+      padding: 0.5rem env(safe-area-inset-right) calc(0.5rem + env(safe-area-inset-bottom)) env(safe-area-inset-left);
       font-size: var(--text-base);
       transition: translate 150ms ease-out;
 
@@ -196,8 +227,9 @@
 
     .dropdown-panel::backdrop { background: rgb(0 0 0 / 0.4); }
 
-    /* Roomier rows for a thumb. */
-    .dropdown-panel :is(a, button) { padding-block: 0.625rem; }
+    /* Roomier rows for a thumb. Important, since the rows carry a py-* utility
+       and utilities outrank this layer. */
+    .dropdown-panel :is(a, button) { padding-block: 0.625rem !important; }
   }
 
   @media (prefers-reduced-motion: reduce) {

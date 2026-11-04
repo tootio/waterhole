@@ -56,6 +56,9 @@ class DnsAllowlist
   #      from NXDOMAIN, which would silently collapse `unreachable` into
   #      `not_allowlisted`.
   #
+  #      That covers timeouts alone: the same rescue swallows SERVFAIL and REFUSED,
+  #      so StrictDNS below is just as mandatory.
+  #
   #   2. The config hash REPLACES the system resolver config, so it must be
   #      merged onto default_config_hash. Passing raise_timeout_errors alone
   #      leaves :nameserver unset, falls back to 0.0.0.0, and makes every lookup
@@ -65,7 +68,34 @@ class DnsAllowlist
   #      search-list expansion, which would turn the lookup into
   #      `_waterhole.example.social.<local search domain>`.
   class Resolver
+    # Makes a nameserver that fails to answer (SERVFAIL, REFUSED, ...) count like one
+    # that timed out: Resolv moves on to the next nameserver, and raises if none
+    # answers. NXDOMAIN and an empty answer still come back as [], because those are
+    # answers: the name has no such record. The raised message says "timeout" either
+    # way, so don't show it to people as a diagnosis: DnsAllowlist#call doesn't. No API
+    # gets at this, so it hooks @config, as read in Ruby 4.0.9's resolv.rb;
+    # the tests against a real nameserver fail if an upgrade moves it.
+    class StrictDNS < Resolv::DNS
+      module FailedNameserverIsATimeout
+        def resolv(name)
+          super do |*args|
+            yield(*args)
+          rescue Resolv::DNS::Config::OtherResolvError
+            raise Resolv::ResolvTimeout
+          end
+        end
+      end
+
+      def initialize(...)
+        super
+        @config.extend(FailedNameserverIsATimeout)
+      end
+    end
+
     TIMEOUT = 3 # seconds; a slow resolver must not hang a web request
+
+    # What a lookup that got no usable answer raises. Says nothing about the name.
+    ERRORS = [ Resolv::ResolvError, IOError, SystemCallError, Timeout::Error ].freeze
 
     # Exposed so it can be asserted on directly: both settings below are load
     # bearing, and a refactor that quietly drops either one would break
@@ -75,10 +105,18 @@ class DnsAllowlist
     end
 
     def txt_records(name)
-      Resolv::DNS.open(**config) do |dns|
-        dns.timeouts = TIMEOUT
+      with_dns do |dns|
         dns.getresources(Resolv::DNS::Name.create(name), Resolv::DNS::Resource::IN::TXT)
            .map { |record| Array(record.strings).join }
+      end
+    end
+
+    private
+
+    def with_dns
+      StrictDNS.open(**config) do |dns|
+        dns.timeouts = TIMEOUT
+        yield dns
       end
     end
   end
@@ -164,9 +202,9 @@ class DnsAllowlist
       Result.new(outcome: :verified, records:, error: nil, accepted_terms: @required_terms,
         signals: signals_on?(addressed.first))
     end
-  rescue Resolv::ResolvError, IOError, SystemCallError, Timeout::Error => e
+  rescue *Resolver::ERRORS => e
     # Says nothing about whether the record exists. Never counts as removal.
-    Result.new(outcome: :unreachable, records: [], error: "#{e.class}: #{e.message}",
+    Result.new(outcome: :unreachable, records: [], error: "DNS gave no usable answer (#{e.class})",
       accepted_terms: nil, signals: nil)
   end
 

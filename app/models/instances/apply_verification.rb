@@ -27,7 +27,7 @@ module Instances
       when :unreachable     then note_unreachable
       else
         # A new outcome silently reported as "unreachable" would turn a
-        # deterministic, admin-fixable refusal into "a problem on our side" and
+        # deterministic, admin-fixable refusal into "try again shortly" and
         # would never set a deadline. Fail loudly instead.
         raise ArgumentError, "unknown DnsAllowlist outcome: #{@result.outcome.inspect}"
       end

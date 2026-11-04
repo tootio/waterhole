@@ -69,9 +69,9 @@ class RegistrationRequest < ApplicationRecord
 
   # Cross-instance flags live on OTHER instances' requests, so a change here has
   # to reach them: joining or leaving the active set (a rejection, wherever it
-  # happens), or a new email or network. The old key matters as much as the new
-  # one -- a pending user who signs in from elsewhere must stop flagging the
-  # requests that matched their previous network.
+  # happens), a new email or network, or an email getting confirmed. The old key
+  # matters as much as the new one -- a pending user who signs in from elsewhere
+  # must stop flagging the requests that matched their previous network.
   before_save :remember_previous_ip_group, if: :ip_changed?
   after_commit :refresh_cross_instance_counterparts, on: %i[create update],
     if: :cross_instance_match_changed?
@@ -257,7 +257,7 @@ class RegistrationRequest < ApplicationRecord
 
   def cross_instance_match_changed?
     saved_change_to_canonical_email_hash? || saved_change_to_ip? || saved_change_to_ip_relay? ||
-      saved_change_to_invite_fingerprint? || saved_change_to_signup_shape? ||
+      saved_change_to_invite_fingerprint? || saved_change_to_signup_shape? || saved_change_to_confirmed? ||
       (saved_change_to_status? && ACTIVE_STATUSES.include?(status_before_last_save) != active?)
   end
 

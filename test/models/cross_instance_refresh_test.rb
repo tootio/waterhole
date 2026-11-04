@@ -33,6 +33,14 @@ class CrossInstanceRefreshTest < ActiveSupport::TestCase
     end
   end
 
+  test "an address confirmed later flags the other instance, and one unconfirmed clears it" do
+    perform_enqueued_jobs { @alpha_jules.update!(confirmed: false) }
+    assert_nil email_flag(@beta_jules), "an unconfirmed address is not evidence"
+
+    perform_enqueued_jobs { @alpha_jules.update!(confirmed: true) }
+    assert email_flag(@beta_jules), "without a refresh it would wait for the hourly sweep"
+  end
+
   # A pending user can sign in, and Mastodon then reports the new address.
   test "moving to a new network releases the requests that matched the old one" do
     a = request_on(instances(:alpha), "9101", "192.0.2.50")

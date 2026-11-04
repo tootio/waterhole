@@ -69,6 +69,19 @@ class UnconfirmedEmailTest < ActiveSupport::TestCase
     assert Flags::Reapplication.call(again), "a real rejection still counts"
   end
 
+  test "someone rejected under a stranger's address does not make its owner the rejected person" do
+    impostor = signup(email: "owner@example.org", disabled: true, signed_up_at: 2.days.ago)
+    impostor.update!(status: "rejected", resolved_at: Time.current)
+    owner = signup(email: "owner@example.org", disabled: true, signed_up_at: 1.minute.ago)
+
+    owner.recompute_flags!
+
+    flag = owner.reload.flags.find_by(rule: "reapplication")
+    assert_equal "warning", flag.severity
+    assert_equal false, flag.details["address_verified"]
+    assert_equal "warning", Flag.severities.key(owner.max_flag_severity)
+  end
+
   test "expiry is resolved, and no longer counts as active on other instances" do
     @request.update!(status: "expired", resolved_at: Time.current)
 

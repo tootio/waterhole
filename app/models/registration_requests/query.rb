@@ -4,15 +4,16 @@ module RegistrationRequests
   class Query
     SORTS   = %w[newest oldest risk].freeze
     CLAIMS  = %w[any unclaimed mine theirs].freeze
-    # Unconfirmed signups are hidden by default, as in Mastodon, which only
-    # tells staff about a pending account once its email is confirmed: many
-    # never are, and Mastodon deletes them after a week.
-    EMAILS  = %w[confirmed unconfirmed any].freeze
+    # Signups waiting for email confirmation are hidden by default, as in
+    # Mastodon, which only tells staff about a pending account once its email is
+    # confirmed: many never are, and Mastodon deletes them after a week. Those
+    # whose mail is postponed until approval are not waiting for anything.
+    EMAILS  = %w[reviewable confirmed frozen unconfirmed any].freeze
     # Several flags or watchwords: any of them (the default), or all.
     MATCHES = %w[any all].freeze
     # The lowest severity a chosen flag may have ("Warning and above").
     SEVERITIES = Flag::SEVERITIES.keys.map(&:to_s).freeze
-    DEFAULT = { status: %w[pending], claim: "any", email: "confirmed", sort: "newest" }.freeze
+    DEFAULT = { status: %w[pending], claim: "any", email: "reviewable", sort: "newest" }.freeze
 
     attr_reader :filters
 
@@ -24,6 +25,7 @@ module RegistrationRequests
       normalise_multiple(filters, :flag, :flag_match)
       normalise_multiple(filters, :watchword, :watchword_match)
       filters.delete(:severity) unless SEVERITIES.include?(filters[:severity])
+      filters.delete(:email) unless EMAILS.include?(filters[:email])
       @filters = DEFAULT.merge(filters.compact_blank)
     end
 
@@ -40,7 +42,7 @@ module RegistrationRequests
 
     def active? = filters.except(*DEFAULT.keys) != {} || filters != DEFAULT
 
-    # Same as the plain queue landing page: pending, verified, unclaimed-or-not,
+    # Same as the plain queue landing page: pending, reviewable, unclaimed-or-not,
     # any moderator. Sort order doesn't count as a filter here — an empty
     # "newest" queue and an empty "riskiest" queue are the same empty queue.
     def unfiltered? = filters.except(:sort) == DEFAULT.except(:sort)
@@ -119,9 +121,15 @@ module RegistrationRequests
 
     def apply_email(relation)
       case filters[:email]
-      when "unconfirmed" then relation.email_unconfirmed
+      when "confirmed"   then relation.email_confirmed
+      # Pending only, as both say something about where the account stands now,
+      # and the columns stop being kept up to date at a decision.
+      when "frozen"      then relation.pending.frozen_unconfirmed
+      when "unconfirmed" then relation.pending.waiting_for_confirmation
       when "any"         then relation
-      else relation.email_confirmed
+      # Only pending requests can be waiting on anything: a filter on what the
+      # queue hides must not hide decided ones, or expired ones could never show.
+      else relation.reviewable.or(relation.where.not(status: "pending"))
       end
     end
 

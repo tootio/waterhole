@@ -39,10 +39,22 @@
       </dd>
       <% if registration_request.confirmed? %>
         <dd class="mt-1 text-xs text-stone-500 dark:text-stone-400">confirmed</dd>
+      <% elsif registration_request.resolved? %>
+        <dd class="mt-1 text-xs text-stone-500 dark:text-stone-400">not confirmed when last synced</dd>
+      <% elsif registration_request.account_frozen? %>
+        <dd class="mt-1 text-xs text-amber-800 dark:text-amber-200">
+          not confirmed — a frozen account usually means Mastodon only sends the confirmation
+          email after approval, so nobody has checked this address yet
+        </dd>
       <% else %>
         <dd class="mt-1 text-xs text-amber-800 dark:text-amber-200">
           not confirmed yet — Mastodon deletes the account if it stays unconfirmed
-          for <%= RegistrationRequest::UNCONFIRMED_ACCOUNT_LIFETIME.inspect %> after signup
+          for <%= RegistrationRequest::UNCONFIRMED_ACCOUNT_LIFETIME.inspect %> after sending the confirmation email
+        </dd>
+      <% end %>
+      <% if registration_request.account_frozen? %>
+        <dd class="mt-1 text-xs text-amber-800 dark:text-amber-200">
+          account frozen — approving lifts the freeze on Mastodon 5.0 and later, but not on older versions
         </dd>
       <% end %>
     </div>

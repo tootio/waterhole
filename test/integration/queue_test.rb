@@ -126,6 +126,65 @@ class QueueTest < ActionDispatch::IntegrationTest
     assert_select "body", { count: 0, text: /rowan/ }, "confirmed ones are not in this view"
   end
 
+  # Mastodon's "postpone confirmation emails": hiding these would empty the queue.
+  test "signups whose confirmation mail is postponed are in the queue by default" do
+    sign_in_as @moderator
+    requests = @moderator.instance.registration_requests
+    requests.create!(mastodon_account_id: "9402", username: "postponed_applicant", signed_up_at: 1.hour.ago,
+      confirmed: false, disabled: true, invite_request: "The mail only comes once you approve me.")
+    awaiting = requests.awaiting_review.count
+
+    get root_path
+    assert_select "li", /postponed_applicant/
+    assert_select "li span", "Frozen, email not confirmed"
+    assert_select "p", /#{awaiting} pending/
+    assert_select "a[href=?]", root_path(email: "unconfirmed"), count: 0
+
+    get root_path, params: { email: "unconfirmed" }
+    assert_select "body", { count: 0, text: /postponed_applicant/ }, "not waiting on the applicant"
+
+    get root_path, params: { email: "frozen" }
+    assert_select "li", /postponed_applicant/
+
+    get root_path, params: { email: "confirmed" }
+    assert_select "body", { count: 0, text: /postponed_applicant/ }, "nobody has confirmed this address"
+    assert_select "select[name=?] option[selected][value=?]", "email", "confirmed"
+  end
+
+  test "an unknown email filter is the default one, and an empty queue says it is quiet" do
+    sign_in_as @moderator
+    @moderator.instance.registration_requests.pending.destroy_all
+
+    get root_path, params: { email: "nonsense" }
+
+    assert_select "body", /The waterhole is quiet/
+  end
+
+  test "the default email filter leaves decided requests alone" do
+    sign_in_as @moderator
+    @moderator.instance.registration_requests.create!(mastodon_account_id: "9403", username: "long_expired",
+      signed_up_at: 9.days.ago, confirmed: false, status: "expired", resolved_at: 1.day.ago)
+
+    get root_path, params: { status: [ "expired" ] }
+
+    assert_select "li", /long_expired/
+    assert_select "li span", "Email not confirmed"
+  end
+
+  # The mirror stops at a decision, and approving unfreezes the account anyway.
+  test "a decided request does not claim to be frozen" do
+    sign_in_as @moderator
+    request = @moderator.instance.registration_requests.create!(mastodon_account_id: "9404", username: "decided_one",
+      signed_up_at: 1.day.ago, confirmed: false, disabled: true, status: "approved", resolved_at: 1.hour.ago)
+
+    get root_path, params: { status: [ "approved" ] }
+    assert_select "li span", "Email not confirmed"
+
+    get registration_request_path(request)
+    assert_select "body", { count: 0, text: /frozen/ }
+    assert_select "dd", /not confirmed when last synced/
+  end
+
   # Regression: the pagination links were built by handing url_for the raw
   # query string, so ?host= and ?protocol= rewrote them into another origin or
   # a javascript: URL.

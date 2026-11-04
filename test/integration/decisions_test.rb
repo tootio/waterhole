@@ -68,7 +68,7 @@ class DecisionsTest < ActionDispatch::IntegrationTest
   end
 
   test "an unconfirmed account Mastodon cleaned up reads as expired" do
-    @pending.update_columns(confirmed: false, signed_up_at: (RegistrationRequest::UNCONFIRMED_ACCOUNT_LIFETIME + 1.day).ago)
+    @pending.update_columns(confirmed: false, confirmation_requested_at: (RegistrationRequest::UNCONFIRMED_ACCOUNT_LIFETIME + 1.day).ago)
     stub_decision(@instance, id: @pending.mastodon_account_id, action: "reject", status: 404,
       body: { "error" => "Record not found" })
 

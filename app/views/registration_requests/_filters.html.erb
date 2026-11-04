@@ -43,7 +43,8 @@
   <div>
     <%= f.label :email, "Email", class: "block text-xs font-medium text-stone-600 dark:text-stone-300" %>
     <%= f.select :email,
-          options_for_select([ %w[Confirmed confirmed], [ "Not confirmed", "unconfirmed" ], %w[Either any] ],
+          options_for_select([ [ "Ready for review", "reviewable" ], %w[Confirmed confirmed], [ "Frozen, not confirmed", "frozen" ],
+                               [ "Waiting for confirmation", "unconfirmed" ], %w[Any any] ],
                              query.filters[:email]),
           {}, data: { action: "change->auto-submit#submit" },
           autocomplete: "none", # it's called email, but email autofill is wrong

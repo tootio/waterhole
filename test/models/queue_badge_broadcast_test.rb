@@ -13,6 +13,27 @@ class QueueBadgeBroadcastTest < ActiveSupport::TestCase
 
   def badge_broadcasts = enqueued_jobs.count { it.to_s.include?("queue_badge") }
 
+  test "a postponed signup counts, and leaves the count when it is re-enabled" do
+    request = nil
+    assert_difference -> { badge_broadcasts }, 1 do
+      request = @instance.registration_requests.create!(mastodon_account_id: "new-3", username: "postponed",
+        signed_up_at: Time.current, confirmed: false, disabled: true, status: "pending")
+    end
+
+    assert_difference -> { badge_broadcasts }, 1 do
+      request.update!(disabled: false)
+    end
+  end
+
+  test "confirming a frozen signup leaves the count alone" do
+    request = @instance.registration_requests.create!(mastodon_account_id: "new-4", username: "postponed",
+      signed_up_at: Time.current, confirmed: false, disabled: true, status: "pending")
+
+    assert_no_difference -> { badge_broadcasts } do
+      request.update!(confirmed: true)
+    end
+  end
+
   test "a new request that lands in the queue updates the badge" do
     assert_difference -> { badge_broadcasts }, 1 do
       @instance.registration_requests.create!(mastodon_account_id: "new-1", username: "newcomer",

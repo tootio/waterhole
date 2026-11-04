@@ -62,7 +62,7 @@ class SyncInstanceJobTest < ActiveSupport::TestCase
   # that 404 looks exactly like a rejection.
   test "an unconfirmed request that vanished after a week is marked expired, not rejected" do
     existing = registration_requests(:pending_alpha)
-    existing.update_columns(confirmed: false, signed_up_at: 8.days.ago)
+    existing.update_columns(confirmed: false, signed_up_at: 8.days.ago, confirmation_requested_at: 8.days.ago)
     stub_pending_accounts(@instance, accounts: still_pending_payloads(except: existing))
     stub_admin_account(@instance, id: existing.mastodon_account_id, status: 404,
       body: { "error" => "Record not found" })
@@ -74,7 +74,47 @@ class SyncInstanceJobTest < ActiveSupport::TestCase
 
   test "an unconfirmed request that vanished within the week can only have been rejected" do
     existing = registration_requests(:pending_alpha)
-    existing.update_columns(confirmed: false, signed_up_at: 2.days.ago)
+    existing.update_columns(confirmed: false, signed_up_at: 2.days.ago, confirmation_requested_at: 2.days.ago)
+    stub_pending_accounts(@instance, accounts: still_pending_payloads(except: existing))
+    stub_admin_account(@instance, id: existing.mastodon_account_id, status: 404,
+      body: { "error" => "Record not found" })
+
+    SyncInstanceJob.perform_now(@instance)
+
+    assert_equal "rejected_elsewhere", existing.reload.status
+  end
+
+  # With "postpone confirmation emails", accounts start frozen and unconfirmed,
+  # and stay that way until a moderator acts.
+  test "a signup whose confirmation mail is postponed lands in the queue" do
+    stub_pending_accounts(@instance, accounts: still_pending_payloads +
+      [ admin_account_payload(id: 5000, username: "postponed", "confirmed" => false, "disabled" => true) ])
+
+    SyncInstanceJob.perform_now(@instance)
+
+    request = @instance.registration_requests.find_by!(mastodon_account_id: "5000")
+    assert request.awaiting_review?
+    assert request.awaiting_since
+  end
+
+  test "a postponed signup re-enabled in Mastodon leaves the queue until it confirms" do
+    stub_pending_accounts(@instance, accounts: still_pending_payloads +
+      [ admin_account_payload(id: 5000, username: "postponed", "confirmed" => false, "disabled" => false) ])
+    existing = @instance.registration_requests.create!(mastodon_account_id: "5000", username: "postponed",
+      signed_up_at: 1.day.ago, confirmed: false, disabled: true)
+    assert existing.awaiting_since
+
+    SyncInstanceJob.perform_now(@instance)
+
+    refute existing.reload.awaiting_review?
+    assert_in_delta Time.current, existing.confirmation_requested_at, 1.minute, "the mail goes out now, not at signup"
+  end
+
+  # Mastodon's cleanup skips accounts that were never sent the mail, so an old
+  # one vanishing can only be a rejection.
+  test "a postponed request that vanished after a week was rejected, not expired" do
+    existing = registration_requests(:pending_alpha)
+    existing.update_columns(confirmed: false, disabled: true, signed_up_at: 8.days.ago)
     stub_pending_accounts(@instance, accounts: still_pending_payloads(except: existing))
     stub_admin_account(@instance, id: existing.mastodon_account_id, status: 404,
       body: { "error" => "Record not found" })

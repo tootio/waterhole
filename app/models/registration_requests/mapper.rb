@@ -19,6 +19,7 @@ module RegistrationRequests
         account_url: account["url"].presence,
         locale: payload["locale"].presence,
         confirmed: !!payload["confirmed"],
+        disabled: !!payload["disabled"],
         approved: !!payload["approved"],
         email: payload["email"].presence,
         ip: extract_ip(payload),

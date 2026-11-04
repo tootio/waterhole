@@ -23,6 +23,13 @@
         The notes you write, the requests you claim and the decisions you make,
         which your fellow moderators see with your name.
       </li>
+      <% if Waterhole::Deployment.push_configured? %>
+        <li>
+          Only if you use push notifications: your notification settings and
+          time zone, and the address your browser's vendor (Apple, Google, Mozilla
+          or Microsoft) issued for reaching that browser.
+        </li>
+      <% end %>
     </ul>
     <p class="mt-3 text-sm text-stone-700 dark:text-stone-300">
       The details, how long we keep what, and your rights are in the

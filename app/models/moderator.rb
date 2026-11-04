@@ -12,6 +12,8 @@ class Moderator < ApplicationRecord
   has_many :decisions, dependent: :restrict_with_exception
   has_many :votes, dependent: :restrict_with_exception
   has_one :avatar, dependent: :delete
+  has_one :push_preference, dependent: :delete
+  has_many :push_subscriptions, dependent: :delete_all
 
   validates :mastodon_account_id, presence: true,
     uniqueness: { scope: :instance_id }
@@ -76,6 +78,10 @@ class Moderator < ApplicationRecord
       # points at it. With the token gone, rotation cannot pick this one again.
       update!(access_token: nil, token_invalidated_at: Time.current)
       Avatar.where(moderator_id: id).delete_all
+      # Explicitly: an anonymised moderator's row stays, and nothing may keep
+      # reaching a browser of someone who asked to be forgotten.
+      PushSubscription.where(moderator_id: id).delete_all
+      PushPreference.where(moderator_id: id).delete_all
       instance.rotate_sync_moderator! if instance.sync_moderator_id == id
 
       if notes.exists? || decisions.exists? || votes.exists?

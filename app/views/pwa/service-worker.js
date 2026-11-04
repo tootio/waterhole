@@ -1,26 +1,26 @@
-// Add a service worker for processing Web Push notifications:
+// Only here for push: nothing is cached, and nothing is stored in the browser.
 //
-// self.addEventListener("push", async (event) => {
-//   const { title, options } = await event.data.json()
-//   event.waitUntil(self.registration.showNotification(title, options))
-// })
-//
-// self.addEventListener("notificationclick", function(event) {
-//   event.notification.close()
-//   event.waitUntil(
-//     clients.matchAll({ type: "window" }).then((clientList) => {
-//       for (let i = 0; i < clientList.length; i++) {
-//         let client = clientList[i]
-//         let clientPath = (new URL(client.url)).pathname
-//
-//         if (clientPath == event.notification.data.path && "focus" in client) {
-//           return client.focus()
-//         }
-//       }
-//
-//       if (clients.openWindow) {
-//         return clients.openWindow(event.notification.data.path)
-//       }
-//     })
-//   )
-// })
+// Messages are Declarative Web Push (PushNotifications::Message), which a browser
+// that supports it displays by itself without waking this worker. For the others,
+// this shows the same JSON.
+self.addEventListener("push", event => {
+  const notification = event.data?.json().notification
+  if (!notification) return
+
+  event.waitUntil(self.registration.showNotification(notification.title, {
+    body: notification.body,
+    tag: notification.tag,
+    renotify: notification.renotify,
+    icon: "/icon.png",
+    data: { navigate: notification.navigate }
+  }))
+})
+
+self.addEventListener("notificationclick", event => {
+  event.notification.close()
+
+  const url = new URL(event.notification.data?.navigate || "/", self.location.origin)
+  if (url.origin !== self.location.origin) return
+
+  event.waitUntil(self.clients.openWindow(url.href))
+})

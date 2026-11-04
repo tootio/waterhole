@@ -73,6 +73,12 @@ sed -i.bak \
 
 With Ruby at hand, `bin/rails waterhole:secrets` prints the same keys to paste in instead.
 
+Moderators can also opt in to push notifications about their queue, if you set the optional
+`WATERHOLE_VAPID_*` pair. Generate it with `bin/rails waterhole:vapid`, or under Docker Compose with
+`docker compose run --rm web bin/rails waterhole:vapid`. Keep it stable: changing it ends every browser's
+subscription. Add the push paragraphs from the template to your privacy policy first: changing your copy
+asks every moderator to consent again and starts each instance's terms grace period.
+
 - **Outside a container**, Rails reads `.env.production` at boot.
 - **In a container**, the same variables are passed in (see [Deployment](#deployment-via-docker-compose) below).
 - Variables already set in the environment always win over the file.

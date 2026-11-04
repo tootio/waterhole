@@ -16,6 +16,21 @@ namespace :waterhole do
     ENV
   end
 
+  # Apart from :secrets, because setting these turns a feature on, and an existing
+  # deployment must not be handed new encryption keys alongside them.
+  desc "Print a freshly generated key pair for push notifications"
+  task :vapid do
+    require "web-push"
+
+    vapid = WebPush.generate_key
+
+    puts <<~ENV
+      # Generated #{Time.now.utc.iso8601}. Setting these lets moderators opt in to push notifications.
+      WATERHOLE_VAPID_PUBLIC_KEY=#{vapid.public_key}
+      WATERHOLE_VAPID_PRIVATE_KEY=#{vapid.private_key}
+    ENV
+  end
+
   # A stored request's match keys are only recomputed when their source changes,
   # so after EmailCanonicalizer's or ReasonFingerprint's rules change -- or
   # WATERHOLE_SHARING_HMAC_KEY, which keys both -- existing rows keep old keys

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_26_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_04_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -185,10 +185,38 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_120000) do
     t.index ["instance_id", "mastodon_account_id"], name: "index_purged_registrations_on_instance_and_account", unique: true
   end
 
+  create_table "push_preferences", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "daily_at", default: 420, null: false
+    t.datetime "daily_held_until"
+    t.integer "forgotten_after_days"
+    t.datetime "forgotten_checked_at", null: false
+    t.string "forgotten_scope", default: "awaiting", null: false
+    t.datetime "forgotten_through"
+    t.bigint "moderator_id", null: false
+    t.datetime "new_checked_at", null: false
+    t.string "new_frequency", default: "hourly", null: false
+    t.string "new_scope", default: "awaiting", null: false
+    t.string "time_zone", default: "UTC", null: false
+    t.datetime "updated_at", null: false
+    t.index ["moderator_id"], name: "index_push_preferences_on_moderator_id", unique: true
+  end
+
+  create_table "push_subscriptions", force: :cascade do |t|
+    t.string "auth", null: false
+    t.datetime "created_at", null: false
+    t.string "endpoint", null: false
+    t.bigint "moderator_id", null: false
+    t.string "p256dh", null: false
+    t.datetime "updated_at", null: false
+    t.index ["moderator_id", "endpoint"], name: "index_push_subscriptions_on_moderator_id_and_endpoint", unique: true
+  end
+
   create_table "registration_requests", force: :cascade do |t|
     t.string "account_url"
     t.boolean "approved", default: false, null: false
     t.string "avatar_url"
+    t.datetime "awaiting_since"
     t.text "bio"
     t.string "canonical_email_hash"
     t.datetime "claimed_at"
@@ -215,6 +243,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_120000) do
     t.string "mastodon_account_id", null: false
     t.integer "max_flag_severity", default: 0, null: false
     t.integer "notes_count", default: 0, null: false
+    t.datetime "pending_since"
     t.jsonb "raw", default: {}, null: false
     t.datetime "resolved_at"
     t.datetime "signed_up_at", null: false
@@ -305,6 +334,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_120000) do
   add_foreign_key "notes", "registration_requests"
   add_foreign_key "purged_registration_stats", "instances"
   add_foreign_key "purged_registrations", "instances"
+  add_foreign_key "push_preferences", "moderators"
+  add_foreign_key "push_subscriptions", "moderators"
   add_foreign_key "registration_requests", "instances"
   add_foreign_key "registration_requests", "moderators", column: "claimed_by_id"
   add_foreign_key "registration_stats", "instances"

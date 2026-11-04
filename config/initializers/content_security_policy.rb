@@ -24,7 +24,9 @@ Rails.application.configure do
     policy.object_src      :none
     policy.frame_ancestors :none
     policy.require_trusted_types_for :script
-    policy.trusted_types "default", "dompurify", "turbo-drive"
+    # "push-service-worker" registers the one worker (push_subscription_controller.js):
+    # the DOMFortify default policy rightly refuses every script URL.
+    policy.trusted_types "default", "dompurify", "turbo-drive", "push-service-worker"
   end
 
   config.content_security_policy_nonce_generator = ->(_request) { SecureRandom.base64(16) }

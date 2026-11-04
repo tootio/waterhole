@@ -1,0 +1,46 @@
+<% content_for :page_title, "Push notifications" %>
+<%
+  heading_class = "mb-2 mt-6 font-semibold"
+  list_class = "list-disc space-y-1 pl-5 text-sm text-stone-600 dark:text-stone-300"
+%>
+
+<h1 class="mb-4 text-2xl font-semibold tracking-tight">Push notifications</h1>
+
+<p class="text-sm text-stone-600 dark:text-stone-300">
+  Waterhole can tell you when registrations are waiting, even with no Waterhole page open.
+  It's off until you turn it on, in each browser you want it in.
+</p>
+
+<h2 class="<%= heading_class %>">Turning it on</h2>
+<ul class="<%= list_class %>">
+  <li><strong>iPhone and iPad:</strong> Apple only allows notifications for sites on the home screen.
+    In Safari, tap Share, then “Add to Home Screen”. Open Waterhole from that new icon, sign in there
+    (it doesn't share Safari's sign-in), and turn notifications on from the account menu.</li>
+  <li><strong>Android and desktop browsers:</strong> go to Notifications in the account menu and choose
+    “Turn on in this browser”. On Android, adding Waterhole to the home screen is optional.</li>
+  <li><strong>When your browser asks,</strong> choose Allow. If you blocked it earlier, allow notifications
+    for this site in your browser's settings first.</li>
+  <li>Then use <strong>Send a test notification</strong> to check that it works. Also check your device's
+    Do Not Disturb or Focus settings, which can hide notifications.</li>
+</ul>
+
+<h2 class="<%= heading_class %>">What gets sent, and through whom</h2>
+<ul class="<%= list_class %>">
+  <li>Only a count, such as “2 new registrations are waiting”. Never an applicant's details, and not the instance's name.</li>
+  <li>Messages travel through the push service of your browser's vendor: Apple, Google, Mozilla or Microsoft.
+    The message is encrypted, but the vendor can see that your browser received one, and when.</li>
+  <li>Waterhole does not check whether you're looking at the queue, so you may get a notification about
+    something already on your screen.</li>
+</ul>
+
+<h2 class="<%= heading_class %>">Good to know</h2>
+<ul class="<%= list_class %>">
+  <li>Registrations are fetched every five minutes, so even “every 5 minutes” can lag a little.</li>
+  <li>Signing out does <strong>not</strong> stop notifications, because sessions expire within a week and
+    you would stop hearing from Waterhole. On a shared device, turn them off or remove the browser from the list.</li>
+  <li>If notifications stop arriving, open the Notifications page in that browser and turn them on again:
+    browsers sometimes replace or drop their push address.</li>
+  <li>Notifications pause while you can't use Waterhole: when your instance sign-in has lapsed, or when the
+    privacy policy changed and you haven't agreed to it yet. No notification tells you this has happened.
+    Once you've signed in or agreed, they pick up where they left off.</li>
+</ul>

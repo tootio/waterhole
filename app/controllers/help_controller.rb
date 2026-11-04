@@ -27,6 +27,9 @@ class HelpController < ApplicationController
   def sign_in
   end
 
+  def push
+  end
+
   def flag
     @flag = Flag.where(registration_request: registration_requests_scope).find(params[:id])
   end

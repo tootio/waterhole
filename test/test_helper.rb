@@ -79,3 +79,31 @@ class ActionDispatch::IntegrationTest
     moderator
   end
 end
+
+# A browser's push subscription, with real keys so that sending really encrypts.
+module PushTestHelper
+  FCM = "https://fcm.googleapis.com/fcm/send/"
+
+  def subscribe_browser(moderator, endpoint: "#{FCM}#{SecureRandom.hex(8)}")
+    moderator.push_subscriptions.create!(endpoint:, **browser_keys)
+  end
+
+  def browser_keys
+    {
+      p256dh: Base64.urlsafe_encode64(OpenSSL::PKey::EC.generate("prime256v1").public_key.to_bn.to_s(2)),
+      auth: Base64.urlsafe_encode64(SecureRandom.random_bytes(16))
+    }
+  end
+
+  def without_vapid
+    saved = ENV.delete("WATERHOLE_VAPID_PUBLIC_KEY")
+    yield
+  ensure
+    ENV["WATERHOLE_VAPID_PUBLIC_KEY"] = saved
+  end
+
+  def waiting_request(instance, **attributes)
+    instance.registration_requests.create!(mastodon_account_id: SecureRandom.hex(8), username: "applicant",
+      signed_up_at: Time.current, status: "pending", confirmed: true, **attributes)
+  end
+end

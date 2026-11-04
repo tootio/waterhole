@@ -26,6 +26,7 @@ Mastodon instances that approve their signups by hand: each instance is a herd.
   * reapplications (remembered for the retention period, 90 days by default)
 * **Network details** for the signup IP: country, network (ASN), iCloud Private Relay, and Tor relays.
 * **Translate the reason for joining** with one click, right in your browser: the language gets detected and translated on your device, so the reason never leaves it (in browsers with built-in translation, currently Chrome).
+* **Push notifications** tell you when requests are waiting, if your Waterhole has them enabled. Opt in per browser and choose how often, about which requests and at what time of day. Messages contain only a count, so your browser vendor's push service learns nothing about applicants or your instance.
 * **Claim a request**, so other moderators see that someone is working on it.
 * Add **notes** to a request or **vote** on it.
 * Power through big queues: **filters, search, sorting by risk**, **keyboard shortcuts** and **bulk actions** help you tackle the next spam wave.

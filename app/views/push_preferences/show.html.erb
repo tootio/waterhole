@@ -1,6 +1,6 @@
 <% content_for :page_title, "Notifications" %>
 <%
-  field_class = "mt-1 rounded border border-stone-300 dark:border-stone-700 px-3 py-2"
+  field_class = "mt-1 max-w-full rounded border border-stone-300 dark:border-stone-700 px-3 py-2"
   section_class = "rounded-lg border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-5"
   scopes = [ [ "Awaiting review", "awaiting" ], [ "All pending (also waiting for email confirmation)", "all_pending" ] ]
 %>
@@ -45,7 +45,7 @@
       </div>
     <% end %>
 
-    <fieldset class="space-y-3">
+    <fieldset class="min-w-0 space-y-3">
       <legend class="font-medium">New registrations</legend>
       <div class="flex flex-wrap gap-4">
         <div>
@@ -54,14 +54,14 @@
                 [ [ "Never", "off" ], [ "Every 5 minutes", "every_5_minutes" ], [ "Every hour", "hourly" ], [ "Once a day", "daily" ] ],
                 {}, class: field_class %>
         </div>
-        <div>
+        <div class="max-w-full">
           <%= f.label :new_scope, "About", class: "block text-sm font-medium" %>
           <%= f.select :new_scope, scopes, {}, class: field_class %>
         </div>
       </div>
     </fieldset>
 
-    <fieldset class="space-y-3">
+    <fieldset class="min-w-0 space-y-3">
       <legend class="font-medium">Forgotten registrations</legend>
       <div class="flex flex-wrap gap-4">
         <div>
@@ -70,7 +70,7 @@
                 PushPreference::FORGOTTEN_AFTER_DAYS.map { [ pluralize(it, "day"), it ] },
                 { include_blank: "Never" }, class: field_class %>
         </div>
-        <div>
+        <div class="max-w-full">
           <%= f.label :forgotten_scope, "About", class: "block text-sm font-medium" %>
           <%= f.select :forgotten_scope, scopes, {}, class: field_class %>
         </div>

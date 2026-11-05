@@ -69,7 +69,7 @@ SELECT_ALL = "document.querySelector('[data-bulk-select-target=all]').click()"
 SCROLL_TO_QUEUE = "scrollTo(0, document.querySelector('[data-bulk-select-target=all]').closest('div').offsetTop - 12)"
 SCENES = [
   { desktop: "/requests", mobile: [ "/requests", SCROLL_TO_QUEUE ] },
-  { desktop: "/requests/#{claimed.id}", mobile: "/requests/#{claimed.id}" },
+  { desktop: "/requests/#{claimed.id}", mobile: "/notifications" },
   { desktop: "/requests/#{datacenter.id}", mobile: "/requests/#{datacenter.id}" },
   { desktop: [ "/requests?search=deliverability&sort=risk", SELECT_ALL ],
     mobile: [ "/requests?search=deliverability&sort=risk", "#{SELECT_ALL}; #{SCROLL_TO_QUEUE}" ] },

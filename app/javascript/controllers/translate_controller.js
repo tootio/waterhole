@@ -46,7 +46,7 @@ export default class extends Controller {
     try {
       // Detection is deferred to here when its model still had to be
       // downloaded: create() may only start a download on a user gesture.
-      if (!this.state.detected) await this.#detect()
+      if (!this.state.detected) await this.#detect({ monitor: this.#monitor() })
       const source = this.state.source
       if (!source) return this.#finish("Your browser could not tell which language this is.")
       if (source === this.targetLanguage) return this.#finish(`This is already in ${this.#name(source)}.`)
@@ -115,8 +115,10 @@ export default class extends Controller {
     this.reconcile()
   }
 
-  async #detect() {
-    const detector = await LanguageDetector.create({ monitor: this.#monitor() })
+  // Without a monitor on load: the model is already there then, though Chrome
+  // still reports it as a download, and nothing would replace that status.
+  async #detect(options = {}) {
+    const detector = await LanguageDetector.create(options)
     const [best] = await detector.detect(this.#text())
     detector.destroy()
     // Recorded either way, so an undetermined reason is neither offered nor

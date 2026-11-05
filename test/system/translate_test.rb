@@ -53,6 +53,16 @@ class TranslateTest < ApplicationSystemTestCase
     assert_selector "[data-translate-target=output]", text: "[vi→en] #{VIETNAMESE}"
   end
 
+  # Nothing is downloading when the model is already there, whatever the
+  # monitor reports, and nothing would ever replace that status on load.
+  test "detecting on load with a downloaded model reports no download" do
+    fake_translation_apis
+    visit registration_request_path(@request)
+
+    assert_selector "[data-translate-target=language]", text: "English"
+    assert_no_text "Downloading a language model"
+  end
+
   test "a language pair the browser cannot translate says so" do
     @request.update_columns(invite_request: VIETNAMESE)
     fake_translation_apis(translator: "unavailable")
@@ -192,9 +202,16 @@ class TranslateTest < ApplicationSystemTestCase
     source = if supported
       <<~JS
         window.__translations = 0
+        const announceDownload = (monitor) => {
+          const target = new EventTarget()
+          monitor?.(target)
+          target.dispatchEvent(Object.assign(new Event("downloadprogress"), { loaded: 1 }))
+        }
         window.LanguageDetector = {
           availability: () => #{detector == "hang" ? "new Promise(() => {})" : "Promise.resolve(#{detector.to_json})"},
-          create: async () => ({
+          create: async ({ monitor } = {}) => ({
+            // Chrome reports progress even when the model is already on disk.
+            ...announceDownload(monitor),
             detect: async (text) => [{ detectedLanguage: #{detected.to_json} || (/[ốảỏđẹ]/.test(text) ? "vi" : "en"), confidence: 0.9 }],
             destroy() {}
           })

@@ -38,7 +38,7 @@
     mail for <%= d["domain"] %> goes to <%= d["matched"] %>
   <%- end -%>
 <%- when "app_signup" -%>
-  created through an OAuth app (#<%= d["application_id"] %>), not the website's sign-up form
+  created through an OAuth app (#<%= d["application_id"] %>)
 <%- else -%>
   <%= d.to_json %>
 <%- end -%>

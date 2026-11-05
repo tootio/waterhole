@@ -204,7 +204,8 @@ en:
         participating instances is a warning."
     app_signup:
       label: "Signed up via app"
-      help: "This account was created through Mastodon's API by an app, rather than
-        through the instance's own website sign-up form. That's a normal way to
-        sign up used by e.g, mobile apps, but it's noted because it bypasses any additional checks the
-        website's own form might present and because of this it is commonly used by spammers."
+      help: "This account was created through an app, such as a mobile app. That's a
+        normal way to sign up, but it's noted because spammers commonly do it too: Mastodon's
+        API lets an app sign up without any additional checks the website's own form might
+        present. From Mastodon 5.0, apps can use that website form instead, and Mastodon
+        doesn't say which of the two an app used."

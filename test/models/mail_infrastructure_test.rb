@@ -110,10 +110,46 @@ class MailInfrastructureTest < ActiveSupport::TestCase
     assert_equal %w[ai_bot cloudflare_email_routing], keys("ilands.app", %w[route1.mx.cloudflare.net])
   end
 
+  test "forwarding for one's own domain is only information" do
+    assert_equal %w[domain_forwarding], keys("example.org", %w[mx1.improvmx.com mx2.improvmx.com])
+    assert_equal %w[domain_forwarding], keys("example.org", %w[mx1.forwardemail.net])
+    assert_equal %w[domain_forwarding], keys("example.org", %w[eforward1.registrar-servers.com])
+    assert_equal %w[domain_forwarding], keys("example.org", %w[fwd1.porkbun.com])
+    assert_empty keys("example.org", %w[mx1.privateemail.com mail.registrar-servers.com])
+  end
+
   test "email aliases are only information" do
     assert_equal %w[email_alias], keys("passmail.com", %w[mx1.simplelogin.co])
     assert_equal %w[email_alias], keys("anonaddy.me", %w[mail2.anonaddy.me])
     assert_equal %w[email_alias], keys("aliasvault.net", %w[mail.aliasvault.net])
+    assert_equal %w[email_alias], keys("duck.com", %w[smtp-inbound1.duck.com])
+    assert_equal %w[email_alias], keys("addy.io", %w[mx1.addy.io])
+    assert_equal %w[email_alias], keys("example.org", %w[mx1.alias.proton.me])
+    assert_equal %w[email_alias], keys("privaterelay.appleid.com", %w[smtp1.privaterelay.appleid.com])
+    assert_equal %w[email_alias], keys("jane.33mail.com", %w[smtpv2.ec2.33mail.com])
+    assert_equal %w[email_alias], keys("example.org", %w[domains.33mail.com])
+    assert_equal %w[email_alias], keys("4wrd.cc", %w[mx1.4wrd.cc])
+    assert_equal %w[email_alias], keys("abinemail.com", %w[smtp7.opayq.com])
+  end
+
+  test "an alias service's own domains are known before any lookup" do
+    %w[duck.com privaterelay.appleid.com addy.io spamgourmet.net burnermail.io].each do |domain|
+      assert_equal %w[email_alias], keys(domain), domain
+    end
+  end
+
+  test "an alias service behind Amazon SES is named instead of SES" do
+    assert_equal %w[email_alias], keys("mozmail.com", %w[inbound-smtp.us-west-2.amazonaws.com])
+    assert_equal %w[email_alias], keys("jane.mozmail.com", %w[inbound-smtp.us-west-2.amazonaws.com])
+    assert_equal %w[email_alias], keys("relay.firefox.com", %w[inbound-smtp.us-west-2.amazonaws.com])
+  end
+
+  # Anyone can list an alias service's host as a spare MX, so it must not hide what
+  # the domain's other hosts say.
+  test "an alias MX host next to a platform hides nothing more severe" do
+    assert_equal %w[inbound_email_api email_alias], keys("example.org", %w[mxa.mailgun.org mx1.simplelogin.co])
+    assert_equal %w[amazon_ses_inbound email_alias],
+      keys("example.org", %w[inbound-smtp.us-east-1.amazonaws.com mx1.addy.io])
   end
 
   test "more mailbox providers are told apart" do
@@ -161,6 +197,6 @@ class MailInfrastructureTest < ActiveSupport::TestCase
     assert_equal :critical, severity.("test_mail")
     assert_equal :critical, severity.("inbound_email_api")
     assert_equal :warning, severity.("amazon_ses_inbound")
-    %w[gmail google_workspace office365 cloudflare_email_routing].each { assert_equal :info, severity.(it) }
+    %w[gmail google_workspace office365 cloudflare_email_routing domain_forwarding].each { assert_equal :info, severity.(it) }
   end
 end

@@ -120,6 +120,60 @@ module PushNotifications
       assert_equal [ "1 new registration, 2 waiting in all" ], run_at(record, Time.utc(2026, 5, 11, 2, 0))
     end
 
+    test "every 5 minutes keeps quiet outside the chosen hours, then tells of all of it at once" do
+      start = Time.utc(2026, 5, 10, 12, 0)
+      record = preference(at: start, notify_from_time: "14:00", notify_until_time: "04:00")
+      travel_to(start + 1.minute) { waiting_request(@instance) }
+      travel_to(start + 90.minutes) { waiting_request(@instance) }
+
+      refute Digest.due?(record, now: Time.utc(2026, 5, 10, 13, 55))
+      assert_equal [ "2 new registrations are waiting" ], run_at(record, Time.utc(2026, 5, 10, 14, 0))
+
+      travel_to(Time.utc(2026, 5, 11, 3, 50)) { waiting_request(@instance) }
+      assert_equal [ "1 new registration, 3 waiting in all" ], run_at(record, Time.utc(2026, 5, 11, 3, 55))
+      travel_to(Time.utc(2026, 5, 11, 3, 58)) { waiting_request(@instance) }
+      refute Digest.due?(record, now: Time.utc(2026, 5, 11, 4, 0))
+      refute Digest.due?(record, now: Time.utc(2026, 5, 11, 13, 55))
+      assert Digest.due?(record, now: Time.utc(2026, 5, 11, 14, 0))
+    end
+
+    test "hourly keeps to the chosen hours, in the moderator's zone" do
+      start = Time.utc(2026, 5, 10, 12, 10)
+      record = preference(at: start, new_frequency: "hourly", time_zone: "Asia/Tokyo",
+        notify_from_time: "08:00", notify_until_time: "22:00") # 23:00 to 13:00 UTC
+      travel_to(start + 1.minute) { waiting_request(@instance) }
+
+      refute Digest.due?(record, now: Time.utc(2026, 5, 10, 13, 0))
+      refute Digest.due?(record, now: Time.utc(2026, 5, 10, 22, 55))
+      # Real runs land on the five minutes, and a send job seconds behind them.
+      assert_equal [ "1 new registration is waiting" ], run_at(record, Time.utc(2026, 5, 10, 23, 0, 5))
+      travel_to(Time.utc(2026, 5, 10, 23, 1)) { waiting_request(@instance) }
+      refute Digest.due?(record, now: Time.utc(2026, 5, 10, 23, 5, 5)), "a second one in the opening hour"
+      refute Digest.due?(record, now: Time.utc(2026, 5, 10, 23, 55, 5))
+      assert_equal [ "1 new registration, 2 waiting in all" ], run_at(record, Time.utc(2026, 5, 11, 0, 0, 5))
+    end
+
+    test "hourly sends once an hour, on the hour, however soon after the run the job starts" do
+      start = Time.utc(2026, 5, 10, 12, 0)
+      record = preference(at: start, new_frequency: "hourly")
+      sent = (1..36).filter_map do |tick|
+        now = start + (tick * 5).minutes + 3.seconds
+        travel_to(now - 1.minute) { waiting_request(@instance) }
+        now.strftime("%H:%M") if run_at(record, now).any?
+      end
+
+      assert_equal %w[13:00 14:00 15:00], sent
+    end
+
+    test "the chosen hours leave daily notifications alone" do
+      start = Time.utc(2026, 5, 10, 12, 0)
+      record = preference(at: start, new_frequency: "daily", daily_time: "07:00",
+        notify_from_time: "14:00", notify_until_time: "04:00")
+      travel_to(start + 1.minute) { waiting_request(@instance) }
+
+      assert_equal [ "1 new registration is waiting" ], run_at(record, Time.utc(2026, 5, 11, 7, 2))
+    end
+
     test "daily arrives at the moderator's chosen time, in their zone" do
       start = Time.utc(2026, 5, 10, 12, 0)
       record = preference(at: start, new_frequency: "daily", daily_time: "21:30", time_zone: "America/New_York") # 01:30 UTC

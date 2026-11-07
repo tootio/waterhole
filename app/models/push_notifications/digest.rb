@@ -23,6 +23,7 @@ module PushNotifications
 
     def initialize(preference, now)
       @preference = preference
+      @clock = now
       @now = now - COMMIT_MARGIN
     end
 
@@ -52,10 +53,17 @@ module PushNotifications
       )
     end
 
+    # Outside the moderator's hours the watermark stays put, so the first run
+    # inside them tells of everything held back, in one message.
+    #
+    # When to run goes by the real clock, so hours from 14:00 open on the 14:00
+    # run. A watermark sits COMMIT_MARGIN behind the run that set it: hourly asks
+    # whether that run was in an earlier hour, or a run at 14:00:05 would leave
+    # 13:59:35 and the 14:05 run would count as the next hour.
     def new_due?
       case @preference.new_frequency
-      when "every_5_minutes" then true
-      when "hourly" then @preference.new_checked_at < @now.beginning_of_hour
+      when "every_5_minutes" then @preference.notify_at?(@clock)
+      when "hourly" then @preference.notify_at?(@clock) && @preference.new_checked_at + COMMIT_MARGIN < @clock.beginning_of_hour
       when "daily" then daily_due?(@preference.new_checked_at)
       else false
       end

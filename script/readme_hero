@@ -67,9 +67,15 @@ SIGN_IN_PATH = "/dev/sign_in?token=#{token}"
 # shows. A view is a path, or a path and JavaScript to run once it has loaded.
 SELECT_ALL = "document.querySelector('[data-bulk-select-target=all]').click()"
 SCROLL_TO_QUEUE = "scrollTo(0, document.querySelector('[data-bulk-select-target=all]').closest('div').offsetTop - 12)"
+# Enabling a browser needs a real push service, and the hours are what is new.
+NOTIFICATION_SETTINGS = <<~JS.squish
+  document.querySelector('[aria-labelledby=push_this_browser]').remove();
+  document.querySelector('[name="push_preference[notify_from_time]"]').value = '08:00';
+  document.querySelector('[name="push_preference[notify_until_time]"]').value = '22:00'
+JS
 SCENES = [
   { desktop: "/requests", mobile: [ "/requests", SCROLL_TO_QUEUE ] },
-  { desktop: "/requests/#{claimed.id}", mobile: "/notifications" },
+  { desktop: "/requests/#{claimed.id}", mobile: [ "/notifications", NOTIFICATION_SETTINGS ] },
   { desktop: "/requests/#{datacenter.id}", mobile: "/requests/#{datacenter.id}" },
   { desktop: [ "/requests?search=deliverability&sort=risk", SELECT_ALL ],
     mobile: [ "/requests?search=deliverability&sort=risk", "#{SELECT_ALL}; #{SCROLL_TO_QUEUE}" ] },

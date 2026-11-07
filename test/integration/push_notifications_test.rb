@@ -24,6 +24,8 @@ class PushNotificationsTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "select[name=?]", "push_preference[new_frequency]"
     assert_select "input[type=time][name=?]", "push_preference[daily_time]"
+    assert_select "input[type=time][name=?]", "push_preference[notify_from_time]"
+    assert_select "input[type=time][name=?]", "push_preference[notify_until_time]"
     assert_select "a[href=?]", push_help_path
     assert_equal 0, PushPreference.where(moderator: @moderator).count
     assert_select "#account-menu a[href=?]", push_preferences_path
@@ -43,6 +45,25 @@ class PushNotificationsTest < ActionDispatch::IntegrationTest
     assert_equal "18:15", preference.daily_time
     assert_equal 7, preference.forgotten_after_days
     assert_equal "Europe/Berlin", preference.time_zone
+  end
+
+  test "saving and clearing the notification hours" do
+    patch push_preferences_path, params: { push_preference: { notify_from_time: "14:00", notify_until_time: "04:00" } }
+    assert_redirected_to push_preferences_path
+    preference = @moderator.reload.push_preference
+    assert_equal [ "14:00", "04:00" ], [ preference.notify_from_time, preference.notify_until_time ]
+
+    get push_preferences_path
+    assert_select "input[name=?][value=?]", "push_preference[notify_from_time]", "14:00"
+
+    patch push_preferences_path, params: { push_preference: { notify_from_time: "", notify_until_time: "" } }
+    refute preference.reload.notify_window?
+  end
+
+  test "half a window comes back with an error" do
+    patch push_preferences_path, params: { push_preference: { notify_from_time: "14:00", notify_until_time: "" } }
+    assert_response :unprocessable_entity
+    assert_select ".bg-red-50", text: /both a start and an end/
   end
 
   test "bad settings come back with an error" do

@@ -8,6 +8,7 @@ class PushPreference < ApplicationRecord
   # After moving the daily time or zone: a new slot this soon after the old one
   # would be today's notification a second time.
   RESCHEDULE_GAP = 6.hours
+  DISPATCH_EVERY_MINUTES = ScheduleInstanceSyncsJob::INTERVAL.in_minutes.to_i
 
   belongs_to :moderator
 
@@ -20,6 +21,7 @@ class PushPreference < ApplicationRecord
 
   validates :forgotten_after_days, inclusion: { in: FORGOTTEN_AFTER_DAYS }, allow_nil: true
   validates :daily_at, numericality: { only_integer: true, in: 0...MINUTES_IN_A_DAY }
+  validate :notify_window_complete
 
   before_validation :start_counting_from_now
   before_save :hold_daily_after_rescheduling
@@ -33,15 +35,38 @@ class PushPreference < ApplicationRecord
   # The most recent moment the clock in this moderator's zone showed daily_at.
   # At a local time a DST change skips, this is the hour after; at one it repeats,
   # always the first of the two.
-  def latest_daily_time(now) = latest_slot(now, ActiveSupport::TimeZone[time_zone], daily_at)
+  def latest_daily_time(now) = latest_slot(now, zone, daily_at)
 
-  # The form's "HH:MM", which is what a time input submits.
-  def daily_time = daily_at && format("%02d:%02d", daily_at / 60, daily_at % 60)
+  def daily_time = time_from_minutes(daily_at)
 
-  # Some browsers submit seconds as well.
   def daily_time=(value)
-    hours, minutes = value.to_s.match(/\A(\d{2}):(\d{2})(?::\d{2})?\z/)&.captures&.map(&:to_i)
-    self.daily_at = hours && minutes < 60 ? (hours * 60) + minutes : nil
+    self.daily_at = minutes_from_time(value)
+  end
+
+  # Every 5 minutes and hourly only: daily already picks its own time. Both blank
+  # means around the clock.
+  def notify_from_time = time_from_minutes(notify_from)
+  def notify_until_time = time_from_minutes(notify_until)
+
+  def notify_from_time=(value)
+    self.notify_from = window_minutes("“Only from”", value)
+  end
+
+  def notify_until_time=(value)
+    self.notify_until = window_minutes("“Until”", value)
+  end
+
+  def notify_window? = notify_from.present? && notify_until.present?
+
+  # From notify_from up to, not including, notify_until, on the wall clock in this
+  # moderator's zone, so a DST change moves the hours with the clock. A start
+  # after the end runs across midnight.
+  def notify_at?(now)
+    return true unless notify_window?
+
+    local = now.in_time_zone(zone)
+    minute = (local.hour * 60) + local.min
+    notify_from < notify_until ? minute.in?(notify_from...notify_until) : !minute.in?(notify_until...notify_from)
   end
 
   # Enabling the first browser, after any time without one: what piled up in the
@@ -54,6 +79,26 @@ class PushPreference < ApplicationRecord
 
   private
 
+  def zone = ActiveSupport::TimeZone[time_zone]
+
+  # The form's "HH:MM", which is what a time input submits; some browsers add
+  # seconds. Anything else is nil.
+  def minutes_from_time(value)
+    hours, minutes = value.to_s.match(/\A(\d{2}):(\d{2})(?::\d{2})?\z/)&.captures&.map(&:to_i)
+    hours && hours < 24 && minutes < 60 ? (hours * 60) + minutes : nil
+  end
+
+  def time_from_minutes(minutes) = minutes && format("%02d:%02d", minutes / 60, minutes % 60)
+
+  # Blank is a choice here, so input that is not a time must not read as one:
+  # it is remembered for validation rather than saved as around the clock.
+  def window_minutes(label, value)
+    @unreadable_window_times ||= {}
+    minutes = minutes_from_time(value)
+    @unreadable_window_times[label] = value.present? && minutes.nil?
+    minutes
+  end
+
   # Walks back because the slot of the day before can be in the future as well: a
   # skipped 23:30 falls after midnight.
   def latest_slot(now, zone, minutes)
@@ -63,6 +108,19 @@ class PushPreference < ApplicationRecord
       return slot if slot <= now
 
       date -= 1
+    end
+  end
+
+  # Shorter hours could fall between two runs of DispatchPushNotificationsJob
+  # and never notify at all.
+  def notify_window_complete
+    unreadable = (@unreadable_window_times || {}).select { |_, bad| bad }.keys
+    if unreadable.any?
+      errors.add(:base, "#{unreadable.to_sentence} must be a time of day")
+    elsif notify_from.nil? != notify_until.nil?
+      errors.add(:base, "Give both a start and an end time, or neither for around the clock")
+    elsif notify_window? && (notify_until - notify_from) % MINUTES_IN_A_DAY < DISPATCH_EVERY_MINUTES
+      errors.add(:base, "Notification hours must be at least #{DISPATCH_EVERY_MINUTES} minutes long; leave both blank for around the clock")
     end
   end
 

@@ -26,6 +26,6 @@ class PushPreferencesController < ApplicationController
   end
 
   def preference_params
-    params.expect(push_preference: %i[new_frequency new_scope daily_time forgotten_after_days forgotten_scope time_zone])
+    params.expect(push_preference: %i[new_frequency new_scope notify_from_time notify_until_time daily_time forgotten_after_days forgotten_scope time_zone])
   end
 end

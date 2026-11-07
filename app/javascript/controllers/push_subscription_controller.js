@@ -158,10 +158,9 @@ export default class extends Controller {
     if (!browser) return
 
     if (this.hasTimeZoneTarget) this.timeZoneTarget.value = browser
-    if (this.hasZoneNameTarget) {
-      const saved = this.savedZoneValue
-      this.zoneNameTarget.textContent = !saved || saved === browser ? browser : `${saved}, or ${browser} once you save`
-    }
+    const saved = this.savedZoneValue
+    const zoneName = !saved || saved === browser ? browser : `${saved}, or ${browser} once you save`
+    this.zoneNameTargets.forEach((target) => { target.textContent = zoneName })
   }
 
   async currentSubscription() {

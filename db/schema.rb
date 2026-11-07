@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_04_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_07_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -199,6 +199,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_04_150000) do
     t.string "new_scope", default: "awaiting", null: false
     t.string "time_zone", default: "UTC", null: false
     t.datetime "updated_at", null: false
+    t.integer "notify_from"
+    t.integer "notify_until"
     t.index ["moderator_id"], name: "index_push_preferences_on_moderator_id", unique: true
   end
 

@@ -7,7 +7,7 @@
 
 <div class="mx-auto max-w-2xl space-y-6" data-controller="push-subscription"
      data-action="turbo:render@document->push-subscription#sync"
-     data-push-subscription-saved-zone-value="<%= @preference.time_zone if @preference.persisted? %>"
+     data-push-subscription-saved-zone-value="<%= @preference.time_zone_in_database if @preference.persisted? %>"
      data-push-subscription-public-key-value="<%= Waterhole::Deployment.vapid_public_key %>"
      data-push-subscription-subscriptions-url-value="<%= push_subscriptions_path %>"
      data-push-subscription-check-url-value="<%= check_push_subscriptions_path %>"
@@ -59,6 +59,25 @@
           <%= f.select :new_scope, scopes, {}, class: field_class %>
         </div>
       </div>
+      <div class="flex flex-wrap gap-4">
+        <div>
+          <%= f.label :notify_from_time, "Only from", class: "block text-sm font-medium" %>
+          <%= f.time_field :notify_from_time,
+                aria: { describedby: "push_notify_window_hint" }, class: field_class %>
+        </div>
+        <div>
+          <%= f.label :notify_until_time, "Until", class: "block text-sm font-medium" %>
+          <%= f.time_field :notify_until_time,
+                aria: { describedby: "push_notify_window_hint" }, class: field_class %>
+        </div>
+      </div>
+      <p id="push_notify_window_hint" class="text-xs text-stone-500 dark:text-stone-400">
+        For “every 5 minutes” and “every hour”, in your time zone:
+        <span data-push-subscription-target="zoneName"><%= @preference.time_zone_in_database %></span>.
+        Leave both blank for around the clock.
+        An end before the start runs past midnight, such as 14:00 until 04:00.
+        Whatever arrives after the last notification within them comes in one notification when they next begin.
+      </p>
     </fieldset>
 
     <fieldset class="min-w-0 space-y-3">
@@ -80,11 +99,11 @@
 
     <div>
       <%= f.label :daily_time, "Daily notifications arrive around", class: "block text-sm font-medium" %>
-      <%= f.time_field :daily_time, value: @preference.daily_time, required: true,
+      <%= f.time_field :daily_time, required: true,
             aria: { describedby: "push_daily_time_hint" }, class: field_class %>
       <p id="push_daily_time_hint" class="mt-1 text-xs text-stone-500 dark:text-stone-400">
         For “once a day” and for reminders. Your time zone:
-        <span data-push-subscription-target="zoneName"><%= @preference.time_zone %></span>.
+        <span data-push-subscription-target="zoneName"><%= @preference.time_zone_in_database %></span>.
       </p>
       <%= f.hidden_field :time_zone, data: { push_subscription_target: "timeZone" } %>
     </div>

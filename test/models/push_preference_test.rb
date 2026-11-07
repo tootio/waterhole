@@ -19,6 +19,53 @@ class PushPreferenceTest < ActiveSupport::TestCase
     assert_equal "07:30", preference(daily_time: "07:30:00").daily_time
   end
 
+  test "notification hours are both blank or both real, different times" do
+    record = preference(notify_from_time: "14:00", notify_until_time: "04:00:00")
+    assert record.valid?
+    assert_equal [ 14 * 60, 4 * 60 ], [ record.notify_from, record.notify_until ]
+    assert_equal [ "14:00", "04:00" ], [ record.notify_from_time, record.notify_until_time ]
+
+    assert preference(notify_from_time: "", notify_until_time: "").valid?
+    assert preference(notify_from_time: "23:58", notify_until_time: "00:03").valid?, "five minutes across midnight"
+
+    {
+      [ "14:00", "" ] => /both a start and an end/,
+      [ "", "04:00" ] => /both a start and an end/,
+      [ "09:00", "09:00" ] => /at least 5 minutes/,
+      [ "12:01", "12:04" ] => /at least 5 minutes/,
+      [ "soon", "" ] => /“Only from” must be a time of day/,
+      [ "04:00", "24:00" ] => /“Until” must be a time of day/,
+      [ "later", "soon" ] => /“Only from” and “Until” must be a time of day/
+    }.each do |(from, to), message|
+      record = preference(notify_from_time: from, notify_until_time: to)
+      refute record.valid?, "#{from.inspect} to #{to.inspect} should be invalid"
+      assert_match message, record.errors.full_messages.to_sentence
+    end
+  end
+
+  test "correcting an unreadable time clears its error" do
+    record = preference(notify_from_time: "soon", notify_until_time: "04:00")
+    record.notify_from_time = "14:00"
+    assert record.valid?
+  end
+
+  test "notification hours include the start, exclude the end, and may run past midnight" do
+    day = preference(time_zone: "Europe/Berlin", notify_from_time: "08:00", notify_until_time: "20:00") # UTC+2 in May
+    assert day.notify_at?(Time.utc(2026, 5, 10, 6, 0))
+    assert day.notify_at?(Time.utc(2026, 5, 10, 17, 59))
+    refute day.notify_at?(Time.utc(2026, 5, 10, 18, 0))
+    refute day.notify_at?(Time.utc(2026, 5, 10, 5, 59))
+
+    night = preference(notify_from_time: "14:00", notify_until_time: "04:00")
+    assert night.notify_at?(Time.utc(2026, 5, 10, 14, 0))
+    assert night.notify_at?(Time.utc(2026, 5, 10, 23, 30))
+    assert night.notify_at?(Time.utc(2026, 5, 11, 3, 59))
+    refute night.notify_at?(Time.utc(2026, 5, 11, 4, 0))
+    refute night.notify_at?(Time.utc(2026, 5, 11, 13, 59))
+
+    assert preference.notify_at?(Time.utc(2026, 5, 11, 3, 0)), "around the clock without hours"
+  end
+
   test "an unknown time zone falls back to UTC instead of losing the form" do
     assert_equal "UTC", preference(time_zone: "Mars/Olympus").time_zone
     assert_equal "Asia/Kolkata", preference(time_zone: "Asia/Kolkata").time_zone

@@ -142,17 +142,26 @@ class PushNotificationsSystemTest < ApplicationSystemTestCase
     assert_equal 0, @moderator.push_subscriptions.count
   end
 
-  test "the form saves the chosen daily time in the browser's zone" do
+  test "the form saves the chosen times in the browser's zone" do
+    # A zone no test browser is in, so the page has to say it will change.
+    PushPreference.create!(moderator: @moderator, time_zone: "Pacific/Chatham")
     visit push_preferences_path
+    browser_zone = page.evaluate_script("Intl.DateTimeFormat().resolvedOptions().timeZone")
+    [ "#push_notify_window_hint", "#push_daily_time_hint" ].each do |hint|
+      assert_selector hint, text: "Pacific/Chatham, or #{browser_zone} once you save"
+    end
+
     select "Once a day", from: "Tell me"
-    page.execute_script("document.querySelector('input[type=time]').value = '18:15'")
+    fill_in "Only from", with: Time.utc(2000, 1, 1, 14, 0)
+    fill_in "Until", with: Time.utc(2000, 1, 1, 4, 0)
+    fill_in "Daily notifications arrive around", with: Time.utc(2000, 1, 1, 18, 15)
     click_on "Save"
 
     assert_text "Notification settings saved."
     preference = @moderator.reload.push_preference
     assert preference.new_daily?
-    assert_equal "18:15", preference.daily_time
-    assert_equal page.evaluate_script("Intl.DateTimeFormat().resolvedOptions().timeZone"), preference.time_zone
+    assert_equal [ "14:00", "04:00", "18:15" ], [ preference.notify_from_time, preference.notify_until_time, preference.daily_time ]
+    assert_equal browser_zone, preference.time_zone
   end
 
   test "the page registers the real worker under the real CSP" do

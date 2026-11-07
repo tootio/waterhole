@@ -43,7 +43,19 @@ module MailInfrastructure
   end
 
   # via: "domain", "mx" or "ip", whichever gave the provider away.
-  Match = Data.define(:provider, :matched, :via)
+  Match = Data.define(:provider, :matched, :via) do
+    # The applicant can list any host as an MX next to their real one, so a match on
+    # one only hides flags no more severe than its own. The address's domain is the
+    # service's, and names what stands behind it whatever the severity.
+    def hides?(other)
+      provider.subsumes.include?(other.provider.key) &&
+        (via == "domain" || rank(provider) >= rank(other.provider))
+    end
+
+    private
+
+    def rank(provider) = Flag.severities.fetch(provider.severity.to_s)
+  end
 
   # Naming the service says more than the mail platform behind it, and two flags
   # for one fact would rank the request above others in the riskiest-first sort.
@@ -82,7 +94,24 @@ module MailInfrastructure
     Provider.new(key: "inbound_email_api", severity: :critical,
       mx: %w[mx.sendgrid.net mailgun.org inbound.postmarkapp.com]),
     Provider.new(key: "cloudflare_email_routing", severity: :info, mx: %w[mx.cloudflare.net]),
-    Provider.new(key: "email_alias", severity: :info, mx: %w[simplelogin.co anonaddy.me], domains: %w[aliasvault.net]),
+    # Like Cloudflare: forwarding for one's own domain, by a service or by the
+    # registrar. Namecheap and Porkbun also host mailboxes, so only their forwarding
+    # hosts are matched. Forward Email hosts mailboxes on the same MX, which the help
+    # text says.
+    Provider.new(key: "domain_forwarding", severity: :info,
+      mx: [ *%w[improvmx.com forwardemail.net],
+            /\Aeforward\d+\.registrar-servers\.com\z/, /\Afwd\d+\.porkbun\.com\z/ ]),
+    # Each service's own address domains are named, so they match before any lookup.
+    # The MX hosts catch customers' own domains, and the alias domains of SimpleLogin
+    # and Proton Pass, which are too many to list. Firefox Relay receives through
+    # Amazon SES, so only its domains tell it. Blur's opayq.com is left to the
+    # disposable blocklist, which already has it. iCloud's Hide My Email and
+    # Fastmail's masked addresses look like ordinary mailboxes and can't be told.
+    Provider.new(key: "email_alias", severity: :info, subsumes: BEHIND_A_NAMED_SERVICE,
+      mx: %w[simplelogin.co alias.proton.me anonaddy.me addy.io addymail.com 33mail.com],
+      domains: %w[aliasvault.net mozmail.com relay.firefox.com duck.com privaterelay.appleid.com
+                  anonaddy.me anonaddy.com addy.io addymail.com 4wrd.cc mailer.me 33mail.com abinemail.com
+                  burnermail.io erine.email spamgourmet.com spamgourmet.net spamgourmet.org]),
     Provider.new(key: "gmail", severity: :info, mx: %w[gmail-smtp-in.l.google.com]),
     Provider.new(key: "google_workspace", severity: :info,
       mx: %w[aspmx.l.google.com smtp.google.com googlemail.com]),
@@ -120,8 +149,6 @@ module MailInfrastructure
   # looked up.
   def classify(domain:, hosts:, addresses: nil)
     matches  = PROVIDERS.filter_map { it.match_for(domain.to_s, Array(hosts), Array(addresses)) }
-    subsumed = matches.flat_map { it.provider.subsumes }
-
-    matches.reject { subsumed.include?(it.provider.key) }
+    matches.reject { |match| matches.any? { it.hides?(match) } }
   end
 end

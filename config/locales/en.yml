@@ -72,12 +72,19 @@ en:
       help: "Mail for this domain is forwarded by Cloudflare to a mailbox elsewhere,
         which stays hidden. Many people use it for their own domains, and throwaway
         domains use it too. Nothing suspicious on its own."
+    domain_forwarding:
+      label: "Email forwarding"
+      help: "Mail for this domain goes to a forwarding service (ImprovMX or Forward
+        Email) or the domain's registrar (Namecheap or Porkbun), which forwards it to
+        a mailbox elsewhere that stays hidden. Forward Email can also keep the mailbox
+        itself. Many people use these for their own domains. Nothing suspicious on its
+        own."
     email_alias:
       label: "Email alias"
-      help: "The address is an alias from a privacy service (SimpleLogin, Proton
-        Pass, addy.io or AliasVault), which forwards mail to a mailbox that stays
-        hidden. Many people use these to protect their real address. Nothing
-        suspicious on its own."
+      help: "The address is an alias from a privacy service (such as SimpleLogin,
+        Proton Pass, addy.io, DuckDuckGo, Firefox Relay or Sign in with Apple),
+        which forwards mail to a mailbox that stays hidden. Many people use these
+        to protect their real address. Nothing suspicious on its own."
     gmail:
       label: "Gmail"
       help: "Mail for this domain goes to Gmail's consumer mail servers. For

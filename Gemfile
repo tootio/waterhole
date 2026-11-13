@@ -100,7 +100,7 @@ gem "public_suffix", "~> 7.0"
 
 # ICU's word boundaries (Words), which split Chinese, Japanese, Thai, Lao,
 # Khmer and Burmese -- scripts written without spaces -- by dictionary.
-gem "ffi-icu", "~> 0.7"
+gem "ffi-icu", "~> 0.8"
 
 # Encrypts and signs moderators' push notifications (PushNotifications::Sender).
 gem "web-push", "~> 3.1"

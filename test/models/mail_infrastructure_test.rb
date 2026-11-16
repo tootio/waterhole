@@ -162,6 +162,8 @@ class MailInfrastructureTest < ActiveSupport::TestCase
     assert_equal %w[t_online], keys("t-online.de", %w[mx00.t-online.de])
     assert_equal %w[vivaldi_mail], keys("vivaldi.net", %w[mxi-1.vivaldi.net])
     assert_equal %w[onion_mail], keys("onionmail.com", %w[mail.onionmail.com])
+    assert_equal %w[onion_mail], keys("2mail.co", %w[mxmail.2mail.co])
+    assert_equal %w[onion_mail], keys("gtfcy37qyzor7kb6blz2buwuu5u7qjkycasjdf3yaslibkbyhsxub4yd.onion")
   end
 
   test "Japanese carriers and internet providers share one classification" do

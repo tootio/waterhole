@@ -77,5 +77,20 @@ module Ip
     module_function
 
     def name_for(code) = NAMES[code.to_s.upcase]
+
+    # Codes in NAMES with no flag emoji: AP is no country, and XK is outside
+    # the standard, so most platforms draw it as two boxed letters.
+    NO_FLAG = %w[ AP XK ].freeze
+
+    # From "A" to REGIONAL INDICATOR SYMBOL LETTER A.
+    REGIONAL_INDICATOR_OFFSET = 0x1F1E6 - "A".ord
+
+    # The flag emoji for a known code (two regional indicator symbols), or nil.
+    def flag_for(code)
+      code = code.to_s.upcase
+      return if name_for(code).nil? || NO_FLAG.include?(code)
+
+      code.codepoints.map { it + REGIONAL_INDICATOR_OFFSET }.pack("U*")
+    end
   end
 end

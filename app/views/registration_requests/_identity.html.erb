@@ -91,6 +91,9 @@
         <dd>
           <% if registration_request.ip_country.present? %>
             <% country_name = Ip::Countries.name_for(registration_request.ip_country) %>
+            <% if (flag = Ip::Countries.flag_for(registration_request.ip_country)) %>
+              <span aria-hidden="true"><%= flag %></span>
+            <% end %>
             <% if country_name %>
               <abbr title="<%= country_name %>" class="font-medium no-underline cursor-help"><%= registration_request.ip_country %></abbr>
             <% else %>

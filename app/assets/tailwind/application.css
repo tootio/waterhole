@@ -3,6 +3,31 @@
    with everything else rather than load on that page alone. */
 @import "../../../vendor/stylesheets/uplot.css";
 
+/* Country flags for Windows, whose Segoe UI Emoji has none and draws the two
+   letters instead (the Network line's 🇷🇺 would read "RU RU"). The font holds
+   only the flags (Twemoji, via country-flag-emoji-polyfill, CC BY 4.0), and the
+   unicode-range keeps it from being fetched for any other text. It sits after
+   Apple Color Emoji and Noto Color Emoji in the stack, so macOS, iOS and
+   desktop Linux keep their own flags. Android's emoji font can't be named
+   from CSS, so Android gets these flags too, which is harmless. */
+@font-face {
+  font-family: "Twemoji Country Flags";
+  unicode-range: U+1F1E6-1F1FF, U+1F3F4, U+E0062-E0063, U+E0065, U+E0067,
+    U+E006C, U+E006E, U+E0073-E0074, U+E0077, U+E007F;
+  src: url("TwemojiCountryFlags.woff2") format("woff2");
+  font-display: swap;
+}
+
+/* Tailwind 4.3's default stack, with the flag font slotted in ahead of Segoe
+   UI Emoji. Noto Color Emoji moves up with it, ahead of the flag font, so
+   Linux keeps its own flags. A copy: compare it with the default when
+   upgrading Tailwind. */
+@theme {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial,
+    sans-serif, "Apple Color Emoji", "Noto Color Emoji", "Twemoji Country Flags", "Segoe UI Emoji",
+    "Segoe UI Symbol";
+}
+
 /* Lets the browser paint its own chrome to match: the interior and glyph of a
    checkbox, the <select> popup, the caret, ::placeholder and the scrollbar. The
    forms here are Rails helpers carrying only border classes, so without this a

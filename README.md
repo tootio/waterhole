@@ -222,6 +222,14 @@ upstream repository by default; set `WATERHOLE_SOURCE_URL` to your fork.
 - `public/og.png`, the link-preview image (`og:image`/`twitter:image`), is a
   derivative of that same 3D mammoth, under the same CC BY 4.0 license. Its
   editable source is [`design/og.svg`](design/og.svg).
+- `app/assets/fonts/TwemojiCountryFlags.woff2`, the country flags shown on
+  Windows, is the "Twemoji Country Flags" font from
+  [country-flag-emoji-polyfill](https://github.com/talkjs/country-flag-emoji-polyfill)
+  0.1.10 (MIT, Copyright 2022 TalkJS; see
+  [vendor/licenses/country-flag-emoji-polyfill.md](vendor/licenses/country-flag-emoji-polyfill.md)).
+  Its flag artwork is from [Twemoji](https://github.com/jdecked/twemoji) by
+  Twitter, Inc and other contributors, under
+  [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), unmodified.
 - IP geolocation data is not part of this repository. It is downloaded at
   runtime from [ip-location-db](https://github.com/sapics/ip-location-db) and is
   in the public domain (PDDL).

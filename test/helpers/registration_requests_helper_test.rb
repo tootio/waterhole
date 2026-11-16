@@ -54,4 +54,14 @@ class RegistrationRequestsHelperTest < ActionView::TestCase
     assert_equal "Netherlands", Ip::Countries.name_for("nl")
     assert_nil Ip::Countries.name_for("ZZ")
   end
+
+  test "known country codes get a flag emoji, others none" do
+    assert_equal "🇷🇺", Ip::Countries.flag_for("RU")
+    assert_equal "🇳🇱", Ip::Countries.flag_for("nl")
+    assert_nil Ip::Countries.flag_for("ZZ")
+    assert_equal "🇪🇺", Ip::Countries.flag_for("EU")
+    assert_nil Ip::Countries.flag_for("AP")
+    assert_nil Ip::Countries.flag_for("XK")
+    assert_nil Ip::Countries.flag_for("")
+  end
 end

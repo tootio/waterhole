@@ -29,6 +29,23 @@ class QueueTest < ActionDispatch::IntegrationTest
     assert_select "dd", text: /none found/
   end
 
+  test "the network line shows the country's flag, and none where it has no flag" do
+    sign_in_as @moderator
+    request = registration_requests(:pending_alpha)
+
+    request.update!(ip_country: "RU", ip_asn: 64500, ip_asn_org: "Example Hosting LLC", ip_enriched_at: Time.current)
+    get registration_request_path(request)
+    assert_select "dd span[aria-hidden=true]", text: "🇷🇺"
+    assert_select "dd abbr[title=?]", "Russia", text: "RU"
+
+    %w[AP XK ZZ].each do |code|
+      request.update!(ip_country: code)
+      get registration_request_path(request)
+      assert_select "dd", text: /#{code}/
+      assert_select "dd span[aria-hidden=true]", count: 0
+    end
+  end
+
   test "the queue lists this instance's pending requests" do
     sign_in_as @moderator
     get root_path

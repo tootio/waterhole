@@ -16,7 +16,10 @@ require "rails/test_unit/railtie"
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
-Bundler.require(*Rails.groups)
+# Plus :assets (Tailwind) wherever it is installed, so assets:precompile builds
+# the CSS in any environment; Bundler skips it where BUNDLE_WITHOUT leaves it
+# out, as in the production image.
+Bundler.require(*Rails.groups, :assets)
 
 # A deployment is configured through ENV, not through Rails credentials or edits
 # to config/environments: every Waterhole runs the same checked-in code, so
@@ -41,6 +44,12 @@ module Waterhole
     # not contain `.rb` files, or that should not be reloaded or eager loaded.
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w[assets tasks])
+
+    # Tailwind's input, compiled to app/assets/builds/tailwind.css. The
+    # tailwindcss-rails engine excludes it too, but production runs without
+    # that gem (see Gemfile), and stylesheet_link_tag :app would otherwise
+    # link the raw source.
+    config.assets.excluded_paths << config.root.join("app/assets/tailwind")
 
     # Keys for encrypted columns (access tokens, client secrets, emails).
     # Generate with bin/rails waterhole:secrets. Losing them makes that data

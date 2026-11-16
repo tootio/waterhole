@@ -15,7 +15,10 @@ gem "turbo-rails"
 # Hotwire's modest JavaScript framework [https://stimulus.hotwired.dev]
 gem "stimulus-rails"
 # Use Tailwind CSS [https://github.com/rails/tailwindcss-rails]
-gem "tailwindcss-rails"
+# Only compiling assets needs it: its CLI is a ~100 MB binary the production
+# image leaves out (BUNDLE_WITHOUT). config/application.rb requires the group
+# wherever it is installed and keeps Tailwind's source out of Propshaft.
+gem "tailwindcss-rails", group: [ :assets, :development, :test ]
 
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 # gem "bcrypt", "~> 3.1.7"

@@ -143,6 +143,13 @@ requests already waiting (decided ones keep theirs):
 docker compose exec web bin/rails waterhole:recompute_flags
 ```
 
+When the release notes say the matching rules or the image's ICU version
+changed, recompute the stored match keys, or older requests stop matching new
+ones:
+```shell
+docker compose exec web bin/rails waterhole:rehash_match_keys
+```
+
 ### Without Docker
 
 If you know your way around Ruby on Rails, it should not be too hard to run Waterhole without Docker.

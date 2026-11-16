@@ -10,42 +10,44 @@
 
 # Make sure RUBY_VERSION matches the Ruby version in .ruby-version
 ARG RUBY_VERSION=4.0.9
-FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
+FROM docker.io/library/ruby:$RUBY_VERSION-alpine AS base
 
 # Rails app lives here
 WORKDIR /rails
 
-# Install base packages. libicu76 is ICU on the image's Debian (trixie), for
-# ffi-icu's word boundaries; its name changes with the Debian release.
-# tzdata-legacy for zones like Asia/Calcutta, which is what browsers report.
-RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y curl libicu76 libjemalloc2 postgresql-client tzdata tzdata-legacy && \
-    ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so && \
-    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+# Install base packages. icu-data-full carries the CJK/Thai dictionaries that
+# ffi-icu's word boundaries need (icu-libs alone pulls only icu-data-en).
+# bash for bin/docker-entrypoint. Alpine's tzdata keeps backward links like
+# Asia/Calcutta, which is what browsers report.
+# No postgresql-client: db:prepare loads db/schema.rb, so nothing runs psql.
+RUN apk add --no-cache bash curl icu-libs icu-data-full jemalloc tzdata && \
+    ln -s /usr/lib/libjemalloc.so.2 /usr/local/lib/libjemalloc.so
 
 # Set production environment variables and enable jemalloc for reduced memory usage and latency.
 ENV RAILS_ENV="production" \
     BUNDLE_DEPLOYMENT="1" \
     BUNDLE_PATH="/usr/local/bundle" \
-    BUNDLE_WITHOUT="development" \
+    BUNDLE_WITHOUT="development:test:assets" \
     LD_PRELOAD="/usr/local/lib/libjemalloc.so"
 
 # Throw-away build stage to reduce size of final image
 FROM base AS build
 
-# Install packages needed to build gems
-RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential git libpq-dev libssl-dev libyaml-dev pkg-config && \
-    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+# The build also needs the assets group (Tailwind) for assets:precompile.
+ENV BUNDLE_WITHOUT="development:test"
 
-# Install application gems
-COPY vendor/* ./vendor/
+# Install packages needed to build gems. pg normally installs precompiled for
+# musl; libpq-dev is there for when it has to compile.
+RUN apk add --no-cache build-base git libpq-dev openssl-dev yaml-dev pkgconf
+
+# Install application gems, and precompile bootsnap for the ones the image
+# keeps (not the assets group), in a layer cached until Gemfile.lock changes.
 COPY Gemfile Gemfile.lock ./
 
 RUN bundle install && \
     rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
     # -j 1 disable parallel compilation to avoid a QEMU bug: https://github.com/rails/bootsnap/issues/495
-    bundle exec bootsnap precompile -j 1 --gemfile
+    BUNDLE_WITHOUT="development:test:assets" bundle exec bootsnap precompile -j 1 --gemfile
 
 # Copy application code
 COPY . .
@@ -54,8 +56,12 @@ COPY . .
 # -j 1 disable parallel compilation to avoid a QEMU bug: https://github.com/rails/bootsnap/issues/495
 RUN bundle exec bootsnap precompile -j 1 app/ lib/
 
-# Precompiling assets for production without requiring secret RAILS_MASTER_KEY
-RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
+# Precompiling assets for production without requiring secret RAILS_MASTER_KEY.
+# Tailwind (the assets group) builds the CSS first; without it the pages would
+# ship unstyled, so fail the build. Then drop the assets gems from the image.
+RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile && \
+    { ls public/assets/tailwind-*.css > /dev/null || { echo "Tailwind CSS was not built" >&2; exit 1; }; } && \
+    BUNDLE_WITHOUT="development:test:assets" bundle clean --force
 
 
 
@@ -64,8 +70,8 @@ RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
 FROM base
 
 # Run and own only the runtime files as a non-root user for security
-RUN groupadd --system --gid 1000 rails && \
-    useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash
+RUN addgroup -S -g 1000 rails && \
+    adduser -S -u 1000 -G rails -h /home/rails -s /bin/bash rails
 USER 1000:1000
 
 # Copy built artifacts: gems, application

@@ -42,7 +42,8 @@ Rails.application.routes.draw do
   resources :keyword_rules, except: :show
   resources :email_templates, except: :show
 
-  resources :herds, only: %i[index show], controller: "instances", constraints: { id: /[^\/]+/ }
+  resources :herds, only: %i[index show], controller: "instances",
+                    constraints: { id: /[^\/]+/ }, format: false, defaults: { format: "html" }
 
   # Development only; the controller refuses to act in any other environment.
   get "/dev/sign_in", to: "dev_sessions#create" if Rails.env.local?

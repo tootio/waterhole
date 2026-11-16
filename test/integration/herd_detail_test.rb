@@ -14,6 +14,22 @@ class HerdDetailTest < ActionDispatch::IntegrationTest
     assert_select "h1", other.domain
   end
 
+  # Browsers send Accept: text/html,...,*/*, which Rails ignores as too vague
+  # and falls back to the path's extension -- and .zip, .json, .xml, ... are
+  # all real top-level domains as well as registered formats.
+  test "a domain whose TLD is also a file extension is still a page" do
+    browser_accept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+    %w[something.zip something.json].each do |domain|
+      other.update!(domain: domain)
+
+      get herd_path(other), headers: { "Accept" => browser_accept }
+
+      assert_response :success, "/herds/#{domain}"
+      assert_equal "text/html", response.media_type
+      assert_select "h1", domain
+    end
+  end
+
   test "your own herd has no special address" do
     get herd_path(mine)
 

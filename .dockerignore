@@ -46,3 +46,11 @@
 
 # The operator's legal documents are mounted at runtime, never baked in.
 /legal/
+
+# Not needed at runtime: tests, dev scripts, design files, docs, tool config.
+/test/
+/script/
+/design/
+/doc/
+/mise*.toml
+/docker-compose.yml

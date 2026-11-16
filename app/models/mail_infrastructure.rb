@@ -134,7 +134,9 @@ module MailInfrastructure
     Provider.new(key: "seznam", severity: :info, mx: %w[seznam.cz]),
     Provider.new(key: "t_online", severity: :info, mx: %w[t-online.de]),
     Provider.new(key: "vivaldi_mail", severity: :info, mx: %w[vivaldi.net]),
-    Provider.new(key: "onion_mail", severity: :info, mx: %w[onionmail.com]),
+    Provider.new(key: "onion_mail", severity: :info, mx: %w[onionmail.com onionmail.org mail2tor.co 2mail.co],
+      # Their hidden service, for a server that delivers over Tor; it has no MX to look up.
+      domains: %w[gtfcy37qyzor7kb6blz2buwuu5u7qjkycasjdf3yaslibkbyhsxub4yd.onion]),
     # A pattern for au: anyone can register a subdomain of au.com.
     Provider.new(key: "jp_carrier_isp", severity: :info,
       mx: [ *%w[docomo.ne.jp softbank.ne.jp softbank.jp disney.ne.jp auone-net.jp ocn.ad.jp biglobe.ne.jp zaq.ne.jp

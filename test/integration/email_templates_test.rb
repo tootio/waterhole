@@ -67,14 +67,14 @@ class EmailTemplatesTest < ActionDispatch::IntegrationTest
     assert_select "li", /Ask for more.*disabled/m
 
     get registration_request_path(registration_requests(:pending_alpha))
-    assert_select "main [data-controller=dropdown]", false
+    assert_select "#email-template-menu", false
   end
 
   test "without templates the request page points to setting them up" do
     EmailTemplate.delete_all
     get registration_request_path(registration_requests(:pending_alpha))
 
-    assert_select "main [data-controller=dropdown]", false
+    assert_select "#email-template-menu", false
     assert_select "a[href=?]", email_templates_path
   end
 
@@ -83,6 +83,16 @@ class EmailTemplatesTest < ActionDispatch::IntegrationTest
     request.update_columns(email: nil)
     get registration_request_path(request)
 
-    assert_select "main [data-controller=dropdown]", false
+    assert_select "#email-template-menu", false
+    assert_select "#email-domain-research-menu", false
+  end
+
+  test "the request page offers lookups of the email domain, without a referrer" do
+    get registration_request_path(registration_requests(:pending_alpha))
+
+    assert_select "#email-domain-research-menu" do
+      assert_select "a[href=?][target=_blank][rel~=noreferrer]", "https://check-mail.org/domain/fastmail.com/"
+      assert_select "a[href=?]", "https://who.is/whois/fastmail.com"
+    end
   end
 end

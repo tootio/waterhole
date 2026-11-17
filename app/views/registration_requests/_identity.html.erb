@@ -9,7 +9,7 @@
 
     <div>
       <dt class="text-xs text-stone-500 dark:text-stone-400">Email</dt>
-      <dd class="flex items-center gap-2">
+      <dd class="flex flex-wrap items-center gap-x-2">
         <span class="break-all font-mono text-xs"><%= registration_request.email.presence || "—" %></span>
         <% if registration_request.email.present? %>
           <button type="button" class="<%= button_classes(:ghost, "rounded text-xs hover:text-stone-700 dark:hover:text-stone-300") %>"
@@ -34,6 +34,23 @@
           <% else %>
             <%= link_to "templates", email_templates_path, title: "Set up email templates to write to applicants in one click",
                   class: button_classes(:ghost, "rounded text-xs hover:text-stone-700 dark:hover:text-stone-300") %>
+          <% end %>
+          <% if (research = email_domain_research_links(registration_request)).any? %>
+            <div data-controller="dropdown" class="dropdown">
+              <button type="button" popovertarget="email-domain-research-menu" aria-expanded="false" data-dropdown-target="toggle"
+                      class="dropdown-toggle <%= button_classes(:ghost, "rounded text-xs whitespace-nowrap hover:text-stone-700 dark:hover:text-stone-300") %>">look up ▾</button>
+              <div id="email-domain-research-menu" popover data-dropdown-target="panel" class="dropdown-panel sm:w-64">
+                <p class="px-3 py-1 font-mono text-xs text-stone-500 dark:text-stone-400 truncate"><%= registration_request.email_domain %></p>
+                <ul>
+                  <% research.each do |label, url| %>
+                    <li>
+                      <%= link_to label, url, target: "_blank", rel: "noopener noreferrer",
+                            class: "block px-3 py-1.5 text-sm hover:bg-stone-100 dark:hover:bg-stone-800 #{focus_ring_classes}" %>
+                    </li>
+                  <% end %>
+                </ul>
+              </div>
+            </div>
           <% end %>
         <% end %>
       </dd>

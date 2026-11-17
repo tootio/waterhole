@@ -36,6 +36,25 @@ module RegistrationRequestsHelper
     "mailto:#{to}#{"?#{query}" if query.present?}"
   end
 
+  # Public databases to look the email domain up in, for a domain the flags don't
+  # settle: [[label, url], ...]. Disposable-domain databases first, then the
+  # domain's age, spam reports and certificates. Only a well-formed domain ever
+  # lands in a URL.
+  def email_domain_research_links(registration_request)
+    domain = registration_request.email_domain.to_s
+    return [] unless domain.match?(DomainLists::DisposableEmailDomains::DOMAIN)
+
+    [
+      [ "check-mail.org", "https://check-mail.org/domain/#{domain}/" ],
+      [ "verifymail.io", "https://verifymail.io/domain/#{domain}" ],
+      [ "UserCheck", "https://www.usercheck.com/domain/#{domain}" ],
+      [ "Registration date (who.is)", "https://who.is/whois/#{domain}" ],
+      [ "Spam reports (CleanTalk)", "https://cleantalk.org/blacklists/#{domain}" ],
+      [ "Spamhaus", "https://check.spamhaus.org/results/?query=#{domain}" ],
+      [ "Certificates (crt.sh)", "https://crt.sh/?q=#{domain}" ]
+    ]
+  end
+
   # Public databases to look the signup network up in, grouped by what they are
   # keyed on: { "IP address" => [[label, url], ...], "AS…" => ..., country => ... }.
   # The address is re-parsed rather than interpolated as stored, so only a

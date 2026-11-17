@@ -81,6 +81,14 @@ class MailInfrastructureTest < ActiveSupport::TestCase
     assert_equal %w[disposable_mail], keys("example.org", %w[in.mail.tm])
     assert_equal %w[disposable_mail], keys("10mail.org", %w[mx.10mail.org])
     assert_equal %w[disposable_mail], keys("hadjoy.com", %w[mail.hadjoy.com])
+    assert_equal %w[disposable_mail], keys("benshelf.com", %w[ereg4.brushemail.com])
+  end
+
+  test "EmailOnDeck's newer domains are recognised by the address behind their own MX host" do
+    found = match("inqdryer.com", %w[mailstore.inqdryer.com], %w[107.170.232.119])
+    assert_equal [ "disposable_mail", "ip" ], [ found.provider.key, found.via ]
+
+    assert_equal "138.197.239.249", match("lisost.com", %w[route.lisost.com], %w[138.197.239.249]).matched
   end
 
   def match(domain, hosts, addresses) = MailInfrastructure.classify(domain:, hosts:, addresses:).sole

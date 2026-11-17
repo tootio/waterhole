@@ -44,6 +44,19 @@ class RegistrationRequestsHelperTest < ActionView::TestCase
     assert_includes links["AS64500"], [ "bgp.tools", "https://bgp.tools/as/64500" ]
   end
 
+  test "email domain research links start with the disposable-domain databases" do
+    links = email_domain_research_links(RegistrationRequest.new(email_domain: "inqdryer.com"))
+
+    assert_equal [ "check-mail.org", "https://check-mail.org/domain/inqdryer.com/" ], links.first
+    assert_includes links, [ "Registration date (who.is)", "https://who.is/whois/inqdryer.com" ]
+    assert links.all? { |_, url| url.start_with?("https://") && url.include?("inqdryer.com") }
+  end
+
+  test "a malformed email domain never lands in a research link" do
+    assert_empty email_domain_research_links(RegistrationRequest.new(email_domain: "evil.com/../../x?y"))
+    assert_empty email_domain_research_links(RegistrationRequest.new(email_domain: nil))
+  end
+
   test "a malformed address never lands in a research link" do
     request = RegistrationRequest.new(ip: "203.0.113.5/../../evil", ip_country: "de<")
 

@@ -76,17 +76,24 @@ module MailInfrastructure
     # MX host, so new ones show only in the address. The named domains stay: they
     # match before any lookup, and still do if a service moves.
     #
-    # The addresses, in order: TinyHost; Mail.tm; DropMail; TMaily. Services move and
-    # addresses get reused, so these want reviewing now and then.
+    # EmailOnDeck has done both. Its older domains share named MX hosts (brushemail.com
+    # and the rest, attributed to it by bdea.cc); each newer one gets a made-up MX
+    # host of its own, nearly all of them on one address. In November 2026 none of
+    # its new domains were on the blocklist.
+    #
+    # The addresses, in order: TinyHost; Mail.tm; DropMail; TMaily; EmailOnDeck, its
+    # shared one first. Services move and addresses get reused, so these want
+    # reviewing now and then.
     Provider.new(key: "disposable_mail", severity: :warning, unless_on_blocklist: true,
-      mx: %w[tinyhost.shop mail.tm],
+      mx: %w[tinyhost.shop mail.tm brushemail.com bumpemail.com aerospaceemail.com hubblehost.com],
       domains: %w[dropmail.me 10mail.org 10mail.info emltmp.com emlpro.com freeml.net spymail.one mimimail.me
                   maximail.fyi maximail.vip mailtowin.com pickmail.org pickmemail.com picomail.biz
                   hadjoy.com manglgih.com],
       ips: %w[144.91.107.45
               49.12.18.190 2a01:4f8:c011:4d4::1
               78.47.124.133 94.130.108.80 2a01:4f8:c0c:944::1 2a01:4f8:c0c:944::6
-              159.195.145.63]),
+              159.195.145.63
+              138.197.239.249 107.170.232.119 107.170.249.236 162.243.140.207 159.65.162.243]),
     # A warning rather than critical: mostly programs, but also people forwarding
     # their own domain to a personal mailbox through a Lambda. MX can't tell which.
     Provider.new(key: "amazon_ses_inbound", severity: :warning,

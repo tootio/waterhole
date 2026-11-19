@@ -48,7 +48,7 @@ class DnsAllowlist
   end
 
   # Wraps Resolv::DNS with the settings this design depends on. Verified against
-  # Ruby 4.0.9:
+  # Ruby 4.0.10:
   #
   #   1. `raise_timeout_errors: true` is MANDATORY. Resolv::DNS::Config#resolv
   #      ends with `rescue ResolvError; raise if @raise_timeout_errors && ...`,
@@ -73,7 +73,7 @@ class DnsAllowlist
     # answers. NXDOMAIN and an empty answer still come back as [], because those are
     # answers: the name has no such record. The raised message says "timeout" either
     # way, so don't show it to people as a diagnosis: DnsAllowlist#call doesn't. No API
-    # gets at this, so it hooks @config, as read in Ruby 4.0.9's resolv.rb;
+    # gets at this, so it hooks @config, as read in Ruby 4.0.10's resolv.rb;
     # the tests against a real nameserver fail if an upgrade moves it.
     class StrictDNS < Resolv::DNS
       module FailedNameserverIsATimeout

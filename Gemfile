@@ -78,7 +78,7 @@ gem "webmock", "~> 3.34", group: :test
 # jsonb column decode. Pinned until Rails supports json 3.
 gem "json", "~> 3.1"
 
-gem "kramdown", "~> 2.5"
+gem "kramdown", "~> 2.6"
 
 # Every Waterhole runs the same code, so a deployment is configured entirely
 # through ENV -- read from .env.production when not injected by the container.

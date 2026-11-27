@@ -34,7 +34,12 @@ export default class extends Controller {
       maxOptions: null,
       // The select's own classes size the wrapper like the other controls; the
       // dropdown is styled separately.
-      copyClassesToDropdown: false
+      copyClassesToDropdown: false,
+      render: {
+       option(data, escape) {
+          return `<div><span class="option-label">${escape(data[this.settings.labelField])}</span></div>`
+        }
+      }
     })
 
     // A refresh morph (every claim and decision broadcasts one) would strip the

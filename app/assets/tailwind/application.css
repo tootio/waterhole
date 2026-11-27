@@ -435,6 +435,7 @@
     accent-color: var(--color-stone-900);
     pointer-events: none;
   }
+  .ts-dropdown .option-label { min-width: 0; }
   .ts-dropdown .option.active { background: var(--color-stone-100); }
   .ts-dropdown .no-results { color: var(--color-stone-500); }
   .ts-dropdown .highlight { background: none; font-weight: 600; }
